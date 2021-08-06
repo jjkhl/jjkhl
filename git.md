@@ -78,8 +78,9 @@ git checkout master
 # 图形化查看分支
 git log --oneline --all --graph
 
+#删除分支
+git branch -d 分支名
 
-合并分支
 # 创建一个分支并切换到这个分支
 git checkout -b 分支名
 
@@ -105,6 +106,12 @@ git clone xxx.xxx.xxx zjh
 #要把两个不同的项目合并，但是两个仓库不同，报错：refusing to merge unrelated histories
 git pull origin master --allow-unrelated-histories
 
+#同步远程仓库和本地
+git pull origin 远程分支:本地分支
+git fetch origin 远程分支:本地分支
+
+#比较本地仓库和下载的temp分支
+git diff temp
 ```
 
 [查看分支操作](https://blog.csdn.net/guo_qiangqiang/article/details/88020656?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base)
