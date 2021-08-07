@@ -87,6 +87,12 @@ git commit -m "提交信息描述"
 # 查看提交的版本记录
 git log
 
+git reset HEAD^　　#回退所有内容到上一个版本
+git reset HEAD^　　a.py　#回退a.py这个文件的版本到上一个版本
+git reset –soft　　HEAD~3　#向前回退到第3个版本
+git reset –hard　　origin/master　#将本地的状态回退到和远程的一样
+git reset 057d　　#回退到某个版本
+git revert HEAD　#回退到上一次提交的状态，按照某一次的commit完全反向的进行一次commit
 # 回退到之间提交的某个节点
 git checkout 版本号
 
