@@ -164,6 +164,16 @@ git fetch origin 远程分支:本地分支
 
 #比较本地仓库和下载的temp分支
 git diff temp
+
+#删除远程仓库里的文件
+#提示删除的文件
+git rm -r test（删除文件夹）
+git rm --cached "路径+文件名" #不删除物理文件，仅将该文件从缓存中删除
+git rm -f "路径+文件名"#将文件在物理上和缓存中删除
+#提交修改的版本
+git commit -m "delete"
+#提交
+git push
 ```
 
 [查看分支操作](https://blog.csdn.net/guo_qiangqiang/article/details/88020656?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base)
