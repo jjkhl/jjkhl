@@ -87,12 +87,6 @@ git commit -m "提交信息描述"
 # 查看提交的版本记录
 git log
 
-git reset HEAD^　　#回退所有内容到上一个版本
-git reset HEAD^　　a.py　#回退a.py这个文件的版本到上一个版本
-git reset –soft　　HEAD~3　#向前回退到第3个版本
-git reset –hard　　origin/master　#将本地的状态回退到和远程的一样
-git reset 057d　　#回退到某个版本
-git revert HEAD　#回退到上一次提交的状态，按照某一次的commit完全反向的进行一次commit
 # 回退到之间提交的某个节点
 git checkout 版本号
 
@@ -164,7 +158,6 @@ git fetch origin 远程分支:本地分支
 
 #比较本地仓库和下载的temp分支
 git diff temp
-
 #删除远程仓库里的文件
 #提示删除的文件
 git rm -r test（删除文件夹）
@@ -174,6 +167,18 @@ git rm -f "路径+文件名"#将文件在物理上和缓存中删除
 git commit -m "delete"
 #提交
 git push
+
+#软撤销——本地代码不会发生改变，只删除commit
+git reset --soft HEAD~1
+
+#硬撤销——删除工作空间改动代码，撤销commit，撤销git add
+git reset --hard HEAD~1
+
+#修改commit内容
+git commit --amend
+
+#不删除工作空间改动代码，撤销commit和add操作
+git  reset --mixed HEAD~1 ↔  git reset HEAD~1
 ```
 
 [查看分支操作](https://blog.csdn.net/guo_qiangqiang/article/details/88020656?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base)
