@@ -179,6 +179,15 @@ git commit --amend
 
 #不删除工作空间改动代码，撤销commit和add操作
 git  reset --mixed HEAD~1 ↔  git reset HEAD~1
+
+#删除远程仓库的文件
+#-n 不会删除任何文件，而是展示此命令要删除的文件列表预览
+git rm -r -n --cached 文件/文件夹名称
+#确认后删除文件
+git rm -r --cached 文件
+#提交本地并推送到远程服务器
+git commit -m "说明"
+git push
 ```
 
 [查看分支操作](https://blog.csdn.net/guo_qiangqiang/article/details/88020656?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-1.base)
