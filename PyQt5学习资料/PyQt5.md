@@ -552,3 +552,34 @@ sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 #SOCK_STREM表示tcp
 check_socket.settimeout(3)#阻塞线程3s，然后自动退出
 ```
+
+### 异常
+
+```python
+#处理结构
+try:
+    可能会出现错误的代码段
+except 错误类型:
+    处理异常代码
+#处理所有异常
+except:
+except Exception as e:#e为所有异常类型的别名
+	处理异常代码
+	print(traceback.format_exc())#查找错误的位置并打印
+
+#抛出异常
+raise 异常名称
+```
+
+### 调用外部程序
+```python
+#方法1：os库的system函数
+import os
+cmd=r'd:\tools\wget http:///mirrors.sohu.com/ngnix/nginx-1.13.9.zip'
+os.system(cmd)
+#打开非可执行程序文件
+os.startfile('hello.txt')
+#方法2：subprocess库
+
+```
+
