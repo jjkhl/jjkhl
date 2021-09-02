@@ -435,9 +435,222 @@ def hello_clicked(self):
 	print("点击了OK按钮")
 ```
 
-### 多线程
 
-#### 定时器(QTimer)
+
+### 异常
+
+```python
+#处理结构
+try:
+    可能会出现错误的代码段
+except 错误类型:
+    处理异常代码
+#处理所有异常
+except:
+except Exception as e:#e为所有异常类型的别名
+	处理异常代码
+	print(traceback.format_exc())#查找错误的位置并打印
+
+#抛出异常
+raise 异常名称
+```
+
+### 调用外部程序
+
+```python
+#方法1：os库的system函数
+import os
+cmd=r'd:\tools\wget http:///mirrors.sohu.com/ngnix/nginx-1.13.9.zip'
+os.system(cmd)
+#打开非可执行程序文件
+os.startfile('hello.txt')
+#方法2：subprocess库
+from subprocess import PIPE, Popen
+# 返回的是 Popen 实例对象
+proc = Popen(
+    'fsutil volume diskfree c:',
+    stdin  = None,
+    stdout = PIPE,
+    stderr = PIPE,
+    shell=True
+# communicate 方法返回 输出到 标准输出 和 标准错误 的字节串内容
+# 标准输出设备和 标准错误设备 当前都是本终端设备
+outinfo, errinfo = proc.communicate()
+# 注意返回的内容是bytes 不是 str ，我的是中文windows，所以用gbk解码
+outinfo = outinfo.decode('gbk')
+errinfo = errinfo.decode('gbk')
+print (outinfo)
+print ('-------------')
+print (errinfo)
+
+outputList = outinfo.splitlines()
+
+# 剩余量
+free  = int(outputList[0].split(':')[1].strip())
+
+# 总空间
+total = int(outputList[1].split(':')[1].strip())
+
+if (free/total < 0.1):
+    print('!! 剩余空间告急！！')
+else:
+    print('剩余空间足够')
+```
+
+### 装饰器
+
+```python
+#在原来函数的基础上，不去修改原来的函数而使用装饰器
+#原函数
+import time
+def getXXXTime():
+    print()
+    return time.strftime('%Y_%m_%d %H:%M:%S',time.localtime())
+#装饰器
+import time
+
+# 定义一个装饰器函数
+def sayLocal(func):
+    def wrapper():
+        curTime = func()#未执行func函数
+        return f'当地时间： {curTime}'
+    return wrapper
+
+def getXXXTime():
+    return time.strftime('%Y_%m_%d %H:%M:%S',time.localtime())
+
+# 装饰 getXXXTime
+getXXXTime = sayLocal(getXXXTime)
+
+print (getXXXTime())  
+```
+
+### JSON格式转换
+
+**序列化**：把程序的各种类型数据对象变成表示该数据对象的字节串的过程`json.dumps(数据对象)`
+
+**反序列化**：把字节串转化为程序中的数据对象的过程`json.loads(目标字符串)`
+
+```python
+historyTransactions = [
+
+    {
+        'time'   : '20170101070311',  # 交易时间
+        'amount' : '3088',            # 交易金额
+        'productid' : '45454455555',  # 货号
+        'productname' : 'iphone7'     # 货名
+    },
+    {
+        'time'   : '20170101050311',  # 交易时间
+        'amount' : '18',              # 交易金额
+        'productid' : '453455772955', # 货号
+        'productname' : '奥妙洗衣液'   # 货名
+    },
+]
+import json
+jsonStr=json.dumps(historyTransactions,ensure_ascii=False)
+print(jsonStr)
+```
+
+### 日期与实践
+
+#### 获取当前时间对应的数字
+
+```python
+import time
+before=time.time()#从1970年1月1日0点(epoch时间点)到当前时间经过的秒数（秒数时间）
+#得到当前时间对应的字符串
+from datetime import datetime
+str(datetime.now())#2021-09-02 20:23:57.021582
+datetime.now().strftime('%Y-%m-%d %H:%M:%S')#2021-09-02 20:27:50
+time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())#2021-09-02 20:27:50
+#将字符串指定时间转换为秒数时间
+int(time.mktime(time.strptime('2015-08-01 23:59:59', '%Y-%m-%d %H:%M:%S')))
+```
+
+
+
+## 多线程
+
+```python
+#Python3调用线程
+print('主线程执行代码') 
+
+# 从 threading 库中导入Thread类
+from threading import Thread
+from time import sleep
+
+# 定义一个函数，作为新线程执行的入口函数
+def threadFunc(arg1,arg2):
+    print('子线程 开始')
+    print(f'线程函数参数是：{arg1}, {arg2}')
+    sleep(5)
+    print('子线程 结束')
+
+
+# 创建 Thread 类的实例对象
+thread = Thread(
+    # target 参数 指定 新线程要执行的函数
+    # 注意，这里指定的函数对象只能写一个名字，不能后面加括号，
+    # 如果加括号就是直接在当前线程调用执行，而不是在新线程中执行了
+    target=threadFunc, 
+
+    # 如果 新线程函数需要参数，在 args里面填入参数
+    # 注意参数是元组， 如果只有一个参数，后面要有逗号，像这样 args=('参数1',)
+    args=('参数1', '参数2')
+)
+
+# 执行start 方法，就会创建新线程，
+# 并且新线程会去执行入口函数里面的代码。
+# 这时候 这个进程 有两个线程了。
+thread.start()
+
+# 主线程的代码执行 子线程对象的join方法，
+# 就会等待子线程结束，才继续执行下面的代码
+thread.join()
+print('主线程结束')
+
+#Lock保护共享数据
+from threading import Thread,Lock
+from time import sleep
+
+bank = {
+    'byhy' : 0
+}
+
+bankLock = Lock()
+
+# 定义一个函数，作为新线程执行的入口函数
+def deposit(theadidx,amount):
+    # 操作共享数据前，申请获取锁
+    bankLock.acquire()
+    
+    balance =  bank['byhy']
+    # 执行一些任务，耗费了0.1秒
+    sleep(0.1)
+    bank['byhy']  = balance + amount
+    print(f'子线程 {theadidx} 结束')
+    
+    # 操作完共享数据后，申请释放锁
+    bankLock.release()
+
+theadlist = []
+for idx in range(10):
+    thread = Thread(target = deposit,
+                    args = (idx,1)
+                    )
+    thread.start()
+    # 把线程对象都存储到 threadlist中
+    theadlist.append(thread)
+
+for thread in theadlist:
+    thread.join()
+
+print('主线程结束')
+print(f'最后我们的账号余额为 {bank["byhy"]}')
+```
+
+### 定时器(QTimer)
 
 ```python
 #头文件
@@ -531,7 +744,11 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 ```
 
-### socket编程
+## socket编程
+
+tcp进行通讯的双方，分为服务端和客户端。
+
+![白月黑羽Python3教程](http://cdn1.python3.vip/imgs/socket1.png)
 
 ```python
 #创建一个socket进程
@@ -551,64 +768,107 @@ socket.sendall(string)#发送完整的TCP数据，成功返回None，失败p
 sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 #SOCK_STREM表示tcp
 check_socket.settimeout(3)#阻塞线程3s，然后自动退出
+
+#socket编程：http://www.byhy.net/tut/py/etc/socket/
+#服务端代码
+#  === TCP 服务端程序 server.py ===
+
+# 导入socket 库
+from socket import *
+
+# 主机地址为空字符串，表示绑定本机所有网络接口ip地址
+# 等待客户端来连接
+IP = ''
+# 端口号
+PORT = 50000
+# 定义一次从socket缓冲区最多读入512个字节数据
+BUFLEN = 512
+
+# 实例化一个socket对象
+# 参数 AF_INET 表示该socket网络层使用IP协议
+# 参数 SOCK_STREAM 表示该socket传输层使用tcp协议
+listenSocket = socket(AF_INET, SOCK_STREAM)
+
+# socket绑定地址和端口
+listenSocket.bind((IP, PORT))
+
+
+# 使socket处于监听状态，等待客户端的连接请求
+# 参数 8 表示 最多接受多少个等待连接的客户端
+listenSocket.listen(8)
+print(f'服务端启动成功，在{PORT}端口等待客户端连接...')
+
+dataSocket, addr = listenSocket.accept()
+print('接受一个客户端连接:', addr)
+
+while True:
+    # 尝试读取对方发送的消息
+    # BUFLEN 指定从接收缓冲里最多读取多少字节
+    recved = dataSocket.recv(BUFLEN)
+
+    # 如果返回空bytes，表示对方关闭了连接
+    # 退出循环，结束消息收发
+    if not recved:
+        break
+
+    # 读取的字节数据是bytes类型，需要解码为字符串
+    info = recved.decode()
+    print(f'收到对方信息： {info}')
+
+    # 发送的数据类型必须是bytes，所以要编码
+    dataSocket.send(f'服务端接收到了信息 {info}'.encode())
+
+# 服务端也调用close()关闭socket
+dataSocket.close()
+listenSocket.close()
+
+#客户端代码
+#  === TCP 客户端程序 client.py ===
+
+from socket import *
+
+IP = '127.0.0.1'
+SERVER_PORT = 50000
+BUFLEN = 1024
+
+# 实例化一个socket对象，指明协议
+dataSocket = socket(AF_INET, SOCK_STREAM)
+
+# 连接服务端socket
+dataSocket.connect((IP, SERVER_PORT))
+
+while True:
+    # 从终端读入用户输入的字符串
+    toSend = input('>>> ')
+    if  toSend =='exit':
+        break
+    # 发送消息，也要编码为 bytes
+    dataSocket.send(toSend.encode())
+
+    # 等待接收服务端的消息
+    recved = dataSocket.recv(BUFLEN)
+    # 如果返回空bytes，表示对方关闭了连接
+    if not recved:
+        break
+    # 打印读取的信息
+    print(recved.decode())
+
+dataSocket.close()
 ```
 
-### 异常
+Windows查看IP地址端口：`netstat -an|find /i "端口号"`
 
-```python
-#处理结构
-try:
-    可能会出现错误的代码段
-except 错误类型:
-    处理异常代码
-#处理所有异常
-except:
-except Exception as e:#e为所有异常类型的别名
-	处理异常代码
-	print(traceback.format_exc())#查找错误的位置并打印
+### 应用消息格式
 
-#抛出异常
-raise 异常名称
-```
+TCP协议传输的是字节流，需要明确定义<strong style="color:red">消息边界</strong>
 
-### 调用外部程序
-```python
-#方法1：os库的system函数
-import os
-cmd=r'd:\tools\wget http:///mirrors.sohu.com/ngnix/nginx-1.13.9.zip'
-os.system(cmd)
-#打开非可执行程序文件
-os.startfile('hello.txt')
-#方法2：subprocess库
-from subprocess import PIPE, Popen
-# 返回的是 Popen 实例对象
-proc = Popen(
-    'fsutil volume diskfree c:',
-    stdin  = None,
-    stdout = PIPE,
-    stderr = PIPE,
-    shell=True
-# communicate 方法返回 输出到 标准输出 和 标准错误 的字节串内容
-# 标准输出设备和 标准错误设备 当前都是本终端设备
-outinfo, errinfo = proc.communicate()
-# 注意返回的内容是bytes 不是 str ，我的是中文windows，所以用gbk解码
-outinfo = outinfo.decode('gbk')
-errinfo = errinfo.decode('gbk')
-print (outinfo)
-print ('-------------')
-print (errinfo)
+指定消息边界的两种方式：
 
-outputList = outinfo.splitlines()
+* 用特殊字节作为消息的结尾符号
 
-# 剩余量
-free  = int(outputList[0].split(':')[1].strip())
+使用消息内容中不可能出现的字符串，比如`FFFF`，作为消息的结尾字符
 
-# 总空间
-total = int(outputList[1].split(':')[1].strip())
+* 在消息开头的某个位置，直接指定消息的长度
 
-if (free/total < 0.1):
-    print('!! 剩余空间告急！！')
-else:
-    print('剩余空间足够')
-```
+> UDP协议通常不需要指定消息边界，因为UDP是数据包协议，应用程序从socket接收到的必定是发送方发送的完整消息
 
