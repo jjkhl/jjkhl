@@ -10,7 +10,175 @@
 
 **vscode安装PyQt5**:https://zhuanlan.zhihu.com/p/66758263
 
+## Matplotlib
+
+安装：  `pip install matplotlib -i https://pypi.tuna.tsinghua.edu.cn/simple/ `
+
+```python	
+#头文件导入
+import matplotlib.pyplot as plt
+#画图
+# 如果只传入一个数组作为参数， matplotlib 认为是 Y 轴的坐标
+# 并自动产生 从 0 开始的 对应 X 轴坐标： 0、1、2、3 ...
+plt.plot([2, 4, 6, 8])
+plt.plot([0,1,2,3],[2,4,6,8])
+plt.show()
+#matplotlib的缺省字体不支持中文，我们可以指定一个支持中文的字体
+import matplotlib.pyplot as plt
+
+plt.rcParams['font.family'] = 'sans-serif'
+# 设定字体为微软雅黑
+plt.rcParams['font.sans-serif']=['Microsoft Yahei']
+
+plt.plot([1, 2, 3, 4])
+plt.xlabel('times 次数')
+plt.show()
+
+#原文链接：https://blog.csdn.net/hopyGreat/article/details/81389144
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib
+ 
+plt.rcParams['font.sans-serif'] = ['SimHei']    # 用来正常显示中文字符
+plt.rcParams['axes.unicode_minus'] = False      # 用来正常显示正负号
+ 
+# 这行可以显示matplotlib的配置文件的位置
+print(matplotlib.matplotlib_fname())
+ 
+x = np.linspace(1,4,100)
+y = x**x
+plt.plot(x,y, '+',label='y=x**x函数图像',color='black')
+ 
+plt.xlabel('这是x坐标')
+plt.ylabel('这是y坐标')
+plt.title('这是y=x**x的函数图像')
+plt.legend()
+plt.show()
+#
+```
+
+### 样式设置
+
+```python
+#'r.'表示红色点图，-线图。参考：  https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html 
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3, 4], [1, 4, 9, 16], 'r.')
+plt.show()
+#指定宽度：linewidth
+import matplotlib.pyplot as plt
+plt.plot(range(10), range(10), linewidth=0.5)
+plt.show()
+#指定点的大小：markersize
+plt.plot(range(10), range(10), 'r.', markersize=2.5)
+
+#numpy数组
+#matplotlib 内部都是把作图数据转化为 numpy 的 ndarray 数组类型进行处理的。
+#所以可以直接使用numpy数组作为画图数据
+import matplotlib.pyplot as plt
+import numpy as np
+# arange 就像 Python中的range
+# 从 0 到 5 步长为 0.2
+t = np.arange(0, 5, 0.2)
+# 使用 numpy 的ndarray 作为数据
+plt.plot(t, t**2, 'b.')
+plt.show()
+
+#柱状图：bar
+import matplotlib.pyplot as plt
+names = ['2016', '2017', '2018']
+values = [1, 10, 100]
+plt.bar(names, values)
+plt.show()
+
+#饼状图：pie
+import matplotlib.pyplot as plt
+
+# 指定饼图的每个切片名称
+labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
+
+# 指定每个切片的数值，从而决定了百分比
+sizes = [15, 30, 45, 10]
+explode = (0, 0.1, 0, 0)  # only "explode" the 2nd slice (i.e. 'Hogs')
+
+fig1, ax1 = plt.subplots()
+ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+        shadow=True, startangle=90)
+ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+plt.show()
+
+#多个子图：subplot
+import matplotlib.pyplot as plt
+import numpy as np
+
+# arange 就像 Python中的range
+# 从 0 到 5 步长为 0.2
+t = np.arange(0, 5, 0.2)
+
+# 指定2行，1列，共两个axe，当前使用第1个绘图块
+plt.subplot(2,1,1)   
+plt.plot(t, t**2, 'b.')
+
+# 当前使用第2个绘图块
+plt.subplot(2,1,2)   
+plt.plot(t, t**2, 'r-')
+plt.show()
+
+#使用多个Figure
+import matplotlib.pyplot as plt
+plt.figure(1)                # the first figure
+plt.subplot(211)             # the first subplot in the first figure
+plt.plot([1, 2, 3])
+plt.subplot(212)             # the second subplot in the first figure
+plt.plot([4, 5, 6])
+
+
+plt.figure(2)                # a second figure
+plt.plot([4, 5, 6])          # creates a subplot(111) by default
+
+plt.figure(1)                # figure 1 current; subplot(212) still current
+plt.subplot(211)             # make subplot(211) in figure1 current
+plt.title('Easy as 1, 2, 3') # subplot 211 title
+
+plt.show()
+
+#在图形中插入文字
+import matplotlib.pyplot as plt
+import numpy as np
+
+mu, sigma = 100, 15
+x = mu + sigma * np.random.randn(10000)
+
+n, bins, patches = plt.hist(x, 50, density=1, facecolor='g', alpha=0.75)
+
+# x轴标题
+plt.xlabel('Smarts')
+# y轴标题
+plt.ylabel('Probability')
+# 子图标题
+plt.title('Histogram of IQ')
+# 指定坐标处添加文本
+plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
+plt.axis([40, 160, 0, 0.03])
+plt.grid(True)
+plt.show()
+
+#x轴刻度文字垂直
+import matplotlib.pyplot as plt
+# 设定字体为微软雅黑
+plt.rcParams['font.family'] = 'Microsoft Yahei'
+
+# x刻度垂直，否则字会重叠
+plt.xticks(rotation=-90)
+
+# 加长底部空间，否则文字显示不全
+plt.subplots_adjust(bottom=0.45)
+```
+
+
+
 ## PyQt5
+
 中文教程：https://www.cnblogs.com/linyfeng/p/11294173.html
 
 ### 基本格式：
@@ -19,12 +187,17 @@
 #前面是UI文件生成的py函数，导入即可
 #设置测试类初始化
 import sys
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QIcon
+
 class MyMainForm(QMainWindow, Ui_Form):
     def __init__(self, parent=None):
         super(MyMainForm, self).__init__(parent)
         self.setWindowTitle("test")
         self.setupUi(self)
         self.okButton.clicked.connect(self.checkCheckBox)#定义信号连接的槽函数
+    def checkCheckBox(self):
+            #函数定义
 #设置主线程
 if __name__=="__main__":
 	app=QApplication(sys.argv)
@@ -32,6 +205,66 @@ if __name__=="__main__":
 	myWin.show()
 	sys.exit(app.exec_())
 ```
+### 程序图标
+
+```python
+#添加主窗口图标
+from PySide2.QtGui import QIcon
+
+app=QApplication([])
+#加载icon
+app.setWindowIcon(QIcon('logo.png'))
+#制作应用程序图标
+pyinstaller -F 目标文件 --icon="logo.ico"#一定要是ico文件
+```
+
+
+
+### 样式更改
+
+```python
+#文本框提示文字：
+QTextEdit——placeholderText
+#更改按钮的样式：MainWindow对象styleSheet属性添加样式表
+QPushButton { 
+    color: red ;
+    font-size:15px;
+    width:50px;#宽度
+    height:20px;#高度
+}
+```
+
+**选择器的常见用法**：https://doc.qt.io/qt-5/stylesheet-syntax.html
+
+| Selector            | 示例                      | 说明                                              |
+| ------------------- | ------------------------- | ------------------------------------------------- |
+| Universal Selector  | *                         | 星号匹配所有界面元素                              |
+| Type Selector       | QPushButton               | 选择所有QPushButton类型(包括其子类)               |
+| Class Selector      | .QPushButton              | 选择所有QPushButton类型，但是不包括子类           |
+| ID Selector         | QPushButton#okButton      | 选择所有对象名为okButton的QPushButton类型         |
+| Property Selector   | QPushButton[flat=“false”] | 选择所有 flat 属性值为 false 的 QPushButton类型。 |
+| Descendant Selector | QDialog QPushButton       | 选择所有 QDialog  `内部`  QPushButton类型         |
+| Child Selector      | QDialog > QPushButton     | 择所有 QDialog  `直接子节点`  QPushButton类型     |
+
+```python
+#设置tabWidget下所有控件
+#tabWidget *{
+	color:red;
+}
+#鼠标悬浮在控件上时显示的样式
+QPushButton:hover{color:red}
+#指定控件disable状态下显示的样式    
+QpushButton:disabled{color:red}
+#指定控件鼠标悬浮加上处于勾选状态下的显示样式
+QCheckBox:hover:checked { color: white }
+#优先级选择：
+#如果一个元素的显示样式被多层指定了， 越靠近元素本身 的选择指定，优先级越高
+#指定边框
+*{border:1px solid red;}
+#1px是边框宽度，solid是实线，dashed为虚线，dotted为点，none为无边框
+```
+
+
 
 ### 运行展示一个小窗口
 
@@ -241,11 +474,34 @@ class MyMainForm(QMainWindow, Ui_Form):
             self.filePathlineEdit.setText(str(' '.join(get_filenames_path)))
 ```
 
+### 文件不存在退出以及文件保存
 
+```python
+#文件不存在问题
+import os
+if os.path.isfile("data.xlsx")==False:
+            msg_box=QMessageBox.warning(self,'警告','文件不存在')
+            app = QApplication(sys.argv)
+            time.sleep(1)
+            app.exit(msg_box.exec_())
+            
+#文件保存问题
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+ Now=QDateTime.currentDateTime().toString("yyyyMMdd_HHmmss")
+ workbook.save(f'output_{Now}.xlsx')
+ 
+#excel中插入图片
+from openpyxl.drawing.image import Image
+workbook = openpyxl.load_workbook('data.xlsx')
+sheet=workbook['Sheet1']
+img=Image('pic.jpg')
+sheet.add_image(img,'F1')
+```
 
+### 使用布局后如何改变空间大小
 
-
-
+`QWidget——sizePolicy`
 
 ## 信号与槽
 
@@ -276,10 +532,6 @@ class WinForm(QMainWindow):
 **左键释放触发信号：**`Released()`
 
 **控件标记状态发生改变时触发信号：**`Toggled()`
-
-### 基本控件使用
-
-`isChecked()`
 
 ## 信号与槽的入门应用
 
@@ -744,6 +996,51 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 ```
 
+### Asyncio并发库
+
+网址：http://c.biancheng.net/view/5557.html
+
+[实现多个客户端数据收发](###多客户端服务器)
+
+概念：一个主线程，进行多个不同任务(future对象)，这些不同的任务被事件循环(Event Loop)的对象控制。
+
+> 事件循环：主线程每次将执行序列中的任务清空后，就去事件队列中检查是否有等待执行的任务，如果有则每次取出一个推到执行序列中执行，这个过程时循环往复的。
+>
+> Asyncio的任务在运行时不会被外部的一些因素打断，因此Asyncio内的操作不会出现竞争资源(多个线程同时使用同一资源)的情况，也就不需要担心线程安全的问题。
+
+```python
+    import asyncio
+    import aiohttp
+    import time
+    async def download_one(url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                print('Read {} from {}'.format(resp.content_length, url))
+    async def download_all(sites):
+        tasks = [asyncio.ensure_future(download_one(site)) for site in sites]
+        await asyncio.gather(*tasks)
+    def main():
+        sites = [
+            'http://c.biancheng.net',
+            'http://c.biancheng.net/c',
+            'http://c.biancheng.net/python'
+        ]
+        start_time = time.perf_counter()
+       
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(download_all(sites))
+        finally:
+            loop.close()
+        end_time = time.perf_counter()
+        print('Download {} sites in {} seconds'.format(len(sites), end_time - start_time))
+       
+    if __name__ == '__main__':
+        main()
+```
+
+
+
 ## socket编程
 
 tcp进行通讯的双方，分为服务端和客户端。
@@ -871,4 +1168,99 @@ TCP协议传输的是字节流，需要明确定义<strong style="color:red">消
 * 在消息开头的某个位置，直接指定消息的长度
 
 > UDP协议通常不需要指定消息边界，因为UDP是数据包协议，应用程序从socket接收到的必定是发送方发送的完整消息
+
+### 多客户端服务器
+
+缺省下创建的`socke`t和`recv`都是阻塞的。所以一个线程里面，没法不断调用监听socket的`accept`方法,同时还能负责多个数据传输socket消息的收发
+
+```python
+#  === TCP 服务端程序 server.py ， 支持多客户端 ===IO bound程序
+#缺点：主要时间都是花费在IO上面，时间都用来等待连接请求了
+# 导入socket 库
+from socket import *
+from threading import Thread
+
+IP = ''
+PORT = 50000
+BUFLEN = 512
+
+# 这是新线程执行的函数，每个线程负责和一个客户端进行通信
+def clientHandler(dataSocket,addr):
+    while True:
+        recved = dataSocket.recv(BUFLEN)
+        # 当对方关闭连接的时候，返回空字符串
+        if not recved:
+            print(f'客户端{addr} 关闭了连接' )
+            break
+
+        # 读取的字节数据是bytes类型，需要解码为字符串
+        info = recved.decode()
+        print(f'收到{addr}信息： {info}')
+
+        dataSocket.send(f'服务端接收到了信息 {info}'.encode())
+
+    dataSocket.close()
+
+# 实例化一个socket对象 用来监听客户端连接请求
+listenSocket = socket(AF_INET, SOCK_STREAM)
+
+# socket绑定地址和端口
+listenSocket.bind((IP, PORT))
+
+listenSocket.listen(8)
+print(f'服务端启动成功，在{PORT}端口等待客户端连接...')
+
+while True:
+   # 在循环中，一直接受新的连接请求
+   dataSocket, addr = listenSocket.accept()     # Establish connection with client.
+   addr = str(addr)
+   print(f'一个客户端 {addr} 连接成功' )
+
+   # 创建新线程处理和这个客户端的消息收发
+   th = Thread(target=clientHandler,args=(dataSocket,addr))
+   th.start()
+
+listenSocket.close()
+
+#异步IO：存在一个线程很好的分配时间，在有连接请求到来时，执行处理连接请求代码，有消息到达socket缓冲时，执行读取处理消息的代码
+#python3的asyncio库同时处理多个客户端数据的收发
+#  === TCP 服务端程序 server.py 异步支持多客户端 ===
+import asyncio, socket
+IP = ''
+PORT = 50000
+BUFLEN = 512
+
+# 定义处理数据收发的回调
+async def handle_echo(reader, writer):
+    addr = writer.get_extra_info('peername')
+    while True:
+        data = await reader.read(100)
+        if not data:
+            print(f'客户端{addr}关闭了连接')
+            writer.close()
+            break
+
+        message = data.decode()
+        print(f'收到{addr}信息： {message}')
+
+        writer.write(data)
+
+loop = asyncio.get_event_loop()
+coro = asyncio.start_server(handle_echo, IP, PORT, loop=loop)
+server = loop.run_until_complete(coro)
+
+# Serve requests until Ctrl+C is pressed
+print('服务端启动成功，在{}端口等待客户端连接...'.format(server.sockets[0].getsockname()[1]))
+try:
+    loop.run_forever()
+except KeyboardInterrupt:
+    pass
+
+# Close the server
+server.close()
+loop.run_until_complete(server.wait_closed())
+loop.close()
+```
+
+
 
