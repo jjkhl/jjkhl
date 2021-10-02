@@ -1,5 +1,11 @@
 <h1 align="center">Python学习</h1>
 
+网址推荐：https://docs.python.org/zh-cn/3/tutorial/classes.html
+
+​				  http://www.byhy.net/tut/py/basic/01/
+
+​				  https://www.runoob.com/python3/python3-tutorial.html
+
 ## 字符串
 
 ```python
@@ -182,19 +188,47 @@ from pizza import *
 
 ## 类
 
-```python	
-class Dog:
-    def __init__(self,name,age):#使用dog类都会自动运行
-        self.name=name
-        self.age=age
-    def sit(self):
-        print(f"{self.name} is now sitting")
-#self：每个与实例相关的方法调用都会传递，必须位于其它形参前面
+类的说明：https://docs.python.org/zh-cn/3/tutorial/classes.html
 
-#继承
-class Cat(Dog):
-	def __init__(self,name,age):
-		super().__init__(name,age)
+实例属性用于区分不同的实例，类属性是每个实例共有属性。
+
+> 实例属性每个实例都各自拥有，互相独立；而类属性有且只有一份，是共有属性。
+>
+> 实例属性的访问优先级比类属性高。
+>
+> 千万不要在实例上修改类属性，它实际上并没有修改类属性，而是给实例绑定了一个实例属性。
+
+```python	
+class Circle(object):
+   pi = 3.14  # 类属性
+
+   def __init__(self, r):
+       self.r = r
+
+circle1 = Circle(1)
+circle2 = Circle(2)
+print('----未修改前-----')
+print('pi=\t', Circle.pi)
+print('circle1.pi=\t', circle1.pi)  #  3.14
+print('circle2.pi=\t', circle2.pi)  #  3.14
+
+print('----通过类名修改后-----')
+Circle.pi = 3.14159  # 通过类名修改类属性，所有实例的类属性被改变
+print('pi=\t', Circle.pi)   #  3.14159
+print('circle1.pi=\t', circle1.pi)   #  3.14159
+print('circle2.pi=\t', circle2.pi)   #  3.14159
+
+print('----通过circle1实例名修改后-----')
+circle1.pi=3.14111   # 实际上这里是给circle1创建了一个与类属性同名的实例属性
+print('pi=\t', Circle.pi)     #  3.14159
+print('circle1.pi=\t', circle1.pi)  # 实例属性的访问优先级比类属性高，所以是3.14111   
+print('circle2.pi=\t', circle2.pi)  #  3.14159
+
+print('----删除circle1实例属性pi-----')
+del circle1.pi
+print('pi=\t', Circle.pi)
+print('circle1.pi=\t', circle1.pi)
+print('circle2.pi=\t', circle2.pi)
 ```
 
 ## 文件和异常
@@ -234,31 +268,7 @@ json.load(文件)
 
 ```
 
-## lambda表达式
 
-```python
-g=lambda x:x*x+1
-#等价于
-def g(x):
-    return x*x+1
-
-funmax = lambda x, y: x if x > y else y  # 求两个数最大值
-#lambda匿名函数的使用
-list1 = [1, 18, 9, 7, 17, 12, 6]
-f = filter(lambda x: x % 2 == 0, list1)  # 筛选list1中能被2整除的数据，返回值可迭代对象
-print(list(f))  # 转换为list 打印出结果
-
-m = map(lambda x: x * 2 + 10, list1)  # 对list中的每个值进行操作，返回可迭代对象
-print(list(m))
-
-from functools import reduce
-
-r = reduce(lambda x, y: x + y, list1)  # 对list中元素进行累积,相当于((((((1+18)+9)+7)+17)+12)+6)
-print(r)
-
-r = reduce(lambda x, y: x + y, list1, 1)  # 对list中元素进行累积,初始值为1,相当于 1+((((((1+18)+9)+7)+17)+12)+6)
-print(r)
-```
 
 
 
