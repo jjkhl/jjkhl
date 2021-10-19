@@ -21,18 +21,7 @@
 #设置测试类初始化
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
-class MyMainForm(QMainWindow, Ui_Form):
-    def __init__(self, parent=None):
-        super(MyMainForm, self).__init__(parent)
-        self.setWindowTitle("test")
-        self.setupUi(self)
-        self.okButton.clicked.connect(self.checkCheckBox)#定义信号连接的槽函数
-#设置主线程
-if __name__=="__main__":
-	app=QApplication(sys.argv)
-	myWin=MyMainForm()#类的初始化定义
-	myWin.show()
-	sys.exit(app.exec_())
+c
 ```
 
 ### 运行展示一个小窗口
