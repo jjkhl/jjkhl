@@ -1,6 +1,9 @@
 ﻿; Typora
 ; 快捷增加字体颜色
 ; SendInput {Text} 解决中文输入法问题
+::pyt::python
+::ipy::ipython
+^`::^+`
 
 #IfWinActive ahk_exe Typora.exe
 {

@@ -52,16 +52,16 @@
   "fileheader.customMade": {    //此为头部注释
         "Description": "",
         "Version": "2.0",
-        "Autor": "lhl",
+        "Autor": "jjkhl",
         "Date": "Do not edit",
-        "LastEditors": "lhl",
+        "LastEditors": "jjkhl",
         "LastEditTime": "Do not edit"
     },
     "fileheader.cursorMode": {  //此为函数注释
         "description":"",
         "param": "",
         "return": "",
-        "author":"lhl"
+        "author":"jjkhl"
     },
     "fileheader.configObj": {
         "autoAdd": true, // 默认开启自动添加头部注释，当文件没有设置头部注释时保存会自动添加
