@@ -21,7 +21,20 @@
 #设置测试类初始化
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
-c
+class MyMainForm(QMainWindow,Ui_MainWindow):
+    def __init__(self,parent=None):
+        super(MyMainForm, self).__init__(parent)
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.hello)
+    def hello(self):
+        print("hello")
+        
+#设置主线程
+if __name__=="__main__":
+	app=QApplication(sys.argv)
+	myWin=MyMainForm()#类的初始化定义
+	myWin.show()
+	sys.exit(app.exec_())
 ```
 
 ### 运行展示一个小窗口
