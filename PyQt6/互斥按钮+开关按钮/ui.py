@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QMainWindow, QMenuBar, QPushButton,
-    QSizePolicy, QStatusBar, QWidget)
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QMainWindow, QMenuBar,
+    QPushButton, QSizePolicy, QStatusBar, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -26,9 +26,19 @@ class Ui_MainWindow(object):
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.pushButton = QPushButton(self.centralwidget)
+        self.buttonGroup = QButtonGroup(MainWindow)
+        self.buttonGroup.setObjectName(u"buttonGroup")
+        self.buttonGroup.addButton(self.pushButton)
         self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(330, 250, 75, 24))
+        self.pushButton.setGeometry(QRect(260, 200, 75, 24))
         self.pushButton.setCheckable(True)
+        self.pushButton.setAutoExclusive(True)
+        self.pushButton_2 = QPushButton(self.centralwidget)
+        self.buttonGroup.addButton(self.pushButton_2)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setGeometry(QRect(380, 200, 75, 24))
+        self.pushButton_2.setCheckable(True)
+        self.pushButton_2.setChecked(True)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -45,6 +55,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"\u6309\u94ae\u5f39\u8d77", None))
+        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"\u6309\u94ae2", None))
     # retranslateUi
 
