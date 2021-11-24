@@ -9,6 +9,9 @@
 后修改launch.json
 "program":"${workspaceFolder}/mytest.exe"
 注释"preLaunchTask"一行
+
+//或者直接修改tasks.json中
+"${file}",改为 "${workspaceFolder}\\*.cpp",
 ```
 * cmake编译多文件
 
