@@ -35,3 +35,61 @@ static unit32_t* calc_table1={
     calc_table
 };
 ```
+## define
+宏的展开、替换发生在预处理阶段，不涉及函数调用、参数传递、指针寻址，没有任何运行期的效率损失，所以对于调用一些频繁的小代码片段来说，用宏封装的效果比使用inline关键字要好。
+但是，宏定义没有作用域概念，永远是全局生效，所以对于一些用来简化代码、起临时作用的宏，最后用完需要用`#undef`取消定义。
+**示例：**
+```c++
+//方式一
+#define CUBE(a) (a)*(a)*(a)
+cout<<CUBE(10)<<endl;
+#undef CUBE
+//方式二
+#ifdef AUTH_PWD
+#undef AUTH_PWD
+#endif
+#define AUTH_PWD "xxx"
+```
+**文本替换示例**
+```c++
+#include<iostream>
+#define BEGIN(x) namespace x {//使用BEGIN(X)替换了namespace {
+#define END(x)  }//使用END(X)
+BEGIN(x)
+void hello(){
+    std::cout<<"hello x"<<std::endl;
+}
+END(x)
+using namespace std;
+int main(int argc,char *argv[])
+{
+    x::hello();
+    system("pause");
+    return 0;
+}
+```
+## 预定宏编译
+|变量名|含义|
+|:--:|:--:|
+|__cpluscplus|c++语言的版本号|
+|__FILE__|源文件名字|
+|__LINE__|源文件行号|
+|__DATE__|预处理时的日期|
+|__has_include|是否存在某个可包含文件|
+|__cpp_modules|是否支持模块机制|
+|__cpp_decltype|是否支持decltype特性|
+|__cpp_decltyoe_auto|是否支持decltype(auto)特性|
+|__cpp_lib_make_unique|是否提供函数make_unique()|
+## 编译阶段的属性介绍
+属性使用两对方括号的形式表示，即`[[...]]`
+|变量名|含义|
+|:--:|:--:|
+|noreturn|显示声明函数不返回任何值|
+|nodiscard|显示声明不允许忽略函数返回值|
+|deprecated|允许当不建议使用(会出现警告)|
+|maybe_unused|显示标记某段代码暂时不用，但保留|
+|gnu::const|标记函数时无副作用的常量函数，让编译器积极优化|
+|gnu::constructor|函数会在main()之前执行，效果类似于全局对象的构造函数|
+|gnu::destructor|函数会在main()之后执行，效果类似于全局对象的析构函数|
+|gnu::always_inline|要求编译器强制内联函数，效果比inline关键字强|
+|gnu::hot|标记"热点"函数，要求编译器更积极优化|
