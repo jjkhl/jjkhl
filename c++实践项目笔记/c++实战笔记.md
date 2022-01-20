@@ -1,5 +1,6 @@
 **实战笔记基于书籍《C++实战笔记_罗剑锋》**
-# 变量命名方式
+# c++开发综述
+## 变量命名方式
 * 变量、函数名和命名空间用snake_case方式，全局变量加“g_”前缀
 * 自定义类名用驼峰式(CamelCase)风格，成员函数用snake_case,成员变量加“m_”前缀
 * 宏和常量全部大写，单词之间使用下划线连接
@@ -56,7 +57,7 @@ cout<<CUBE(10)<<endl;
 #define BEGIN(x) namespace x {//使用BEGIN(X)替换了namespace {
 #define END(x)  }//使用END(X)
 BEGIN(x)
-void hello(){
+void hello(*-+){
     std::cout<<"hello x"<<std::endl;
 }
 END(x)
@@ -93,3 +94,122 @@ int main(int argc,char *argv[])
 |gnu::destructor|函数会在main()之后执行，效果类似于全局对象的析构函数|
 |gnu::always_inline|要求编译器强制内联函数，效果比inline关键字强|
 |gnu::hot|标记"热点"函数，要求编译器更积极优化|
+## 静态断言和动态断言
+### 动态断言
+含义：程序运行时检查断言
+头文件：<cassert>
+宏：`assert`
+示例：assert(p=227)
+效果：断言一个表达式必定为真，如果判断为假，则会输出错误消息，然后调用函数abort()终止程序的运行。
+### 静态断言
+含义：程序编译时检查断言
+宏：`static_assert`
+示例：
+```c++
+static_assert(sizeof(long)>=8,"must run on x64")
+```
+效果：编译阶段如果表达式的值是false就会报错，导致编译失败。
+检查范围：只能检查编译时的阐述和类型，无法检测运行时的变量、指针、内存数据等。
+
+### 模板元函数
+```c++
+//c++17模板元函数，类似于is_xxx<T>::value
+static_assert(is_integral_V<T>);//断言T是整数类型
+static_assert(is_pointer_V<T>);//断言T是指针类型
+static_assert(is_default_constructible_V<T>);//断言T是有默认构造函数
+```
+# C++核心语言特性
+## 编码准则
+### final标识符
+```c++
+class DemoClass final//静止任何人继承
+{...};
+
+class Interface
+{
+    virtual void f()=0;
+};
+
+class Abstract: public Interface{
+    virtual void f() final //虚函数，有final，禁止子类继承
+    {...}
+};
+
+class Implement final: public Abstract//实现类，final禁止其被继承
+{
+    ...
+};
+```
+
+### default/delete函数
+* 类的六大基本函数
+构造函数、析构函数、复制构造函数、复制赋值函数、转移构造函数、转移赋值函数
+* default
+对于比较重要德构造函数和析构函数，使用`=default`形式能明确地告诉编译器进行默认实现。
+```c++
+class DemoClass final
+{
+    public:
+        DemoClass()=default;//明确告诉编译器，使用默认实现
+        ~DemoClass()=default;//明确告诉编译器，使用默认实现
+}
+```
+* delete
+对于任何函数形式，明确禁止该形式的使用
+```c++
+class DemoClass final
+{
+    public:
+        DemoClass(const DemoClass&) = delete;//禁止复制构造函数
+        DemoClass & operator=(const DemoClass&) = delete;//禁止复制赋值函数
+};
+//编译时代码报错
+DemoClass obj1;
+DemoClass obj2=obj1;//错误，不可复制
+```
+### explicit函数
+explicit关键字只能用于类内部的构造函数声明上，而不能用在类外部的函数定义(函数实现)上，它的作用是不能进行隐式转换；explicit关键字作用于单个参数的构造函数，如果构造函数有多个参数，但是从第二个参数开始，如果各参数均有默认赋值，也可以应用explicit关键字
+```c++
+class DemoClass final
+{
+    public:
+        explicit DemoClass(const string_type& str);//显式单参数构造函数
+        explicit operator bool();//显式转型为bool
+};
+//错误方式
+DemoClass obj = "stint ctor";
+bool b=obj;
+//正确方式
+DemoClass obj = (DemoClass) "sting ctor";
+bool b = static_cast<bool>(obj);
+```
+## [委托构造函数](https://cloud.tencent.com/developer/article/1187765#:~:text=%E5%A7%94%E6%89%98%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%EF%BC%88Delegating,Constructor%EF%BC%89%E7%94%B1C%2B%2B11%E5%BC%95%E5%85%A5%EF%BC%8C%E6%98%AF%E5%AF%B9C%2B%2B%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E7%9A%84%E6%94%B9%E8%BF%9B%EF%BC%8C%E5%85%81%E8%AE%B8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E9%80%9A%E8%BF%87%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8%E8%B0%83%E7%94%A8%E5%90%8C%E4%B8%80%E4%B8%AA%E7%B1%BB%E7%9A%84%E5%85%B6%E4%BB%96%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%EF%BC%8C%E7%9B%AE%E7%9A%84%E6%98%AF%E7%AE%80%E5%8C%96%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E7%9A%84%E4%B9%A6%E5%86%99%EF%BC%8C%E6%8F%90%E9%AB%98%E4%BB%A3%E7%A0%81%E7%9A%84%E5%8F%AF%E7%BB%B4%E6%8A%A4%E6%80%A7%EF%BC%8C%E9%81%BF%E5%85%8D%E4%BB%A3%E7%A0%81%E5%86%97%E4%BD%99%E8%86%A8%E8%83%80%E3%80%82)
+委托构造函数（Delegating Constructor）由C++11引入，是对C++构造函数的改进，允许构造函数通过初始化列表调用同一个类的其他构造函数，目的是简化构造函数的书写，提高代码的可维护性，避免代码冗余膨胀。
+```c++
+//不使用之前
+class Foo
+{
+public:
+    Foo() :type(4), name('x') {initRest();}
+    Foo(int i) : type(i), name('x') {initRest();}
+    Foo(char c) :type(4), name(c) {initRest();}
+
+private:
+    void initRest() {/* init othre members */}
+    int type;
+    char name;
+    //...
+};
+//使用委托构造函数织构
+class Foo
+{
+public:
+    Foo() {initRest(); }
+    Foo(int i) : Foo() {type = i;}
+    Foo(char e) : Foo() {name = e;}
+private:
+    void initRest() { /* init othre members */}
+    int type{1};
+    char name{'a'};
+};
+```
