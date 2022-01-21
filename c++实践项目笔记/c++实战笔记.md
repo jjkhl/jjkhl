@@ -277,3 +277,28 @@ decltype(auto) x1=(x);//推导为int&
 decltype(auto) x2=&x;//推导为int*
 decltype(auto) x3=x1；//推导为int&，x3和x1推导一致
 ```
+## 常量与变量
+### const和volatile
+* c++17新增`std::as_const()`，类似于`const_cast`，无条件把变量转换为常量引用
+* `const &`可以引用任何类型，是用作函数入口参数的最佳类型。
+* const还可以修饰成员函数，表示该函数只读。const成员函数不能修改对象的状态，const对象只能调用const成员函数。
+* volatile表示变量可能以“难以察觉”的方式被修改，禁止编译器优化，会影响性能，尽量少用。
+### volatile和mutable
+volatile可以修饰任何变量
+mutable只能修饰类定义里面的成员变量，表示变量即使在const对象里也是可以修改的
+```c++
+class DemoClass final
+{
+private:
+    using mutex_type int;
+    mutable mutex_type m_mutex;//标记为mutable成员变量
+public:
+    void save_data const
+    {
+        m_mutex++;//只可以修改标记为mutable的成员变量
+        m_value++;//修改其它变量会导致编译错误
+    }
+};
+```
+### constexpr关键字
+const能定义运行时的常量，constexpr能实现编译期的常量。
