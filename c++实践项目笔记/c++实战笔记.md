@@ -1,5 +1,5 @@
-**实战笔记基于书籍《C++实战笔记_罗剑锋》**
-# c++开发综述
+<h5 align="center">实战笔记基于书籍《C++实战笔记_罗剑锋》</h5>
+# 第一章c++开发综述
 ## 变量命名方式
 * 变量、函数名和命名空间用snake_case方式，全局变量加“g_”前缀
 * 自定义类名用驼峰式(CamelCase)风格，成员函数用snake_case,成员变量加“m_”前缀
@@ -73,9 +73,9 @@ int main(int argc,char *argv[])
 |变量名|含义|
 |:--:|:--:|
 |__cpluscplus|c++语言的版本号|
-|__FILE__|源文件名字|
-|__LINE__|源文件行号|
-|__DATE__|预处理时的日期|
+|`__FILE__`|源文件名字|
+|`__LINE__`|源文件行号|
+|`__DATE__`|预处理时的日期|
 |__has_include|是否存在某个可包含文件|
 |__cpp_modules|是否支持模块机制|
 |__cpp_decltype|是否支持decltype特性|
@@ -212,4 +212,68 @@ private:
     int type{1};
     char name{'a'};
 };
+```
+## 成员变量初始化
+在类里声明变量的同时给它赋值，实现初始化。
+## 静态成员变量初始化
+const的静态成员变量，可以在声明的时候初始化。
+非const的静态成员变量，必须在实现文件"*.cpp"里初始化，因为需要分配唯一的存储空间。
+内联变量可以保证无论头文件被包含多少次，静态成员变量也只有唯一一个全局实例。
+**示例：**
+```c++
+class DemoInit final
+{
+    public:
+        static const int x = 0;//静态常量可以直接初始化
+        static string prefix = "xx";//无法通过编译
+};
+string DemoInit::prefix= "xx";//需要在类外实现初始化
+
+//c++17解决类成员变量初始化形式的不一致问题
+//内联变量
+class DemoInit final
+{
+public:
+    inline static string prefix = "xx";//c++17中编译正常
+};
+```
+## 类型别名
+```c++
+using unit_t = unsigned int;
+typedef unsigned int unint_t;
+```
+## 自动类型推导(auto、decltype)
+### auto
+* auto默认推导值类型
+* auto只适用于初始化的场合
+```c++
+auto str = "hello";//自动推到为const char [6]类型
+auto str = "hello"s;//c++14以后能推导出string类型
+auto x= 10L;//auto推导出long，x是long
+auto& x1=x;//auto推导出long，x1是long&
+auto* x2=&x;//auto推导出long,x2是long*
+const auto& x3=x;//auto推导出long，x3是const long&
+auto x4=&x3;//auto推导出const long*,x4是const long*
+auto&& x5=x;//总是推导出引用类型，auto推导出long,x5是long&
+
+auto get_a_set(){
+    std::set<int> a={1,2,3};
+    return a;
+}//c++14之后自动推导函数返回值
+```
+### decltype
+```c++
+int x=0;
+decltype(x) x1;//推导为int，x1是int
+decltype(x)& x2=x;//推导为int，x2是int&，引用必须赋值
+decltype(x)* x3;//推导为int，x3是int*
+decltype(&x) x4;//推导为int*，x4是int*
+decltype(&x)* x5;//推导为int*，x5是int**
+```
+### 综合使用
+```c++
+int x=0;
+decltype(auto) x1=(x);//推导为int&
+decltype(auto) x2=&x;//推导为int*
+decltype(auto) x3=x1；//推导为int&，x3和x1推导一致
 ```
