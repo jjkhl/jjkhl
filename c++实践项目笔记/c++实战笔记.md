@@ -44,7 +44,7 @@ static unit32_t* calc_table1={
 ```c++
 //方式一
 #define CUBE(a) (a)*(a)*(a)
-cout<<CUBE(10)<<endl;
+cout<<CUBE(10)<<end;
 #undef CUBE
 //方式二
 #ifdef AUTH_PWD
@@ -303,3 +303,80 @@ public:
 ```
 ### constexpr关键字
 const能定义运行时的常量，constexpr能实现编译期的常量。
+## [异常](https://www.runoob.com/cplusplus/cpp-exceptions-handling.html)
+### 为什么要有异常
+c++之前，处理异常的基本手段是错误码：函数执行后需检查返回值或全局的errno(可以返回错误码以及内容)，看是否正常，如果出错，就执行另外一段代码来处理错误。
+但是这种做法问题有：正常的业务逻辑代码与错误代码混在一起，思维要在两个本不相关的流程里来回跳转；可以被忽略。
+异常就是针对错误码的缺陷而设计的：
+* 异常的处理流程完全独立。throw抛出异常后就可以不用管，错误处理代码都集中在专门的catch块里。这样就彻底分离了业务逻辑和错误处理逻辑，看起来更清晰。
+* 异常绝对不能被忽略，必须处理。如果我们有意无意不写catch模块去捕获异常，那么它会一直向上查找，直到能够找到一个能够处理的catch块。如果实在没有，程序就会立即停止运行，明白地提示我们发生了错误。
+* 异常可以用在错误码无法使用地场合。比如有的函数没有返回值，或者返回值无法表示错误，而全局的errno不太优雅，与c++理念不符合，所以也必须使用异常来报告错误。
+
+### 异常的用法
+一般用法：try把可能发生异常的代码“包”起来，编写catch块去捕获异常并处理
+```mermaid
+graph LR
+  range_error-->runtime_error
+  overflow_error-->runtime_error
+  invalid_argument-->logic_error
+  length_error-->logic_error
+
+  bad_alloc-->exception
+  runtime_error-->exception
+  logic_error-->exception
+  cad_cast-->exception
+```
+类的继承深度不要超过3层，比如我们可以从runtime_error派生出自己的异常类
+```c++
+class my_exception:public std::runtime_error
+{
+public:
+    using this_type = my_exception;//给自己的异常类起个别名
+    using super_type = std::runtime_error;//给父类也起个别名
+    my_exception(const char* msg) : super_type(msg) {}
+    my_exception() = default;
+    ~my_exception() = default;
+private:
+    int code=0;
+}
+```
+在抛出异常的时候，最好不要直接用throw关键字，而是要将其封装为一个函数，这个不要直接用new/delete关键字的道理类似——通过引入一个中间层来获得更高的可读性、安全性和灵活性。
+```c++
+[[noreturn]]                      // 属性标签
+void raise(const char* msg)      // 函数封装throw，没有返回值
+{
+    throw my_exception(msg);     // 抛出异常，也可以有更多的逻辑
+}
+try
+{
+    raise("error occured");     // 函数封装throw，抛出异常
+}
+catch(const exception& e)      // const &捕获异常，可以用基类
+{
+    cout << e.what() << endl;  // what()是exception的虚函数
+}
+void func_noexcept() noexcept            // 声明绝不会抛出异常
+{
+    cout << "noexcept" << endl;
+}
+```
+### 使用异常的判别准则
+* 不允许被忽略的错误
+* 极少情况下才会发生的错误
+* 严重影响正常流程，很难恢复到正常状态的错误
+* 本地无法处理，需要“穿透”调用栈，传递到上层才能被处理的错误
+比如构造函数。如果内部初始化失败，无法创建构造函数，那么后面的逻辑也就进行不下去，所以这时可以用异常来处理。
+比如读写文件。通常文件系统很少出错，如果使用错误码来处理文件不存在、权限错误等就显得太啰嗦，这时也应该使用异常。
+相反的例子就是Socket通信。因为网络链路的不稳定因素太多，收发数据失败很多。虽然出错的后果很严重，但是出现频率很高，使用异常会大幅提高处理成本，为了性能考虑，还是检查错误码并重试比较好。
+### 保证不抛出异常
+`noexcept`：专门修饰函数，告诉编译器这个函数不会抛出异常，编译器能够对函数进行优化，不用付出栈展开的额外代码，降低异常处理的成本。
+但是noexcept修饰的函数也会抛出异常，真正意思是：“我对外承诺不抛出异常，我也不想处理异常。如果真的有异常发生，请让我“死”得干脆点，直接崩溃(crash/core dump)”
+实例：
+```c++
+void func_noexcept() noexcept //声明绝不会抛出异常
+{
+    cout<<"noexcept"<<endl;
+}
+```
+一般认为，重要的构造函数(普通构造函数、复制构造函数、转移构造函数)和析构函数应该尽量声明为`noexcept`以优化性能，而析构函数则必须保证绝不会抛出异常。
+
