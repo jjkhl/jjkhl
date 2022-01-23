@@ -418,3 +418,31 @@ auto f4 = [=] () mutable //mutable可以修改捕获变量的副本
     x+=10;
 };
 ```
+## 内联名字空间
+内联名字空间的效果和匿名名字空间差不多，里面的变量、函数等成员同样能够在外部直接使用，但也不排斥加名字空间限定，所以更灵活。
+```c++
+inline namespace tmp{
+    auto x=0L;
+    auto str="hello";
+}
+cout<<x<<endl;//可以直接使用内部成员，不需要名字空间限制
+cout<<tmp::str<<endl;//也可以加名字空间限定
+```
+### [枚举](https://www.runoob.com/w3cnote/cpp-enums-intro-and-strongly-typed.html)
+示例：
+```c++
+enum class Company
+{
+    Apple,Google,Facebook;
+};
+Company x=1;//错误，不能从整数直接转换
+auto v=Company::Apple;//必须加上类名限定，可以使用自动类型推导
+
+int i=v;//错误，不能直接转换为整数
+auto i=static_cast<int>(v);//可以显式强制转换
+```
+c++20允许使用`using`关键字来使用枚举类
+```c++
+using enum Company;//打开枚举类的作用域
+auto v=Apple;//不再需要类名限定
+```
