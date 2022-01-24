@@ -22,7 +22,7 @@ class FilePath final//类名，首字母大写
         int m_level;//成员变量添加前缀
 };
 ```
-# 预处理阶段
+# 第二章预处理阶段
 ## include
 作用是包含任意文件，可以编写一些代码片段，存进`*.inc`文件里，然后再预处理阶段有选择地加载。
 示例：
@@ -119,7 +119,7 @@ static_assert(is_integral_V<T>);//断言T是整数类型
 static_assert(is_pointer_V<T>);//断言T是指针类型
 static_assert(is_default_constructible_V<T>);//断言T是有默认构造函数
 ```
-# C++核心语言特性
+# 第三章C++核心语言特性
 ## 编码准则
 ### final标识符
 ```c++
@@ -445,4 +445,71 @@ c++20允许使用`using`关键字来使用枚举类
 ```c++
 using enum Company;//打开枚举类的作用域
 auto v=Apple;//不再需要类名限定
+```
+# 第四章c++标准库
+## 智能指针
+智能指针背后的核心概念是动态分配内存的所有权。智能指针被称为可以拥有或管理它所指向的对象。当需要让单个指针拥有动态分配的对象时，可以使用独占指针。对象的所有权可以从一个独占指针转移到另一个指针，其转移方式为：对象始终只能有一个指针作为其所有者。当独占指针离开其作用域或将要拥有不同的对象时，它会自动释放自己所管理的对象。
+### 专有指针(unique_ptr)
+专有指针是最简单、最容易使用的智能指针之一，在声明的时候必须用模板参数指定类型，例如：
+```c++
+unique_ptr<int> p1(new int(10));
+//也可以先定义一个未初始化的指针，然后再赋值
+unique_ptr<int> p2;
+p2=unqiue_ptr<int> (new int);
+*p2=10;
+//c++14后有工厂函数nake_unique在创建智能指针时强制初始化
+auto p3=make_unique<int>(42);
+//make_unique类似模板
+template<class T,class... Args>//可变参数模板
+std::unique_ptr<T>//返回的智能指针
+my_make_unique(Arg&&... args)//可变参数模板的入口参数
+{
+    return std::unique_ptr<T>(
+        new T(std::forward<Args>(args)...);//"完美转发"
+    )
+}
+```
+* unique_ptr所有权唯一，任何时候都只能有“一个人”拥有。必须使用`std::move()`显式声明所有权转移，此时原来的unique_ptr变成了空指针。
+* 如果定义类时将`unique_ptr`作为成员，那么类本身也是不可复制的。也就是说，unique_ptr会将它“唯一所有权”特性传递给它的持有者。
+<h5 align="center">unique_ptr成员函数</h5>
+
+|成员函数|描述|
+|:--:|:--|
+|move|转移所有权|
+|reset|销毁由该智能指针管理的任何可能存在的对象。该智能指针被置为空|
+|reset(T* ptr)|销毁由该智能指针当前管理的任何可能存在的对象。该智能指针继续控制由裸指针 ptr 指向的对象|
+|get()|返回该智能指针管理的由裸指针指向的对象。如果某个指针需要传递给函数，但是 该函数并不知道该如何操作智能指针，则 get() 函数非常有用|
+|release|放弃对它所指对象的控制权，并返回保存的指针，将指针置为空，不会释放内存|
+* release会返回直线的指针，但不会释放内存；reset会释放内存
+```c++
+// 将所有权从p1转移给p2
+unique_ptr<string> p1(new string("abc"));
+unique_ptr<string> p2(p1.release());   // p1.release()会将p1置空，并返回所指向的指针,此时*p2="abc";
+
+unique_ptr<string> p3(new string("dfseg"));
+// 将所有权从p3转移给p2
+p2.reset(p3.release());  
+// p3置空，并返回指针
+// p2释放原来指向的对象，并重新指向p3的指针,*p2="dfseg"
+//示例网址：https://blog.csdn.net/readyone/article/details/112297215
+```
+* 值传递需要使用move()，引用传递不需要
+```c++
+    //函数使用通过值传递的形参
+    void fun1(unique_ptr<int> uptrParam)
+    {
+        cout << *uptrParam << endl;
+    }
+    //函数使用通过引用传递的值
+    void fun2(unique_ptr<int>& up)
+    {
+        cout<<*up<<endl;
+    }
+    int main()
+    {
+        unique_ptr<int> uptr(new int);
+        *uptr = 10;
+        fun1(move (uptr)); // 在调用中使用 move
+        fun2(uptr);
+    }
 ```
