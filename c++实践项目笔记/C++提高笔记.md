@@ -12,7 +12,7 @@ int main()
     chrono::system_clock::time_point start=chrono::system_clock::now();
     //函数运行
     chrono::system_clock::time_point end=chrono::system_clock::now();
-    chrono::microseconds dt=duration_cast<microseconds>(end - start);
+    chrono::microseconds dt=chrono::duration_cast<chrono::microseconds>(end - start);
     //auto dt_nanosecs=end-start;
     cout << "总共耗时: " << dt.count() << "微妙" << endl;
 }
