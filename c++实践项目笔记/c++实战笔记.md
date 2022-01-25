@@ -449,15 +449,20 @@ auto v=Apple;//不再需要类名限定
 # 第四章c++标准库
 ## 智能指针
 智能指针背后的核心概念是动态分配内存的所有权。智能指针被称为可以拥有或管理它所指向的对象。当需要让单个指针拥有动态分配的对象时，可以使用独占指针。对象的所有权可以从一个独占指针转移到另一个指针，其转移方式为：对象始终只能有一个指针作为其所有者。当独占指针离开其作用域或将要拥有不同的对象时，它会自动释放自己所管理的对象。
+* [assert()函数](https://blog.csdn.net/cwdben/article/details/116053192)判断指针内容是否为空，空则无法通过。
 ### 专有指针(unique_ptr)
 专有指针是最简单、最容易使用的智能指针之一，在声明的时候必须用模板参数指定类型，例如：
 ```c++
+//初始化方式一
 unique_ptr<int> p1(new int(10));
-//也可以先定义一个未初始化的指针，然后再赋值
+//方式二也可以先定义一个未初始化的指针，然后再赋值
 unique_ptr<int> p2;
 p2=unqiue_ptr<int> (new int);
 *p2=10;
-//c++14后有工厂函数nake_unique在创建智能指针时强制初始化
+//方式三
+unique_ptr<int> p1(new int);
+*p1=10;
+//c++14后有工厂函数make_unique在创建智能指针时强制初始化
 auto p3=make_unique<int>(42);
 //make_unique类似模板
 template<class T,class... Args>//可变参数模板
@@ -512,4 +517,63 @@ p2.reset(p3.release());
         fun1(move (uptr)); // 在调用中使用 move
         fun2(uptr);
     }
+```
+## 共享指针(shared_ptr)
+头文件：`memory`
+与`unique_ptr`最大区别在于：它的所有权可以被安全共享，即支持复制赋值，允许被多个同时拥有。
+```c++
+auto p1=make_shared<int>(2);
+//use_count()函数判断指针所有权
+//p1.use_count()=1
+auto p2=p1;
+//p1.use_count()=2
+//p2.use_count()=2
+```
+* shared_ptr能支持安全共享在于其内部使用了引用计数，最开始引用计数为1，表示只有一个持有者，如果发生复制赋值，也就是共享的时候，引用计数就会增加，而发生析构时，引用计数就会减少。只有当引用计数为0时，shared_ptr才会真正调用delete来释放内存。
+* 同一指针不能同时为多个shared_ptr对象进行赋值
+* 在初始化 shared_ptr 智能指针时，还可以自定义所指堆内存的释放规则，这样当堆内存的引用计数为 0 时，会优先调用我们自定义的释放规则。
+* 参考网址(http://c.biancheng.net/view/7898.html)
+<h5 align="center">shared_ptr<T>模板类常用成员函数</h5>
+
+|成员函数|描述|
+|:--:|:--|
+|swap()|交换2个相同类型shared_ptr指针的内容|
+|reset()|当函数没有实参时，该函数会使当前 shared_ptr 所指堆内存的引用计数减 1，同时将当前对象重置为一个空指针；当为函数传递一个新申请的堆内存时，则调用该函数的 shared_ptr 对象会获得该存储空间的所有权，并且引用计数的初始值为 1|
+|get()|获得shared_ptr对象内部包含的普通指针|
+|use_count()|返回同当前shared_ptr对象(包含它)指向相同的所有shared_ptr对象的数量|
+|unique()|判断当前shared_ptr对象指向的堆内存，是否不再有其它shared_ptr对象指向它|
+
+## 弱引用指针(weak_ptr)
+头文件：`memory`
+* 一般与`shared_ptr`类型指针搭配使用，当`weak_ptr`类型指针指向和某`shared_ptr`指针相同时，`weak_ptr `指针并不会使所指堆内存的引用计数加 1；同样，当` weak_ptr`指针被释放时，之前所指堆内存的引用计数也不会因此而减 1。也就是说，`weak_ptr` 类型指针并不会影响所指堆内存空间的引用计数。
+* [成员函数](http://c.biancheng.net/view/7918.html)
+<h5 align="center">weak_ptr成员函数</h5>
+
+|成员函数|描述|
+|:--:|:--|
+|operator=()|重载`=`运算符，weak_ptr指针可以直接被weak_ptr或shared_ptr指针赋值|
+|swap(x)|其中x表示同类型的weak_ptr指针，该函数可以互换2个同类型weak_ptr指针的内容|
+|reset()|将当前weak_ptr指针置为空指针|
+|use_count()|查看指向和当前weak_ptr指针相同的shared_ptr指针的数量|
+|expired()|判断当前weak_ptr指针是否过期(指针为空，或指向的堆内存已经被释放)|
+|lock()| 	如果当前 weak_ptr 已经过期，则该函数会返回一个空的 shared_ptr 指针；反之，该函数返回一个和当前 weak_ptr 指向相同的 shared_ptr 指针。|
+* weak_ptr一个重要用途就是让类正确的自我创建shared_ptr；对象内部用weak_ptr来保管this指针，然后调用lock()获取shared_ptr
+```c++
+#include <iostream>
+#include <memory>
+using namespace std;
+int main()
+{
+    std::shared_ptr<int> sp1(new int(10));
+    std::shared_ptr<int> sp2(sp1);
+    std::weak_ptr<int> wp(sp2);
+    //输出和 wp 同指向的 shared_ptr 类型指针的数量
+    cout << wp.use_count() << endl;
+    //释放 sp2
+    sp2.reset();
+    cout << wp.use_count() << endl;
+    //借助 lock() 函数，返回一个和 wp 同指向的 shared_ptr 类型指针，获取其存储的数据
+    cout << *(wp.lock()) << endl;
+    return 0;
+}
 ```
