@@ -577,3 +577,52 @@ int main()
     return 0;
 }
 ```
+## 字符串
+c++中的字符串类型`string`，但它其实不是一个真正类型，而是模板类`basic_string`的特化形式，是一个类型别名：
+```c++
+using string = std::basic_string<char>;
+```
+### 原始字符串
+c++11为字面量增加了一个“原始字符串”的新表示形式，转义如`"\n"`表示回车，原始字符串形式可以关闭转义使用。示例：
+```c++
+auto str=R"(nier"automata)";//原始字符串：nier_automata
+//输出“引号+圆括号”形式
+auto str = R"==(R"(xxx)")==";//输出R"(xxx)"
+```
+### 字符串转换函数
+* stoi()/stol()/stoll()可以把字符串转换为整数
+* stof()/stod()可以把字符串转换为浮点数
+* to_string()可以把整数、浮点数转换为字符串
+### 字面值后缀
+c++14新增字面后缀“s”，明确表明它是字符串类型，示例：
+```c++
+auto str="hello"s;//自动推导为string类型
+```
+### 字符串视图
+c++17新增轻量级的使用C字符串、获取子串等的新的字符串类`string_view`，它是一个字符串的视图，成本很低，内部只保存一个指针和长度，无论是复制还是修改都非常廉价。
+在概念上，`string_view`可以理解为如下代码：
+```c++
+class string_view{
+private:
+    const char* m_ptr;//指向字符串的起始地址
+    std::size_t m_size;//字符串长度
+public:
+    ...//各种操作函数
+};
+```
+从这段代码可以看出`string_view`有4个特点：
+* 因为内部使用了常量指针，所以它是一个只读视图，只能查看字符串而无法修改，相当于"const string&"，用起来很安全。
+* 因为内部使用了字符指针，所以它可以直接从C字符串构造，没有“const string&”的临时对象创建操作，所以适用面广且成本低。
+* 因为使用的是指针，所以必须要当心引用的内容可能失效，和`weak_ptr`一样属于弱引用
+* 因为它是一个只读视图，所以不能保证字符串末尾一定是NULL，无法提供成员函数c_str()。也就是说，不可以将string_view转换为以NULL结尾的字符指针，不能用于C函数传参。
+示例：
+```c++
+using namespace std::literals;
+auto sv1="viewit"sv;
+//调整内部的指针和长度
+string_view sv{"god of war"s};
+string str1=sv.substr(4,2);//str1=of
+sv.remove_prefix(3);//删除前三个字符，sv= of war
+
+sv.remove_suffix(4);//删除后四个字符，sv=god of
+```
