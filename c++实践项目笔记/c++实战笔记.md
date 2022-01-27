@@ -651,3 +651,92 @@ format("{:04},{:+04}",100L,88);//指定填充和宽度，默认十进制,输出：0100, +088
 format("{0:x},{0:#X}",200L);//格式化为十六进制，64,0X64
 format("{:04o},{:04b}",7,5);//格式化为八进制/二进制，宽度为4，输出：0007,0101
 ```
+## [正则表达式](https://docs.microsoft.com/zh-cn/cpp/standard-library/regular-expressions-cpp?view=msvc-170)
+头文件：<regex>
+正则表达式是一种特殊的模式描述语言，专门为处理文本而设计，它定义了一套严谨的语法规则，可以实现复杂的匹配、查找和替换工作。
+|符号|描述|
+|:--:|:---|
+|.|匹配任意单个字符|
+|$|匹配行的末尾|
+|^|匹配行的开头|
+|()|定义子表达式，可以被引用或重复|
+|*|表达元素可以重复任意多次|
+|+|表示元素可以重复一次或多次|
+|?|表示元素可以重复0次或1次|
+|`|`|匹配它两次的元素之一|
+|[]|定义字符集合，列出单个字符、定义范围，或者是集合的补集|
+|`\`|转义符，特殊字符经转义后与自身匹配|
+|\d|匹配数字[0-9]|
+|\D|\d取反|
+|\w|匹配字母[a-z]、数字、下划线|
+|\W|\w取反|
+|\s|匹配空格|
+|{n}|前面元素重复n次|
+|{n,}|前面的元素重复至少n次|
+|{n,m}|前面元素重复至少n次，至多m次|
+### 正则表达式对象
+c++正则表达式主要用到两个类：
+* regex：表示一个正则表达式，是basic_regex的特化形式
+* smatch：表示正则表达式的匹配结果，是match_results的特化形式
+
+在创建正则表达式对象的时候，我们还可以传递一些特殊的标志，用于控制正则的处理过程。这些标志都位于命名空间std::regex_constants中，常用示例：
+* icase：匹配时忽略大小写
+* optimize：尽量优化正则表达式，但会增加正则表达式对象的构造时间
+* ECMAScript：使用ECMAScript兼容语法，也是默认语法
+* awk/grep/egrep：使用awk/grep/egrep等语法
+
+示例：
+```c++
+using namespace std::regex_constants;
+regex reg1{"xyz",icase|optimize};//忽略大小写且尽量优化
+```
+### [正则表达式算法](https://blog.csdn.net/qq_44519484/article/details/107965931)
+c++正则表达式算法有3种，分别实现匹配、查找和替换，但是都是**只读属性**：
+* regex_match：完全匹配一个字符串
+* regex_search：在字符串里查找一个正则匹配
+* regex_replace：先正则查找再替换
+### 正则匹配
+匹配是判断给定的字符串是否复合某个正则表达式
+示例：
+```c++
+auto reg=make_regex(R"(^(\w+\:(\w)$)");
+assert(regex_match("a:b",reg));//正则匹配成功
+assert(regex_match("a,b",reg));//正则匹配失败
+//regex_match还有一个包含3个参数的重载形式，如果匹配成功，结果就会存储再第二个参数种，然后想数组一样去访问子表达式
+auto str="neir:automata"s;
+smatch result;
+regex_match(str,result,reg);//正则匹配成功
+//result[0]=neir:automata
+//result[1]=neir
+//result[2]==automata
+//不支持regex_match("xxx",result,reg)格式
+```
+### 正则查找
+regex_search不要求全文匹配，只要找到一个符合模式的子串，示例：
+```c++
+auto str="god of wars"s;
+regex reg("(\w+)\s(\w)");
+smatch res;
+bool found=regex_search(str,res,reg);
+//查找有"unix"前缀和".com"后缀
+auto reg1(R"(^unix)");
+auto reg2(R"(com$)");
+```
+### 正则替换
+regex_replace不需要匹配结果，而是会返回一个字符串，示例：
+```c++
+string s = "ab123cdef"; 
+regex ex("\\d");//将一个数字变为x
+regex ex("\\d+");//将所有数字变为x
+string r = regex_replace(s, ex, "x"); 
+//可以使用regex_replace("123ss", ex, "x")的格式
+//连续替代
+string str="god of wars"s;
+regex reg1("\\w+$");
+regex reg2("^\\w+");
+cout<<regex_replace(regex_replace(str,reg1,"peace"),reg2,"godness")<<endl;
+//regex_replace第三个参数遵循PCRE正则表达式准则，可以使用"$N"来引用匹配的子表达式，用"$&"来引用整个匹配结果
+regex reg("(\\w+)\\s(\\w+)");
+//regex reg(R"((\w+)\s(\w+))");
+cout<<regex_replace("hello mike",reg,"$2-says-$1($&)")<<endl;//输出：mike-says-hello(hello mike)
+```
