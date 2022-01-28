@@ -740,3 +740,110 @@ regex reg("(\\w+)\\s(\\w+)");
 //regex reg(R"((\w+)\s(\w+))");
 cout<<regex_replace("hello mike",reg,"$2-says-$1($&)")<<endl;//输出：mike-says-hello(hello mike)
 ```
+## 标准容器
+* 所有容器中优先选择array/vector，它们速度最快，成本最低
+* list/forward_list是链表结构，插入和删除的效率高，当查找效率低
+* 有序容器是红黑树结构，自动对key自动排序，查找效率高，但有插入成本。
+* 无序容器是散列表结构，由散列值计算存储位置，查找和插入的成本都很低。
+* 有序容器和无序容器都属于关联容器，元素有key的概念，操作元素实际上是在操作key，所以要定义对key的相等比较函数或散列函数。
+c++容器依据元素的访问方式分为：顺序容器，有序容器，无序容器。所有容器都具有的一个基本特性：容器保存元素采用的是**值语义**，也就是说，里面存储的是元素的副本，而不是引用。
+一个解决方式是尽量为元素实现转移构造函数和转移赋值函数，在加入容器的时候使用[std::move()](https://blog.csdn.net/p942005405/article/details/84644069)来转移元素，降低元素复制的成本。
+```c++
+#include <iostream>
+#include <utility>
+#include <vector>
+#include <string>
+int main()
+{
+  std::string str = "Hello";
+  std::vector<std::string> v;
+  //调用常规的拷贝构造函数，新建字符数组，拷贝数据
+  v.push_back(str);
+  std::cout << "After copy, str is \"" << str << "\"\n";
+  //调用移动构造函数，掏空str，掏空后，最好不要使用str
+  v.push_back(std::move(str));
+  std::cout << "After move, str is \"" << str << "\"\n";
+}
+//输出：After copy, str is "Hello". After move, str is "".
+```
+c++11之后容器新增的`emplace_back()`操作函数，它可以就地构造元素，省去了构造后再复制、转移的成本，不但高效，而且用起来方便。
+### 顺序容器
+顺序容器就是数据结构里的线性表，有5种：连续存储的数组(arrary/vector/deque)，指针结构的数组(list/forward_list)
+* array/vector直接对应C的内置数组，内存布局和C完全兼容，所以是成本最低、速度最快的容器，它们的区别在于容量是否能动态增长：array是静态数组，大小在初始化的时候就固定；vector是动态数组，后续可以按需增长。
+* deque也是动态增长的数组，与vector的区别在于它是可以在两端高效插入和删除元素，vector只能在末端用push_bakc追加元素。
+* vector/deque里的元素因为是连续存储的，所以在中间插入和删除效率很低；而list/forward_list因为是链表，插入和删除的操作只需要调整指针，所以在任意位置的操作很高效。
+* 链表结构的缺点是查找效率低，只能沿着指针顺序访问，这方面不如vector随机访问的效率高。list是双向链表，可以向前或向后遍历，而forward_list是单向链表，只能向前遍历，查找效率很低。
+### 有序容器
+有序容器的元素在插入容器后就被按照某种规则自动重新调整次序，c++的有序容器使用的是树结构，通常是红黑树——有着最好查找性能的二叉树。
+标准库一共有4种有序容器：set/multiset和map/multimap。set是集合，map是关联数组，有multi前缀的容器表示可以容纳重复的key(默认为从小到大)，而内部结构与无前缀的相同。
+### 无序容器
+无序容器同样是集合和关联数组，用法与有序容器一样，区别仅在内部的数据结构：他不是红黑树，而是散列表，也叫哈希表(hash table)
+无序容器有4种：unordered_set/unordered_multiset/unordered_map/unordered_multimap。
+
+## 特殊容器
+特殊容器不完全符合容器的定义，但在用法、用途上又很想容器(例如提供了emplace()函数)。
+有4种特殊容器：optional/variant/any/tuple
+* optional主要用来表示值有效或无效，用法很想智能指针
+* variant是一种一种异质容器，可以在运行时改变类型，实现泛型多态
+* any与variant类似，但可以容纳任意类型，在运行时检查类型会更灵活
+* tuple可以打包多种不同类型的数据，也可以算是一种异质容器
+* optional/variant/any在任何时刻只能持有一个元素，而tuple则可以持有多个元素
+### 可选值(optional)
+optional可以近似看作只能容纳一个元素的特殊容器，通过判断容器是否为空来检查有效或无效，因此可以调用成员函数has_value()，示例如下：
+```c++
+optional<int> op;
+auto op1=make_optional<int>();//默认值是0
+assert(!op.has_value());//默认是无效值
+if(op.has_value())
+    cout<<op.value()<<endl;//获得值得引用，op.value等价于*op;
+else
+    cout<<op.value_or(99)<<endl;//无效则会返回给定得替代值
+```
+### 可变值(variant)
+c++17引入得模板类variant，可以认为是一个智能union，可以聚合任何类型，同时用起来又和union几乎一样。
+示例：
+```c++
+variant<int float,double> v;
+v=42;//v.index()=0
+v=3.14f;//v.index()=1
+v=2.718;//v.index()=2
+//获取值
+get<1>(v)//获得索引值为1的值
+get<double>(v)//获得double类型的值
+//当get()访问到了不存在的值就会以抛出异常的方式来告诉用户出错
+
+//get_if()以指针的方式返回variant内部的值，如果内部的值不存在，就会返回空指针
+auto p=get_if<float>(&v);
+
+//visit()不需要考虑类型的索引，它以一个集中业务罗技的访问器函数来专门处理variant对象
+variant<int,string> v;
+auto vistor=[](auto& x){
+    x+=x;
+    cout<<x<<endl;
+};
+v=10;
+std::visit(vistor,v);//输出20
+v="ok";
+std::visit(vistor,v);//输出okok
+```
+### 任意值(any)
+any不是模板类，能够在运行时任意改变类型，是无界的。
+```c++
+//构造函数
+any a;
+a=10;
+auto b=make_any<int>(1);
+cout<<any_cast<int>(a)<<endl;//输出a的值
+auto p=any_cast<int>(&a);//转型成指针
+auto& p=any_cast<int&>(a);//转型成引用
+```
+### 多元组(tuple)
+tuple的声明和pair差不多，都需要在模板参数列表里声明元素类型，或者使用工厂函数make_tuple()，通过使用索引或类型来定位。
+```c++
+//构造函数
+tuple<int,double,string> t1{0,1.1,"x"};
+auto t2=make_tuple(1L,"hi"s);
+//值的输出
+get<1>(t1)//输出1.1
+
+```
