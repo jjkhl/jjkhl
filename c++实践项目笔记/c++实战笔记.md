@@ -845,5 +845,92 @@ tuple<int,double,string> t1{0,1.1,"x"};
 auto t2=make_tuple(1L,"hi"s);
 //值的输出
 get<1>(t1)//输出1.1
-
 ```
+## [标准算法](http://c.biancheng.net/view/7469.html)
+### 迭代器介绍
+算法只能通过迭代器去间接访问容器以及元素，所以算法的处理范围和能力是由迭代器决定的。
+容器一般会提供成员函数begin/end/cbegin/cend，前缀c表示常量，但具体类型最好用自动类型推导。不过最好使用全局函数begin/end/cbegin/cend。
+```c++
+vector<int> v={1,2,3,4,5};
+auto iter1=v.begin();//成员函数获取迭代器，用自动类型推导
+auto iter2=v.end();
+auto iter3=std::begin(v);//全局函数获取迭代器，用自动类型推导
+auto iter4=std::end(v);
+```
+迭代器常用函数如下：
+* advance()：迭代器前进或后退指定步数
+* next()/prev()：获得迭代器前后某个位置，迭代器自身不移动
+* distance()：计算两个迭代器之间的距离
+```c++
+array<int,5> arr={1,2,3,4,5};
+auto start=begin(arr);
+auto last=end(arr);
+assert(distance(start,last)==5);
+auto p=next(start);
+assert(distance(start,p)==1);
+assert(distance(p,start)==-1);
+
+advance(last,-2);//迭代器last后退2步
+```
+### 遍历算法
+for_each算法将要做的事情分解成两部分，也就是两个函数(一个遍历容器元素，一个操纵容器元素)，而且名字的含义更明确，代码也有更好的封装。
+```c++
+vector<int> v={1,2,3,4,5};
+//range-for循环
+for(const auto&x:v)
+{
+    cout<<x<<",";
+}
+//for_each+lambda
+auto print=[](const auto&x){cout<<x<<",";};
+for_each(cbegin(v),cend(v),print);
+//for_each+内部定义lambda表达式
+for_each(cbegin(v),cend(v),[](const auto&x){
+    cout<<x<<",";
+});
+```
+c++17开始，for_each_n可以不用遍历容器，只需要处理
+```c++
+for_each_n(
+    cbegin(v),3,//指定起点和个数
+    [](const auto&x)
+    {
+        ...
+    }
+);
+```
+### 排序算法
+常见算法示例：
+|函数名|描述|
+|:--:|:---|
+|sort|快速排序|
+|reverse|反转已有次序|
+|shuffle|随机乱序重排|
+|stable_sort|要求排序后仍然保持元素的相对顺序|
+|partial_sort|选出前几名|
+|nth_element|选出前几名，但不要求对其再排出名次|
+|nth_element|求中位数、百分位数|
+|partition/stable_partition|按照某种规则把元素分成两组|
+|minmax_element|求第一名和最后一名|
+示范代码：
+```c++
+vector<int> v={3,5,7,1,10,99,42};
+std:reverse(begin(v),end(v));//输出{42,99,10,1，7，5，3}
+//随机乱序重排元素
+minstd_rand rand;
+std::shuffle(begin(v),end(v),rand);
+//输出前几名
+std::partial_sort(begin(v),next(begin(v),3),end(v));//输出{1,3,7,5,10,99,42}前2位排序，后面几位乱序
+//取前几名，但不进行排序
+std::nth_element(begin(v),next(begin(v),2),end(v));//前2位取出，但元素全部乱序
+//排序得到中位数
+auto mid=next(begin(v),size(v)/2);
+std::nth_element(begin(v),mid,end(v));//此时mid为中位数，*mid取值;
+//找出所有大于9的数
+auto pos=std::partition(begin(v),end(v),[](const auto& x){return x>9;});
+auto print=[](const auto& x){cout<<x<<",";};
+for_each(begin(v),pos,print);
+//找出最大和最小的数
+auto [mi,ma]=std::minmax_element(cbegin(v),cend(v));
+```
+**这些排序算法都需要随机访问迭代器(minmax_element除外)，所以最好是在顺序容器array/vector上使用**
