@@ -996,3 +996,164 @@ for(auto&& x:v|views::drop(3)|views::reverse){
     cout<<x<<',';
 }//输出5,1,8,6,9,4
 ```
+## 线程并发
+**最好的并发就是没有并发，最好的多线程就是没有多线程**
+### 单次调用
+程序免不了初始化数据，但是在多线程中线程并发如果没有某种同步手段来控制，就会刀子初始化函数多次运行。
+once_flag类型变量可以很好的解决这个问题，最好声明为静态、全局的(线程可见)，作为初始化标志：
+```c++
+static std::once_flag flag;//全局初始化标志
+//然后调用专门的call_once()函数，以函数式编程的方式传递这个标志和初始化函数，这样c++就会保证，即使多个线程重入call_once()，也只有一个线程会成功初始化
+auto f=[](){
+    cout<<"tid="<<this_thread::get_id()<<endl;//输出线程ID
+    std::call_once(flag,[](){
+        cout<<"only once"<<endl;
+    });
+};
+//线程启动
+thread t1(f);
+thread t2(f);
+```
+call_once完全消除了初始化时的并发冲突，在它的调用位置根本看不到并发和线程，也可以很轻松地解决多线程领域里被争论很久的双重检查问题，用它代替互斥量检查来实现初始化，
+### 局部存储
+所有权应该由线程独占，而不应该由多线程共同拥有，属于叫做线程局部存储(thread local storage)。
+```c++
+//定义了一个线程独占变量，然后用lambda表达式捕获引用，再将其放进多个线程里运行
+thread_local int n=0;//线程局部存储变量
+auto f=[&](int x){
+    n+=x;//使用线程局部变量，互不影响
+    cout<<n<<endl;//输出验证结果
+};
+//启动线程
+thread t1(f,10);
+thread t2(f,20);
+//输出10和20，互补干扰
+```
+### 原子变量
+对于解决同步问题，互斥量成本过高，所以对小数据，采用原子化方案更好。
+原子在多线程领域里的意思就是不可分的，操作要么完成，要不未完成，不能被任何外部操作打断，总有一个确定的、完整的状态，所以也就不会存在竞争读写的问题。
+但不是所有操作都可以原子化的，目前，c++支持一些基本的类型原子化，如：
+```c++
+using atomic_bool = std::atomic<bool>;//原子化bool
+using atomic_int = std::atomic<int>;//原子化int
+using atomic_long=std::atomic<long>;//原子化long
+```
+原子变量都是模板类atomic的特化形式，包括了原始的类型，具有相同的接口，用起来和bool/int/long几乎一模一样，但是却是原子化的，多线程读写不会出错。它与内置整数类型的一个重要的区别是：它禁用了复制构造函数，所以在初始化的时候不能"="的赋值形式，只能用圆括号或花括号：
+```c++
+atomic_int x{0};
+atomic_long y{1000L};
+assert(++x==1);//自增运算
+y+=200;//加法运算
+assert(y<2000);//比较运算
+```
+除了模拟整数运算，原子变量的特殊原子化操作如下：
+|函数名|描述|
+|:--:|:---|
+|store|写操作，向原子变量存入一个值|
+|load|读操作，读取原子变量里的值|
+|fetch_add|加法操作，返回原值|
+|fetch_sub|减法操作，返回原值|
+|exchange|交换操作，存值后返回原值|
+```c++
+atomic_uint x{0};
+x.store(10);
+assert(x.load()==10);
+auto v=x.fetch_add(5);//返回原值
+assert(v==10&&x==15);
+
+v=x.fetch_sub(2);
+assert(v==15&&x==13);
+
+auto u=x.exchange(100);
+assert(u==13&&x==100);
+```
+`compare_exchange_weak/compare_exchange_strong`：比较并交换(Compare And Swap,CAS)操作——先比较原值，如果相等则写入，否则返回原值。
+**w==x，则w=x，然后x和后一个元素交换；w!=x，则w=x**
+```c++
+atomic_int example{100};
+int expect=1000;
+auto flag=example.compare_exchange_strong(expect,10);//expect!=example，所以flag=false,example不变,expect=example=100
+
+atomic_int example{0};
+int expect=0;
+auto flag=example.compare_exchange_strong(expect,10);//example=expect，所以flag=true,example=10,expect不变
+
+//example.compare_exchange_weak(expected, value);
+if (expected==example){
+    example = value;
+    return true;
+}
+else
+{
+    expected = example;
+    return false;
+}
+```
+TAS(Test And Set)操作，则需要用到一个特殊的原子类型`atomic_flag`
+它不是简单的bool特化(不是atomic<bool>)，没有store/load操作，只用test_and_set()来实现TAS，保证绝对无锁。
+```c++
+static atomic_flag flag{false};//原子标志位，初值为false
+auto f=[&]()
+{
+    auto value=flag.test_and_set();//将TAS设置为true，返回原值
+    if(value)
+    {
+        cout<<"flag has been set."<<endl;
+    }
+    else
+    {
+        cout<<"set flag by "<<this_thread::get_id()<<endl;
+    }
+};
+thread t1(f);
+thread t2(f);
+```
+### 线程接口
+#### 辅助函数
+命名空间std::this_thread的4个线程管理辅助工具，可用来实现线程的调度和管理
+|函数名|描述|
+|:--:|:---|
+|get_id()|获得当前线程的ID|
+|yield()|暂时让出线程的执行权，让系统重新调度|
+|sleep_for()|使当前线程睡眠等待一段时间|
+|sleep_until()|使当前线程睡眠等待至某个时间点|
+#### 线程类
+c++11的thread类在线程启动后调用成员函数join()来等待线程结束，c++20新增特殊的线程类jthread，相比thread类，它在对象析构的时候不是简单的销毁线程，而是先调用join()，等待线程结束后才销毁。
+```c++
+auto task=[]()
+{
+    this_thread::sleep_for(1s);
+    cout<<"sleep for 1s"<<endl;
+};
+thread t(task);
+t.join;
+//使用jthread类
+jthread jt{task};//启动线程，会自动阻塞等待线程结束
+```
+#### 异步运行
+尽量不要直接使用thread/jthread编写多线程程序，最好把它们隐藏到底层，“看不到的线程才是最好的线程”。
+具体做法是调用函数`asynv()`，它用于异步运行一个任务，隐含的动作是启动一个线程取执行，但不绝对保证立即启动。
+```c++
+auto task=[](auto x)
+{
+    this_thread::sleep_for(x*1ms);
+    cout<<"sleep for "<<x<<endl;
+    return x;
+};
+auto f=std::async(task,10);
+f.wait();//等待任务完成
+assert(f.valid());//确实完成了任务
+cout<<f.get()<<endl;//获取任务的执行结果
+```
+* async()调用后会返回一个future变量，可以认为该变量是代表了执行结果的“期货”，如果任务有返回值，可以用成员函数get()获取，但是get()只能调用**一次**，再次获取结果会发生错误，抛出异常std::future_error
+* **隐藏的坑**如果没有显式获取async()的返回值(future对象)，函数返回值没有被接收，就成了临时对象，会同步阻塞直至任务完成。**解决方式**auto f=std::async(task,...)
+#### 其他工具
+c++17新增`scoped_lock`，它是一个RAII型互斥量锁定工具，可以自动在作用域范围内锁定/解锁，非常适合初始化使用，先锁定整个if语句，然后自动解锁：
+```c++
+int x=0;
+mutex mu1,mu2;//两个互斥量
+if(scoped_lock guard(mu1,mu2);x==0)//同时锁定多个互斥量，锁定后判断条件
+{
+    cout<<"scoped_locked"<<endl;//离开if语句，变量析构自动解锁
+}
+```
