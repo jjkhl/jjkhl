@@ -933,4 +933,66 @@ for_each(begin(v),pos,print);
 //找出最大和最小的数
 auto [mi,ma]=std::minmax_element(cbegin(v),cend(v));
 ```
-**这些排序算法都需要随机访问迭代器(minmax_element除外)，所以最好是在顺序容器array/vector上使用**
+* **这些排序算法都需要随机访问迭代器(minmax_element除外)，所以最好是在顺序容器array/vector上使用**
+### 查找算法
+使用排序算法的目的是让算法有序，这样就可以快速查找，节约时间。在有序区间上查找，手算的算法必然是二分查找，对应标准库算法binary_search
+```c++
+vector<int> v={3,5,1,7,10,99,42};
+std::sort(begin(v),esystem("pause");nd(v));
+auto found=std::binary_search(cbegin(v),cend(v),7);//二分查找，只能确定元素在不在
+```
+而想要在有序容器上执行更有效的二分查找，使用lower_bound(大于等于)、upper_bound(大于)。
+```c++
+delctype(cend(v)) pos;//声明一个迭代器
+pos=std::lower_bound(cbegin(v),cend(v),7);//找到第一个大于等于7的位置
+found=(pos!=cend(v)&&(*pos==7));//需要判断迭代器是否有效或值是否有效
+```
+适用于未排序的算法示例：
+```c++
+//find()函数
+vector<int> v={1,9,11,3,5,7};
+decltype(end(v)) pos;
+pos=std::find(begin(v),end(v),3);//找到首次3出现的位置
+assert(pos!=end(v));//与end()比较才能知道是否找到
+//find_if()函数
+pos=std::find_if(begin(v),end(v),[](auto x){return x%2==0;});
+assert(pos!=end(v));
+//find_first_if()函数
+array<int,2> arr={3,5};//数组容器
+pos=std::first_first_if(begin(v),end(v),begin(arr),end(arr));//查找一个子区间
+assert(pos!=end(v));
+``` 
+### 范围算法
+c++20引入新的range类型，可以理解为指明首末位置的迭代器，即pair<begin,end>。
+```c++
+vector<int> v={9,5,1,7,3};
+auto print=[](const auto& x){cout<<x<<",";};
+namespace ranges=std::ranges;//命名空间别名，用于简化代码
+ranges::for_each(v,print);//范围for_each算法
+ranges::count_if(v,[](auto& x){return x>=5;});
+
+minstd_rand rand;//<random>
+ranges::shuffle(v,rand);
+
+ranges::stable_sort(v);//范围随机重排元素
+ranges::binary_search(v,7);//范围二分查找算法
+auto pos=ranges::lower_bound(v,3);//范围二分查找3是否存在
+ranges::partial_sort(v,next(begin(v)),3);//范围部分排序
+auto [mi,ma]=ranges::minmax_element(v);//范围查找最小值和最大值
+```
+c++20的view位于命名空间std::views，常用函数如下：
+|函数名|描述|
+|:--:|:---|
+|take|选出view的前N个元素|
+|drop|跳过view的前N个元素|
+|keys|选出pair里的first成员|
+|values|选出pair里的second成员|
+|reverse|逆序(反转)view里的所有元素|
+|filter|使用谓词函数筛选出view里的特定元素|
+```c++
+vector<int> v={3,7,2,4,9,6,8,1,5};
+namespace views=std::views;
+for(auto&& x:v|views::drop(3)|views::reverse){
+    cout<<x<<',';
+}//输出5,1,8,6,9,4
+```
