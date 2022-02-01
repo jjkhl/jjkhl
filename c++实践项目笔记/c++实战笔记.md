@@ -1157,3 +1157,67 @@ if(scoped_lock guard(mu1,mu2);x==0)//同时锁定多个互斥量，锁定后判断条件
     cout<<"scoped_locked"<<endl;//离开if语句，变量析构自动解锁
 }
 ```
+# 第五章C++进阶技能
+## 准标准库-Boost程序库
+Boost库的出发点是要称为标准库的试验田，负责向标准库输送组件。Boost程序库并不一味追求使用最新的C++标准，它其实非常注重对编译器和系统的兼容。Boost库利用预处理编译和模板元编程等多种手段，尽量让程序库实现跨标准、跨平台，让C++11/14的使用者仍然可以使用C++17/20里才有的variant/any等组件。
+Windows下的boost库安装：https://www.cnblogs.com/lylygoing/p/BoostDownload.html
+### 字符串转换
+头文件：`boost/lexical_cast.hpp`
+函数名：`lexical_cast`
+功能：实现整数、浮点数与字符串之间的任意转换
+```c++
+#include<boost/lexical_cast.hpp>
+using namespace boost;
+auto n1=lexical_cast<short>("42");//字符串转短整型整数
+auto n2=lexical_cast<long>("6400",2);//n2=64
+auto s1=lexical_cast<string>(0x64);//s1="100"s
+auto f1=lexical_cast<double>("2.718");//f1=2.718
+//借鉴lexical_cast，我们可以用一个模板函数来调用stoi()/to_string()等多个标准库函数
+template<typename T,typename U>
+T std_lexical_cast(const U& arg)
+{
+    if constexpr(std::is_same_v<T,int>)
+    {
+        return std::stoi(arg);
+    }
+    if constexpr(std::is_same_v<T,long>)
+    {
+        return std::stol(arg);
+    }
+    if constexpr(std::is_same_v<T,double>)
+    {
+        return std::stod(arg);
+    }
+    if constexpr(std::is_same_v<T,string>)
+    {
+        return std::to_string(arg);
+    }
+    
+    return T{};//默认返回目标类型的空值
+}
+```
+### 字符串算法
+头文件：`boost/algorithm/string.hpp`
+```c++
+#include<boost/algorithm/string.hpp>
+using namespace boost;
+auto str="hello c++"s;
+assert(starts_with(str,"he"));//判断前缀，大小写敏感
+assert(ends_with(str,"c++"));//判断后缀，大小写敏感
+assert(contains(str,"llo"));//判断包好子串
+
+auto ustr=to_upper_copy(str);//转换大写，得到复制
+assert(iends_with(str,"c++"));//忽略大小写判断后缀
+assert(icontains(str,"llo"));//忽略大小写判包含子串
+assert(iequals(str,ustr));//忽略大小写比较字符串
+
+auto tstr=trim_copy_if(str,[](auto& c){return c=='+';});//修剪字符串，得到复制，带条件(删除'+'字符)
+assert(tstr="hello c");
+trim_right_if(str,[](auto& c){return c<'l';});//原地修剪字符串，删除右边小于'l'的字符
+assert(str=="hello");
+```
+知识点：
+* 算法默认大小写敏感，想要忽略大小写需要使用前缀`i`的版本
+* 算法默认都是本地操作，即直接处理原字符串，想要生成变动后的字符串复制需要使用后缀为`copy`的版本
+* 可以向算法传入自定义的判断条件，只有符合条件的字符才会被处理，需要使用后缀为`if`的版本
+* `i/copy/if`这些词缀可以组合，从而得到不同的算法，满足不同需求
