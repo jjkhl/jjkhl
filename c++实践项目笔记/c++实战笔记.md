@@ -1198,6 +1198,7 @@ T std_lexical_cast(const U& arg)
 ```
 ### 字符串算法
 头文件：`boost/algorithm/string.hpp`
+#### 基本功能
 ```c++
 #include<boost/algorithm/string.hpp>
 using namespace boost;
@@ -1210,7 +1211,6 @@ auto ustr=to_upper_copy(str);//转换大写，得到复制
 assert(iends_with(str,"c++"));//忽略大小写判断后缀
 assert(icontains(str,"llo"));//忽略大小写判包含子串
 assert(iequals(str,ustr));//忽略大小写比较字符串
-
 auto tstr=trim_copy_if(str,[](auto& c){return c=='+';});//修剪字符串，得到复制，带条件(删除'+'字符)
 assert(tstr="hello c");
 trim_right_if(str,[](auto& c){return c<'l';});//原地修剪字符串，删除右边小于'l'的字符
@@ -1221,3 +1221,68 @@ assert(str=="hello");
 * 算法默认都是本地操作，即直接处理原字符串，想要生成变动后的字符串复制需要使用后缀为`copy`的版本
 * 可以向算法传入自定义的判断条件，只有符合条件的字符才会被处理，需要使用后缀为`if`的版本
 * `i/copy/if`这些词缀可以组合，从而得到不同的算法，满足不同需求
+#### 替换功能
+替换算法的基本形式是`replace`，后面加上后缀`head/tail/first/last/nth/all`等，此外它也可以附加`i/copy`前后缀(**不支持if**)。
+```c++
+auto str="apple google facebook"s;
+replace_head(str,3,"App");//输出：Apple google facebook
+replace_tail(str,4,"cook");//输出：Apple google facecook
+replace_first(str,"oo","xx");//输出：Apple gxxgle facecook
+replace_all(str,"LE","GE");//输出：AppGE gxxgGE facecook
+replace_nth(str,"ge",1,"MM");//输出：AppGE gxxgMM facecook
+```
+**head/tail与first/last区别：** 前者指定的是字符串前后的字符数量，没有查找动作。后者执行查找动作，对第一个或最后一个找到的子串进行替换。
+#### 分割功能
+split算法会使用谓词函数判断切割点，然后将字符串拆分成多个部分，再将其输出到一个标准容器之中。算法对容器没有特殊要求，顺序容器(如vector/deque/list等)或关联容器(如set/unordered_set等)都可以，但是`map`不行。
+因为分割算法必须指定条件，所以split不需要if后缀。
+```c++
+auto str="123,456,999, 1024"s;
+set<string> res;
+res=boost::split(res,str,[](const auto& c){return c==','||c==' ';});
+for(auto&& x:res){cout<<'['<<x<<']';}//输出：[][1024][123][456][999]
+//输出空串的原因：判断条件是逗号和空格，当算法遇到', '这样连续两个分隔符时会认为中间存在一个空串
+//可以跳过标志位参数token_compress_on来实现压缩空字符串
+res=boost::split(res,str,[](const auto& c){return c==','||c==' ';},boost::token_compress_on);
+```
+#### 合并算法
+join：接收一个字符串容器，再将指定的字符串把容器的元素组个连接起来，最后输出新的字符串。
+```c++
+vector<string> v={"apple","pear","tomato"};
+cout<<join(v,"**")<<endl;//合并多个字符串，输出apple**pear**tomato
+//使用if版本，可以指定条件，只有满足条件的容器元素才能被合并
+cout<<join_if(v,"++",[](auto& x){return std::size(x)>=5;})<<endl;//输出：apple++tomato
+```
+### 高精度计时器
+头文件：`boost/timer/timer.cpp`
+使用方式：提供一个计时类`cpu_timer`，一旦创建了实例对象就立即开始计时，中途可以调用成员函数`stop()/resume()/start()`随时暂停、恢复或者重启计时，成员函数`format()`用于获取当前经过的时间(字符串格式)
+```c++
+#include<iostream>
+#include<thread>
+#include<boost/timer/timer.cpp>
+using namespace boost::timer
+int main()
+{
+    cpu_timer t;
+    t.start();
+    this_thread::sleep_for(100ms);
+    t.stop();
+    if(t.is_stopped())
+        cout<<t.format()<<endl;
+    //或者使用elapsed()成员函数，默认单位都是纳秒
+    auto x=t.elapsed();
+    cout<<x.wall<<endl;
+    cout<<x.user<<endl;
+    cout<<x.system<<endl;
+    return 0;
+}
+//程序输出： 0.111628s wall, 0.000000s user + 0.000000s system = 0.000000s CPU (n/a%)
+//wall：挂钟时间，也就是程序实际运行的时间
+//user：用户CPU时间，也就是程序在用户态使用的CPU时间
+//system：系统CPU时间，也就是程序在内核态使用的CPU时间
+```
+在上述代码中我们使用`sleep_for()`睡眠函数，根本不消耗CPU，所以尽管运行时间是100ms，但是CPU时间为0。
+### 数据序列化
+序列化：内存里的“活的对象”转换成静止的字节序列，便于存储和网络传输
+反序列化：从静止的字节序列重新构建出内存里可用的对象
+#### JSON
+JSON是一种轻量级的数据交换格式，采取纯文本表示，便于人类阅读，且阅读和修改都很方便。
