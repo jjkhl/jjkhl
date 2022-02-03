@@ -1285,4 +1285,62 @@ int main()
 序列化：内存里的“活的对象”转换成静止的字节序列，便于存储和网络传输
 反序列化：从静止的字节序列重新构建出内存里可用的对象
 #### JSON
-JSON是一种轻量级的数据交换格式，采取纯文本表示，便于人类阅读，且阅读和修改都很方便。
+JSON是一种轻量级的数据交换格式，采取纯文本表示，便于人类阅读，且阅读和修改都很方便，只需要包含头文件`json.hpp`。
+JSON for Modern C++的下载方式：
+> git clone git@github.com:nlohmann/json.git
+> wget https://github.com/nlohmann/json/release/download/v3.9.1/json.hpp
+##### 序列化
+```c++
+#include"json.hpp"
+#include<iostream>
+using namespace std;
+int main()
+{
+    nlohmann::json j;
+    j["age"]=23;
+    j["name"]="spiderman";
+    j["gear"]["suits"]="2099";
+    cout<<j.dump()<<endl;//得到数据的JSON文本形式，默认紧凑输出，没有缩进。
+    //j.dump(2)表示缩进2个空格
+    system("pause");
+    return 0;
+}
+```
+我们还可以使用array/vector或者`{}`形式的初始化列表表示JSON数组，使用map或者pair表示JSON对象。
+```c++
+vector<int> v={1,2,3};
+j["numbers"]=v;//输出："numbers":[1,2,3]
+
+map<string,int> m={{"one",1},{"two",2}};
+j["kv"]=m;//输出："kv":{"one":1,"two":2}
+```
+##### 反序列化
+调用静态成员函数`parse()`，即可直接从字符串得到JSON对象，而且可以用自动类型推导。
+```c++
+string str=R"(
+    {
+        "name":"Peter",
+        "age":23,
+        "married":true
+    }
+)";
+auto j=nlohmann::json::parse(str);
+assert(j["age"]==23);
+assert(j["name"]=="peter");
+//方式二
+auto str=R"(
+    {
+        "name":"Peter",
+        "age":23,
+        "married":true
+    }
+)"_json;//字面值后缀”_json“，相当于调用了parse()
+```
+##### 高级用法
+Json for Mordern C++的高级语法如SAX、BSON、自定义类型转换等。比如我们可以调用`to_bson()/from_bson()`实现紧凑、高效的BSON数据格式
+```c++
+auto j=R"({"n":[0,1,2]})"_json;
+auto data=lohmann::json::to_bson(j);
+auto obj=lohmann::json::from_dson(data);
+assert(obj["n"][0]==0);
+```
