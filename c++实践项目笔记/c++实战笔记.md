@@ -1288,7 +1288,8 @@ int main()
 JSON是一种轻量级的数据交换格式，采取纯文本表示，便于人类阅读，且阅读和修改都很方便，只需要包含头文件`json.hpp`。
 JSON for Modern C++的下载方式：
 > git clone git@github.com:nlohmann/json.git
-> wget https://github.com/nlohmann/json/release/download/v3.9.1/json.hpp
+> wget https://github.com/nlohmann/json/releases/download/v3.9.1/json.hpp
+[windows下wget的安装与使用](https://blog.csdn.net/screaming_color/article/details/79201199)
 ##### 序列化
 ```c++
 #include"json.hpp"
@@ -1343,4 +1344,83 @@ auto j=R"({"n":[0,1,2]})"_json;
 auto data=lohmann::json::to_bson(j);
 auto obj=lohmann::json::from_dson(data);
 assert(obj["n"][0]==0);
+```
+#### MessagePack
+MessagePack是一种轻量级的数据交换格式，但与JSON的不同之处在于它二进制的。因此MessagePack比JSON更小巧，处理起来更快，但没有JSON那么直观、易读和好修改了，应用有Redis/Pinterest等。
+[msgpack-c](https://github.com/msgpack/msgpack-c/tree/cpp_master)是c++版本头文件"msgpack.hpp"，**使用方式：** 将`include`文件夹复制到代码目录，编译条件加上`-I .\include\` 
+##### 序列化
+MessagePack只能对基本类型和标准容器进行序列化/反序列化。调用`pack()函数`将数据序列化为MessagePack格式的示例：
+```c++
+auto serialize=[](const auto&x){
+    msgpack::sbuffer sbuf;//输出缓冲区
+    msgpack::pack(sbuf,x);//序列化
+    cout<<sbuf,size()<<endl;//输出序列化后的长度
+};
+serialize(99);
+serialize(3.14);
+serialize("hello msgpack"s);
+serialize(vector{1,2,3});
+serialize(tuple{1,"str"s,true});//元组
+```
+`pack()`的输出目标sbuffer是个简单的缓冲区，可以把它理解为对字符串数组的封装。和vector<char>很像，也可以调用data()/size()方法获取内部的数据和长度。
+##### 反序列化
+需要调用unpack()和两个核心类：object_handle/object：
+```c++
+vector<int> v={1,2,3,4,5};
+msgpack::sbuffer sbuf;//输出缓冲区
+msgpack::pack(sbuf,v);//序列化
+//反序列化，输入二进制数据
+auto handle=msgpack::unpack(sbuf.data(),sbuf.size());
+//得到反序列化对象
+auto obj=handle.get();
+//该对象是MessagePack对数据的封装，但不能直接使用，必须知道原始数据类型，调用convert()才能还原
+vector<int> v2;//向量容器
+obj.convert(v2);//转换反序列化的数据
+assert(std::equal(begin(v),end(v),begin(v2)));
+```
+##### 高级用法
+因为MessagePack不能直接打包复杂数据，所以用法比JSON麻烦一些，必须要自己把数据逐个序列化，再将其连接在一起才行。
+好在MessagePack又提供了一个`packer类`，可以实现串联的序列化操作，从而简化代码，例如：
+```c++
+msgpack::sbuffer sbuf;
+msgpack::packer packer(sbuf);//专门的序列化对象
+packer.pack(10).pack("monado"s).pack(vector<int>{1,2,3});//连续序列化多个数据，最后都输出到缓冲区里
+```
+对于多个对象连续序列化后的数据，反序列化的时候可以用一个偏移量(offset)参数来同样操作：
+```c++
+for(delctype(sbuf.size()) offset=0;offset!=sbuf.size();){//初始偏移量是0，直到反序列化结束
+    auto handle=msgpack::unpack(sbuf.data(),sbuf.size(),offset());//反序列化，输入二进制数据和偏移量
+    auto obj=handle.get();//得到反序列化对象
+}
+```
+`MSGPACK_DEFINE`：把该宏放进类定义里，就可以让自定义类型像标准类型一样呗MessagePack处理，下面简单定义了一个Book类：
+```c++
+class Book final
+{
+public:
+    int id;
+    string title;
+    set<string> tags;
+public:
+    MSGPACK_DEFINE(id,title,tags);
+};
+//使用宏定义可以i直接用于pack/unpack，用法基本上和JSON差不多
+Book book1={1,"1984",{"a","b"}};
+msgpack::sbuffer sbuf;//输出缓冲区
+msgpack::pack(sbuf,book1);//序列化
+
+auto obj=msgpack::unpack(
+    sbuf.data(),sbuf.size()).get();//得到反序列化对象
+Book book2;
+obj.convert(book2);//转换反序列化的数据
+
+//另外在使用MessagePack的时候，也要注意数据不完整的问题，使用try-catch来保护代码，捕获异常
+auto txt=""s;
+try{
+    auto handle=msgpack::unpack(txt.data(),txt.size());
+}
+catch(std::expection& e)
+{
+    cout<<e.what()<<endl;
+}
 ```
