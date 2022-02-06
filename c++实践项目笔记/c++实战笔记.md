@@ -1424,3 +1424,28 @@ catch(std::expection& e)
     cout<<e.what()<<endl;
 }
 ```
+#### ProtoBuffer
+ProtoBuffer也是序列化格式，简称PB，由Google发布。
+PB是一种二进制的数据格式，但是相关东西比较多，要安装一个预处理器和开发库，编译时还要链接动态库(-protobuf)
+> apt-get install protobuf-compiler
+> apt-get install liprotobuf-dev
+> g++ xx.cpp -std=c++17 -lprotobuf -o a.out
+##### 接口描述文件
+PB的特点是数据有模式(schema)，必须先编写一个接口描述语言(Interface Description Language, IDL)文件，在里面定义好数据结构。只有预定义了的数据结构才能被PB序列化和反序列化。优点：接口就是清晰明确的规范文档，沟通和交流简单、无歧义；缺点：接口缺乏灵活性，改接口会导致后续一连串的操作。
+下面是一个简单的PB数据定义，使用的是proto2语法：
+```c++
+syntax="proto2";//使用第二版
+package sample;//定义命名空间
+message Vendor
+{
+    required unint32 id=1;//required表示必须字段
+    required string name=2;//有int32/string等基本类型
+    required bool valid=3;//需要指定字段的序列号，序列化时使用
+    optionla string tel=4;//optional字段可以没有
+}
+```
+有了接口定义文件，需要用命令行工具protoc生成对应的c++源码，用命令行参数"--cpp_out"指定输出路径，然后把源码文件加入自己的项目就能使用了：`protoc --cpp_out=. sample.proto//生成c++源码`
+#### 数据序列化小结
+* JSON是纯文本，容易阅读，方便编辑，适用范围最广
+* MessagePack是二进制，小巧高效，在开源界接受程度比较高
+* ProtoBuffer是工业级的数据格式，注意安全和性能，多用在大公司的商业产品里。
