@@ -322,3 +322,181 @@ public:
     }
 };
 ```
+### [977.有序数组的平方](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
+```c++
+class Solution {
+public:
+    vector<int> sortedSquares(vector<int> &nums)
+    {
+    int left = 0, right = nums.size() - 1;
+    vector<int> res(right + 1.0);
+    int i = right;
+    while (left < right)
+    {
+        if (abs(nums[left]) > abs(nums[right]))
+        {
+            res[i--] = (nums[left] * nums[left]);
+            left++;
+        }
+        else if (abs(nums[left]) < abs(nums[right]))
+        {
+            res[i--] = (nums[right] * nums[right]);
+            right--;
+        }
+        else
+        {
+            res[i--]=(nums[right]*nums[right]);
+            res[i--]=(nums[left]*nums[left]);
+            left++;
+            right--;
+        }
+    }
+    res[0]=(nums[left] * nums[left]);
+    return res;
+  }
+};
+```
+### [209.长度最小的子数组](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
+滑动窗口解法
+```c++
+class Solution {
+public:
+    int minSubArrayLen(int target, vector<int>& nums) {
+    int len=nums.size();
+    int left=0,right=0;
+    int sum=0;
+    int subLen=0;
+    int res=INT_MAX;
+    for(;right<len;right++)
+    {
+         sum+=nums[right];
+        while (sum>=target)
+        {
+            subLen=right-left+1;
+            res=res<subLen?res:subLen;
+            sum-=nums[left++];
+        }     
+    }
+    return res==INT_MAX?0:res;
+    }
+};
+```
+### [904.水果成篮](https://leetcode-cn.com/problems/fruit-into-baskets/)
+```c++
+class Solution {
+public:
+    int totalFruit(vector<int>& tree) {
+      int res = 0;
+	int left = 0, right = 1;
+	int a = tree[0], b ;
+	int len = tree.size();
+	while (right < len && tree[right] == a)
+		++right;
+    if(right==len) return len;
+    b=tree[right++];
+    while(right<len)
+    {
+        if(tree[right]!=a&&tree[right]!=b)
+        {
+            res=max(res,right-left);
+            a=tree[right-1];
+            b=tree[right];
+            left = right - 1;
+  		    while (tree[left - 1] == a)
+			    --left;
+        }
+  		++right;
+    }
+	return max(res, right - left);
+    }
+};
+```
+### [76.最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
+```c++
+class Solution
+{
+public:
+    string minWindow(string s,string t)
+    {
+    vector<int> need(128, 0);
+    for (char c : t)
+    {
+        need[c]++;
+    }
+    int count = t.size();
+    int len_s = s.size();
+    int left = 0, right = 0, start = 0, size = INT_MAX;
+    while (right < len_s)
+    {
+        char c = s[right];
+        if (need[c] > 0)
+            count--;
+        need[c]--;      //先把右边的字符加入窗口
+        if (count == 0) //窗口中已经包含所需的全部字符
+        {
+            while (left < right && need[s[left]] < 0) //缩减窗口
+            {
+                need[s[left++]]++;
+            }                            //此时窗口符合要求
+            if (right - left + 1 < size) //更新答案
+            {
+                size = right - left + 1;
+                start = left;
+            }
+            need[s[left]]++; //左边界右移之前需要释放need[s[left]]
+            left++;
+            count++;
+        }
+        right++;
+    }
+    return size == INT_MAX ? "" : s.substr(start, size);
+    }
+};
+```
+### [59.螺旋矩阵II](https://leetcode-cn.com/problems/spiral-matrix-ii/)
+```c++
+class Solution
+{
+public:
+    vector<vector<int>> generateMatrix(int n)
+    {
+    //左闭右开原则
+    vector<vector<int>> res(n, vector<int>(n, 0));
+    int startX=0,startY=0;
+    int num=1;
+    int i,j;
+    int loop=n/2;
+    int boundary=1;
+    while(loop--)
+    {
+        i=startX;
+        j=startY;
+        while(j<startY+n-boundary)
+        {
+            res[startX][j++]=num++;
+        }
+        while(i<startX+n-boundary)
+        {
+            res[i++][j]=num++;
+        }
+        while(j>startY)
+        {
+            res[i][j--]=num++;
+        }
+        while(i>startX)
+        {
+            res[i--][j]=num++;
+        }
+        //更改下一圈的起点和边界
+        startX++;
+        startY++;
+        boundary+=2;
+    }
+    if(n%2)
+    {
+        res[n/2][n/2]=num;
+    }
+    return res;
+    }
+};
+```
