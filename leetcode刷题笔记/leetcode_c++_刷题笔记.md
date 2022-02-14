@@ -500,3 +500,90 @@ public:
     }
 };
 ```
+### [54.螺旋矩阵](https://leetcode-cn.com/problems/spiral-matrix/)
+```c++
+class Solution{
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix)
+    {
+        vector<int> res;
+        int startX=0,startY=0;
+        int row=matrix.size();//row=3
+        int column=matrix[0].size();//col=4
+        int countdown=row*column;//总个数，用来结束循环
+        int up=0,down=row-1,left=0,right=column-1;
+        while(1)
+        {
+            for(int j=left;j<=right;j++)
+            {
+                res.push_back(matrix[up][j]);
+            }
+            if(++up>down) break;
+            for(int i=up;i<=down;i++)
+            {
+                res.push_back(matrix[i][right]);
+            }
+            if(--right<left) break;
+
+            for(int j=right;j>=left;j--)
+            {
+                res.push_back(matrix[down][j]);
+            }
+            if(--down<up) break;
+            for(int i=down;i>=up;i--)
+            {
+                res.push_back(matrix[i][left]);
+            }
+            if(++left>right) break;
+        }
+        return res;
+    }
+};
+```
+方式二：
+![](picture/按照形状模拟示意图1.png)
+```c++
+class Solution{
+public:
+vector<int> spiralOrder(vector<vector<int>> &matrix)
+{
+    int row = matrix.size();
+    int col = matrix[0].size();
+    int left = 0, right = col - 1, up = 0, down = row - 1;
+    vector<int> res;
+    while (true)
+    {
+        if (left > right || up > down)
+            break;
+        //只有一行时，按行遍历
+        if (up == down)
+        {
+            for (int j = left; j <= right; j++)
+                res.push_back(matrix[up][j]);
+            break;
+        }
+        //只有一列时，按列遍历
+        if (left == right)
+        {
+            for (int i = up; i <= down; i++)
+                res.push_back(matrix[i][left]);
+            break;
+        }
+        //遍历当前的一圈
+        for (int j = left; j < right; j++)
+            res.push_back(matrix[up][j]);
+        for (int i = up; i < down; i++)
+            res.push_back(matrix[i][right]);
+        for (int j = right; j > left; j--)
+            res.push_back(matrix[down][j]);
+        for (int i = down; i > up; i--)
+            res.push_back(matrix[i][left]);
+        left++;
+        right--;
+        up++;
+        down--;
+    }
+    return res;
+}
+};
+```
