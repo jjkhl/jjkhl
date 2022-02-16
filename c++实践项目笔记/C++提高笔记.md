@@ -258,7 +258,7 @@ ifstream //输入文件流
 oftream //输出文件流
 ```
 
-文件打开方式选项
+## 文件打开方式选项
 ```c++
 ios::in　　　　= 0x01,　//供读，文件不存在则创建(ifstream默认的打开方 式)
 ios::out　　　 = 0x02,　//供写，文件不存在则创 建，若文件已存在则清空原内容(ofstream默认的打开方式)
@@ -270,7 +270,7 @@ ios::noreplace = 0x40,　//文件存在时产生错误，常和out联合使用
 ios::binary　　= 0x80　 //二进制格式文件
 ```
 
-打开文件的方式
+## 打开文件的方式
 ```c++
 //方式一：调用构造函数时指定文件名和打开模式
 fstream f("1.txt",ios::in|ios::out|ios::binary); //以读/写/二进制的方式打开文件
@@ -279,7 +279,7 @@ fstream f;
 f.open("1.txt",ios::out);
 ```
 
-字符串读取方式
+## 字符串读取方式
 ```c++
 fstream fp("1.txt",ios::out)
 string a;
@@ -287,7 +287,7 @@ getline(fp,a);
 getline(fp,a);//再次调用，读取第二行
 ```
 
-文件位置指针
+## 文件位置指针
 ```c++
 
 // 定位到 fileObject 的第 n 个字节（假设是 ios::beg）
@@ -303,7 +303,7 @@ fileObject.seekg( n, ios::end );
 fileObject.seekg( 0, ios::end );
 ```
 
-示例：
+## 示例：
 ```c++
 
 #include <fstream>
@@ -355,5 +355,27 @@ int main ()
  
    return 0;
 }
-
 ```
+# 文件指针(FILE)
+参考网址:https://blog.csdn.net/qq_44757034/article/details/104696262
+## 基本格式
+```c++
+//头文件
+#include<stdio.h>
+FILE *fp;
+//打开文件
+fopen("1.txt",r);
+fclose(fp);
+```
+## 打开方式选项
+|符号|含义|
+|:---:|:---|
+|r|只读,文件不存在则失败|
+|r+|允许读写,文件不存在则失败|
+|w|只写覆盖,文件不存在就新建文件|
+|w+|允许读写,文件不存在就新建文件|
+|a|追加,文件不存在就新建文件|
+|rb|只读方式打开二进制文件|
+
+## 对文件操作的函数
+
