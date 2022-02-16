@@ -249,3 +249,111 @@ int main()
         << "or " << int_ms.count() << " whole milliseconds\n";
 }
 ```
+# 文件流(fstream)
+[c++文件流](https://blog.csdn.net/seadplus/article/details/7802346)
+```c++
+//ifstream是指从硬盘到内存，输入读取文件；ostream是指从内存到硬盘，属于写入文件
+fstream //文件输出流
+ifstream //输入文件流
+oftream //输出文件流
+```
+
+文件打开方式选项
+```c++
+ios::in　　　　= 0x01,　//供读，文件不存在则创建(ifstream默认的打开方 式)
+ios::out　　　 = 0x02,　//供写，文件不存在则创 建，若文件已存在则清空原内容(ofstream默认的打开方式)
+ios::ate　　　 = 0x04,　//文件打开时，指针在文件最后。可改变指针的位置，常和in、out联合使用
+ios::app　　　 = 0x08,　//供写，文件不存在则创建，若文件已存在则在原文件内容后写入 新的内容，指针位置总在最后
+ios::trunc　　 = 0x10,　// 在读写前先将文件长度截断为0（默认）
+ios::nocreate　= 0x20,　//文件不存在时产生错误，常和in或app联合使用
+ios::noreplace = 0x40,　//文件存在时产生错误，常和out联合使用
+ios::binary　　= 0x80　 //二进制格式文件
+```
+
+打开文件的方式
+```c++
+//方式一：调用构造函数时指定文件名和打开模式
+fstream f("1.txt",ios::in|ios::out|ios::binary); //以读/写/二进制的方式打开文件
+//方式二：open成员函数
+fstream f;
+f.open("1.txt",ios::out);
+```
+
+字符串读取方式
+```c++
+fstream fp("1.txt",ios::out)
+string a;
+getline(fp,a);
+getline(fp,a);//再次调用，读取第二行
+```
+
+文件位置指针
+```c++
+
+// 定位到 fileObject 的第 n 个字节（假设是 ios::beg）
+fileObject.seekg( n );
+ 
+// 把文件的读指针从 fileObject 当前位置向后移 n 个字节
+fileObject.seekg( n, ios::cur );
+ 
+// 把文件的读指针从 fileObject 末尾往回移 n 个字节
+fileObject.seekg( n, ios::end );
+ 
+// 定位到 fileObject 的末尾
+fileObject.seekg( 0, ios::end );
+```
+
+示例：
+```c++
+
+#include <fstream>
+#include <iostream>
+using namespace std;
+ 
+int main ()
+{
+    
+   char data[100];
+ 
+   // 以写模式打开文件
+   ofstream outfile;
+   outfile.open("afile.dat");
+ 
+   cout << "Writing to the file" << endl;
+   cout << "Enter your name: "; 
+   cin.getline(data, 100);
+ 
+   // 向文件写入用户输入的数据
+   outfile << data << endl;
+ 
+   cout << "Enter your age: "; 
+   cin >> data;
+   cin.ignore();
+   
+   // 再次向文件写入用户输入的数据
+   outfile << data << endl;
+ 
+   // 关闭打开的文件
+   outfile.close();
+ 
+   // 以读模式打开文件
+   ifstream infile; 
+   infile.open("afile.dat"); 
+ 
+   cout << "Reading from the file" << endl; 
+   infile >> data; 
+ 
+   // 在屏幕上写入数据
+   cout << data << endl;
+   
+   // 再次从文件读取数据，并显示它
+   infile >> data; 
+   cout << data << endl; 
+ 
+   // 关闭打开的文件
+   infile.close();
+ 
+   return 0;
+}
+
+```
