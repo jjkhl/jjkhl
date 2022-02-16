@@ -1,58 +1,58 @@
-Ë¢ÌâÍøÖ·£ºhttps://programmercarl.com/
-# [Êı×é](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
-Êı×éÊÇ´æ·ÅÔÚÁ¬Ğø¿Õ¼äÉÏµÄÏàÍ¬ÀàĞÍÊı¾İµÄ¼¯ºÏ£¬¿ÉÒÔ·½±ãµÄÍ¨¹ıÏÂ±êË÷ÒıµÄ·½Ê½»ñÈ¡µ½ÏÂ±êÏÂ¶ÔÓ¦µÄÊı¾İ¡£c++ÖĞ¶şÎ¬Êı×éÔÚµØÖ·¿Õ¼äÉÏÒ²ÊÇÁ¬ĞøµÄ¡£
-## ¶ş·Ö²éÕÒ
-### [704.¶ş·Ö·¨²éÕÒ](https://leetcode-cn.com/problems/binary-search/submissions/)
-¶ş·Ö·¨µÚÒ»ÖÖĞ´·¨£¬Ìõ¼ş`[left,right]`£¬×¢Òâµã£º
-* while(left<=right)ÒªÓÃ<=£¬ÒòÎªleft==rightÓĞÒâÒå
-* if(nums[middle]>target)Ê±rightÒª¸³ÖµÎªmiddle-1£¬ÒòÎª·­Ç½Õâ¸önums[middle]²»Ò»¶¨ÊÇtarget£¬½ÓÏÂÀ´Òª²éÕÒmiddle-1
+åˆ·é¢˜ç½‘å€ï¼šhttps://programmercarl.com/
+# [æ•°ç»„](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
+æ•°ç»„æ˜¯å­˜æ”¾åœ¨è¿ç»­ç©ºé—´ä¸Šçš„ç›¸åŒç±»å‹æ•°æ®çš„é›†åˆï¼Œå¯ä»¥æ–¹ä¾¿çš„é€šè¿‡ä¸‹æ ‡ç´¢å¼•çš„æ–¹å¼è·å–åˆ°ä¸‹æ ‡ä¸‹å¯¹åº”çš„æ•°æ®ã€‚c++ä¸­äºŒç»´æ•°ç»„åœ¨åœ°å€ç©ºé—´ä¸Šä¹Ÿæ˜¯è¿ç»­çš„ã€‚
+## äºŒåˆ†æŸ¥æ‰¾
+### [704.äºŒåˆ†æ³•æŸ¥æ‰¾](https://leetcode-cn.com/problems/binary-search/submissions/)
+äºŒåˆ†æ³•ç¬¬ä¸€ç§å†™æ³•ï¼Œæ¡ä»¶`[left,right]`ï¼Œæ³¨æ„ç‚¹ï¼š
+* while(left<=right)è¦ç”¨<=ï¼Œå› ä¸ºleft==rightæœ‰æ„ä¹‰
+* if(nums[middle]>target)æ—¶rightè¦èµ‹å€¼ä¸ºmiddle-1ï¼Œå› ä¸ºç¿»å¢™è¿™ä¸ªnums[middle]ä¸ä¸€å®šæ˜¯targetï¼Œæ¥ä¸‹æ¥è¦æŸ¥æ‰¾middle-1
 ```c++
 class Solution {
 public:
     int search(vector<int>& nums, int target) {
         int left = 0;
-        int right = nums.size() - 1; // ¶¨ÒåtargetÔÚ×ó±ÕÓÒ±ÕµÄÇø¼äÀï£¬[left, right]
-        while (left <= right) { // µ±left==right£¬Çø¼ä[left, right]ÒÀÈ»ÓĞĞ§£¬ËùÒÔÓÃ <=
-            int middle = left + ((right - left) / 2);// ·ÀÖ¹Òç³ö µÈÍ¬ÓÚ(left + right)/2
+        int right = nums.size() - 1; // å®šä¹‰targetåœ¨å·¦é—­å³é—­çš„åŒºé—´é‡Œï¼Œ[left, right]
+        while (left <= right) { // å½“left==rightï¼ŒåŒºé—´[left, right]ä¾ç„¶æœ‰æ•ˆï¼Œæ‰€ä»¥ç”¨ <=
+            int middle = left + ((right - left) / 2);// é˜²æ­¢æº¢å‡º ç­‰åŒäº(left + right)/2
             if (nums[middle] > target) {
-                right = middle - 1; // target ÔÚ×óÇø¼ä£¬ËùÒÔ[left, middle - 1]
+                right = middle - 1; // target åœ¨å·¦åŒºé—´ï¼Œæ‰€ä»¥[left, middle - 1]
             } else if (nums[middle] < target) {
-                left = middle + 1; // target ÔÚÓÒÇø¼ä£¬ËùÒÔ[middle + 1, right]
+                left = middle + 1; // target åœ¨å³åŒºé—´ï¼Œæ‰€ä»¥[middle + 1, right]
             } else { // nums[middle] == target
-                return middle; // Êı×éÖĞÕÒµ½Ä¿±êÖµ£¬Ö±½Ó·µ»ØÏÂ±ê
+                return middle; // æ•°ç»„ä¸­æ‰¾åˆ°ç›®æ ‡å€¼ï¼Œç›´æ¥è¿”å›ä¸‹æ ‡
             }
         }
-        // Î´ÕÒµ½Ä¿±êÖµ
+        // æœªæ‰¾åˆ°ç›®æ ‡å€¼
         return -1;
     }
 };
 ```
-¶ş·Ö·¨µÚ¶şÖÖĞ´·¨£¬Ìõ¼ş[left,right)£¬×¢Òâµã£º
-* while(left<right>)£¬ÒòÎª´ËÊ±left==rightÎŞÒâÒå
-* if(nums[middle]>target)Ê±right¸üĞÂÎªmiddle£¬ÒòÎªµ±Ç°nums[middle]²»µÈÓÚtarget£¬ĞèÒªÈ¥×÷Çú½±¼ÌĞøÑ°ÕÒ£¬¼´ÏÂÒ»¸ö²éÑ¯Çø¼ä²»»áÈ¥±È½Ïnums[middle]
+äºŒåˆ†æ³•ç¬¬äºŒç§å†™æ³•ï¼Œæ¡ä»¶[left,right)ï¼Œæ³¨æ„ç‚¹ï¼š
+* while(left<right>)ï¼Œå› ä¸ºæ­¤æ—¶left==rightæ— æ„ä¹‰
+* if(nums[middle]>target)æ—¶rightæ›´æ–°ä¸ºmiddleï¼Œå› ä¸ºå½“å‰nums[middle]ä¸ç­‰äºtargetï¼Œéœ€è¦å»ä½œæ›²å¥–ç»§ç»­å¯»æ‰¾ï¼Œå³ä¸‹ä¸€ä¸ªæŸ¥è¯¢åŒºé—´ä¸ä¼šå»æ¯”è¾ƒnums[middle]
 ```c++
-// °æ±¾¶ş
+// ç‰ˆæœ¬äºŒ
 class Solution {
 public:
     int search(vector<int>& nums, int target) {
         int left = 0;
-        int right = nums.size(); // ¶¨ÒåtargetÔÚ×ó±ÕÓÒ¿ªµÄÇø¼äÀï£¬¼´£º[left, right)
-        while (left < right) { // ÒòÎªleft == rightµÄÊ±ºò£¬ÔÚ[left, right)ÊÇÎŞĞ§µÄ¿Õ¼ä£¬ËùÒÔÊ¹ÓÃ <
+        int right = nums.size(); // å®šä¹‰targetåœ¨å·¦é—­å³å¼€çš„åŒºé—´é‡Œï¼Œå³ï¼š[left, right)
+        while (left < right) { // å› ä¸ºleft == rightçš„æ—¶å€™ï¼Œåœ¨[left, right)æ˜¯æ— æ•ˆçš„ç©ºé—´ï¼Œæ‰€ä»¥ä½¿ç”¨ <
             int middle = left + ((right - left) >> 1);
             if (nums[middle] > target) {
-                right = middle; // target ÔÚ×óÇø¼ä£¬ÔÚ[left, middle)ÖĞ
+                right = middle; // target åœ¨å·¦åŒºé—´ï¼Œåœ¨[left, middle)ä¸­
             } else if (nums[middle] < target) {
-                left = middle + 1; // target ÔÚÓÒÇø¼ä£¬ÔÚ[middle + 1, right)ÖĞ
+                left = middle + 1; // target åœ¨å³åŒºé—´ï¼Œåœ¨[middle + 1, right)ä¸­
             } else { // nums[middle] == target
-                return middle; // Êı×éÖĞÕÒµ½Ä¿±êÖµ£¬Ö±½Ó·µ»ØÏÂ±ê
+                return middle; // æ•°ç»„ä¸­æ‰¾åˆ°ç›®æ ‡å€¼ï¼Œç›´æ¥è¿”å›ä¸‹æ ‡
             }
         }
-        // Î´ÕÒµ½Ä¿±êÖµ
+        // æœªæ‰¾åˆ°ç›®æ ‡å€¼
         return -1;
     }
 };
 ```
-### [35.ËÑË÷²åÈëÎ»ÖÃ](https://leetcode-cn.com/problems/search-insert-position/)
+### [35.æœç´¢æ’å…¥ä½ç½®](https://leetcode-cn.com/problems/search-insert-position/)
 ```c++
 class Solution {
 public:
@@ -74,8 +74,8 @@ public:
     }
 };
 ```
-### [34.ÔÚÅÅĞòÊı×éÖĞ²éÕÒÔªËØµÄµÚÒ»¸öºÍ×îºóÒ»¸öÎ»ÖÃ](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
-½âÌâË¼Â·£ºÏÈÓÃ¶ş·Ö·¨ÕÒµ½Ä¿±êÔªËØ£¬È»ºóÕÒµ½¿ªÊ¼Î»ÖÃºÍ½áÊøÎ»ÖÃ
+### [34.åœ¨æ’åºæ•°ç»„ä¸­æŸ¥æ‰¾å…ƒç´ çš„ç¬¬ä¸€ä¸ªå’Œæœ€åä¸€ä¸ªä½ç½®](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
+è§£é¢˜æ€è·¯ï¼šå…ˆç”¨äºŒåˆ†æ³•æ‰¾åˆ°ç›®æ ‡å…ƒç´ ï¼Œç„¶åæ‰¾åˆ°å¼€å§‹ä½ç½®å’Œç»“æŸä½ç½®
 ```c++
 class Solution {
 public:
@@ -104,7 +104,7 @@ public:
     }
     if(!is_existed)
         return res;
-    //ÕÒµ½×îĞ¡Î»ÖÃ
+    //æ‰¾åˆ°æœ€å°ä½ç½®
     int l_mid=mid;
     int r_mid=mid;
     while(l_mid>=0&&nums[l_mid]==target)
@@ -121,7 +121,7 @@ public:
 }
 };
 ```
-### [69.xµÄÆ½·½¸ù](https://leetcode-cn.com/problems/sqrtx/)
+### [69.xçš„å¹³æ–¹æ ¹](https://leetcode-cn.com/problems/sqrtx/)
 ```c++
 class Solution {
 public:
@@ -140,7 +140,7 @@ public:
     }
 };
 ```
-### [267.ÓĞĞ§µÄÍêÈ«Æ½·½Êı](https://leetcode-cn.com/problems/valid-perfect-square/)
+### [267.æœ‰æ•ˆçš„å®Œå…¨å¹³æ–¹æ•°](https://leetcode-cn.com/problems/valid-perfect-square/)
 ```c++
 class Solution {
 public:
@@ -161,9 +161,9 @@ long long left = 0;
     }
 };
 ```
-## ÒÆ³ıÔªËØ-Ë«Ö¸Õë·¨
-### [27.ÒÆ³ıÔªËØ](https://leetcode-cn.com/problems/remove-element/)
-·½·¨Ò»(Ë«Ö¸Õë·¨)£º
+## ç§»é™¤å…ƒç´ -åŒæŒ‡é’ˆæ³•
+### [27.ç§»é™¤å…ƒç´ ](https://leetcode-cn.com/problems/remove-element/)
+æ–¹æ³•ä¸€(åŒæŒ‡é’ˆæ³•)ï¼š
 ```c++
 class Solution {
 public:
@@ -185,7 +185,7 @@ public:
     }
 };
 ```
-·½·¨¶ş£º[Ò»ĞĞ´úÂë](http://c.biancheng.net/view/429.html#:~:text=%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87%E4%BD%BF%E7%94%A8%20vector%20%E7%9A%84%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0,clear%20%28%29%20%E6%9D%A5%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E7%9A%84%E5%85%83%E7%B4%A0%E3%80%82)
+æ–¹æ³•äºŒï¼š[ä¸€è¡Œä»£ç ](http://c.biancheng.net/view/429.html#:~:text=%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87%E4%BD%BF%E7%94%A8%20vector%20%E7%9A%84%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0,clear%20%28%29%20%E6%9D%A5%E5%88%A0%E9%99%A4%E6%89%80%E6%9C%89%E7%9A%84%E5%85%83%E7%B4%A0%E3%80%82)
 ```c++
 class Solution {
 public:
@@ -195,9 +195,9 @@ public:
     }
 };
 ```
-removeº¯Êı·µ»Ø×îºóÒ»¸ö¿ÕÔªËØµü´úÆ÷Î»ÖÃ£¬eraseº¯ÊıÉ¾³ı·¶Î§ÄÚµÄËùÓĞÔªËØ
-![](picture/moveº¯ÊıÊ¾ÒâÍ¼.jpg)
-### [26.É¾³ıÅÅĞòÊı×éÖĞµÄÖØ¸´Ïî](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+removeå‡½æ•°è¿”å›æœ€åä¸€ä¸ªç©ºå…ƒç´ è¿­ä»£å™¨ä½ç½®ï¼Œeraseå‡½æ•°åˆ é™¤èŒƒå›´å†…çš„æ‰€æœ‰å…ƒç´ 
+![](picture/moveå‡½æ•°ç¤ºæ„å›¾.jpg)
+### [26.åˆ é™¤æ’åºæ•°ç»„ä¸­çš„é‡å¤é¡¹](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
 ```c++
 class Solution {
 public:
@@ -211,7 +211,7 @@ public:
     }
 };
 ```
-### [283.ÒÆ¶¯Áã](https://leetcode-cn.com/problems/move-zeroes/)
+### [283.ç§»åŠ¨é›¶](https://leetcode-cn.com/problems/move-zeroes/)
 ```c++
 class Solution {
 public:
@@ -227,7 +227,7 @@ int t=0;
     }
 };
 ```
-### [844.±È½Ïº¬ÍË¸ñµÄ×Ö·û´®](https://leetcode-cn.com/problems/backspace-string-compare/)
+### [844.æ¯”è¾ƒå«é€€æ ¼çš„å­—ç¬¦ä¸²](https://leetcode-cn.com/problems/backspace-string-compare/)
 ```c++
 class Solution {
 public:
@@ -268,18 +268,18 @@ public:
             }
             tp--;
         }
-        if(sp<0||tp<0) break;//Ìø³öÑ­»·
+        if(sp<0||tp<0) break;//è·³å‡ºå¾ªç¯
         if(s[sp--]!=t[tp--])
             return false;
     }
-    //spºÍtpÍ¬Ê±Îª-1±íÊ¾×îºó×Ö·û´®³¤¶ÈÏàÍ¬
+    //spå’ŒtpåŒæ—¶ä¸º-1è¡¨ç¤ºæœ€åå­—ç¬¦ä¸²é•¿åº¦ç›¸åŒ
     if(sp==-1&&tp==-1)
         return true;
     return false;
     }
 };
 ```
-string±ê×¼¿â°æ±¾
+stringæ ‡å‡†åº“ç‰ˆæœ¬
 ```c++
 class Solution {
 public:
@@ -302,7 +302,7 @@ public:
    
 };
 ```
-ÕıÔò±í´ïÊ½°æ±¾
+æ­£åˆ™è¡¨è¾¾å¼ç‰ˆæœ¬
 ```c++
 class Solution {
 public:
@@ -322,7 +322,7 @@ public:
     }
 };
 ```
-### [977.ÓĞĞòÊı×éµÄÆ½·½](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
+### [977.æœ‰åºæ•°ç»„çš„å¹³æ–¹](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
 ```c++
 class Solution {
 public:
@@ -356,8 +356,8 @@ public:
   }
 };
 ```
-### [209.³¤¶È×îĞ¡µÄ×ÓÊı×é](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
-»¬¶¯´°¿Ú½â·¨
+### [209.é•¿åº¦æœ€å°çš„å­æ•°ç»„](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
+æ»‘åŠ¨çª—å£è§£æ³•
 ```c++
 class Solution {
 public:
@@ -381,7 +381,7 @@ public:
     }
 };
 ```
-### [904.Ë®¹û³ÉÀº](https://leetcode-cn.com/problems/fruit-into-baskets/)
+### [904.æ°´æœæˆç¯®](https://leetcode-cn.com/problems/fruit-into-baskets/)
 ```c++
 class Solution {
 public:
@@ -411,7 +411,7 @@ public:
     }
 };
 ```
-### [76.×îĞ¡¸²¸Ç×Ó´®](https://leetcode-cn.com/problems/minimum-window-substring/)
+### [76.æœ€å°è¦†ç›–å­ä¸²](https://leetcode-cn.com/problems/minimum-window-substring/)
 ```c++
 class Solution
 {
@@ -431,19 +431,19 @@ public:
         char c = s[right];
         if (need[c] > 0)
             count--;
-        need[c]--;      //ÏÈ°ÑÓÒ±ßµÄ×Ö·û¼ÓÈë´°¿Ú
-        if (count == 0) //´°¿ÚÖĞÒÑ¾­°üº¬ËùĞèµÄÈ«²¿×Ö·û
+        need[c]--;      //å…ˆæŠŠå³è¾¹çš„å­—ç¬¦åŠ å…¥çª—å£
+        if (count == 0) //çª—å£ä¸­å·²ç»åŒ…å«æ‰€éœ€çš„å…¨éƒ¨å­—ç¬¦
         {
-            while (left < right && need[s[left]] < 0) //Ëõ¼õ´°¿Ú
+            while (left < right && need[s[left]] < 0) //ç¼©å‡çª—å£
             {
                 need[s[left++]]++;
-            }                            //´ËÊ±´°¿Ú·ûºÏÒªÇó
-            if (right - left + 1 < size) //¸üĞÂ´ğ°¸
+            }                            //æ­¤æ—¶çª—å£ç¬¦åˆè¦æ±‚
+            if (right - left + 1 < size) //æ›´æ–°ç­”æ¡ˆ
             {
                 size = right - left + 1;
                 start = left;
             }
-            need[s[left]]++; //×ó±ß½çÓÒÒÆÖ®Ç°ĞèÒªÊÍ·Åneed[s[left]]
+            need[s[left]]++; //å·¦è¾¹ç•Œå³ç§»ä¹‹å‰éœ€è¦é‡Šæ”¾need[s[left]]
             left++;
             count++;
         }
@@ -453,14 +453,14 @@ public:
     }
 };
 ```
-### [59.ÂİĞı¾ØÕóII](https://leetcode-cn.com/problems/spiral-matrix-ii/)
+### [59.èºæ—‹çŸ©é˜µII](https://leetcode-cn.com/problems/spiral-matrix-ii/)
 ```c++
 class Solution
 {
 public:
     vector<vector<int>> generateMatrix(int n)
     {
-    //×ó±ÕÓÒ¿ªÔ­Ôò
+    //å·¦é—­å³å¼€åŸåˆ™
     vector<vector<int>> res(n, vector<int>(n, 0));
     int startX=0,startY=0;
     int num=1;
@@ -487,7 +487,7 @@ public:
         {
             res[i--][j]=num++;
         }
-        //¸ü¸ÄÏÂÒ»È¦µÄÆğµãºÍ±ß½ç
+        //æ›´æ”¹ä¸‹ä¸€åœˆçš„èµ·ç‚¹å’Œè¾¹ç•Œ
         startX++;
         startY++;
         boundary+=2;
@@ -500,7 +500,7 @@ public:
     }
 };
 ```
-### [54.ÂİĞı¾ØÕó](https://leetcode-cn.com/problems/spiral-matrix/)
+### [54.èºæ—‹çŸ©é˜µ](https://leetcode-cn.com/problems/spiral-matrix/)
 ```c++
 class Solution{
 public:
@@ -510,7 +510,7 @@ public:
         int startX=0,startY=0;
         int row=matrix.size();//row=3
         int column=matrix[0].size();//col=4
-        int countdown=row*column;//×Ü¸öÊı£¬ÓÃÀ´½áÊøÑ­»·
+        int countdown=row*column;//æ€»ä¸ªæ•°ï¼Œç”¨æ¥ç»“æŸå¾ªç¯
         int up=0,down=row-1,left=0,right=column-1;
         while(1)
         {
@@ -540,8 +540,8 @@ public:
     }
 };
 ```
-·½Ê½¶ş£º
-![](picture/°´ÕÕĞÎ×´Ä£ÄâÊ¾ÒâÍ¼1.png)
+æ–¹å¼äºŒï¼š
+![](picture/æŒ‰ç…§å½¢çŠ¶æ¨¡æ‹Ÿç¤ºæ„å›¾1.png)
 ```c++
 class Solution{
 public:
@@ -555,21 +555,21 @@ vector<int> spiralOrder(vector<vector<int>> &matrix)
     {
         if (left > right || up > down)
             break;
-        //Ö»ÓĞÒ»ĞĞÊ±£¬°´ĞĞ±éÀú
+        //åªæœ‰ä¸€è¡Œæ—¶ï¼ŒæŒ‰è¡Œéå†
         if (up == down)
         {
             for (int j = left; j <= right; j++)
                 res.push_back(matrix[up][j]);
             break;
         }
-        //Ö»ÓĞÒ»ÁĞÊ±£¬°´ÁĞ±éÀú
+        //åªæœ‰ä¸€åˆ—æ—¶ï¼ŒæŒ‰åˆ—éå†
         if (left == right)
         {
             for (int i = up; i <= down; i++)
                 res.push_back(matrix[i][left]);
             break;
         }
-        //±éÀúµ±Ç°µÄÒ»È¦
+        //éå†å½“å‰çš„ä¸€åœˆ
         for (int j = left; j < right; j++)
             res.push_back(matrix[up][j]);
         for (int i = up; i < down; i++)
@@ -586,4 +586,82 @@ vector<int> spiralOrder(vector<vector<int>> &matrix)
     return res;
 }
 };
+```
+# é“¾è¡¨
+* é“¾è¡¨åœ¨å†…å­˜ä¸­ä¸æ˜¯è¿ç»­åˆ†å¸ƒçš„ï¼Œå®ƒæ˜¯é€šè¿‡æŒ‡é’ˆåŸŸçš„æŒ‡é’ˆæ¥é“¾æ¥å†…å­˜ä¸­çš„å„ä¸ªèŠ‚ç‚¹ã€‚
+é“¾è¡¨å¸¸ç”¨æ–¹å¼
+```c++
+// å•é“¾è¡¨
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode() : val(0), next(nullptr) {}
+    ListNode(int x) : val(x), next(nullptr) {}
+    ListNode(int x, ListNode *next) : val(x), next(next) {}
+};
+//æ•°ç»„æ–¹å¼åˆå§‹åŒ–é“¾è¡¨
+vector<int> v={1,2,6,3,4,5,6};
+    ListNode *head=new ListNode();
+    ListNode *prehead=head;
+    for(const decltype(v[0])& i:v)
+    {
+        prehead->next=new ListNode(i);
+        prehead=prehead->next;
+    }
+    head=head->next;
+};
+```
+## [203.ç§»é™¤é“¾è¡¨å…ƒç´ ](https://leetcode-cn.com/problems/remove-linked-list-elements/)
+```c++
+//è™šæ‹Ÿå¤´ç»“ç‚¹æ–¹å¼
+class Solution {
+public:
+    ListNode* removeElements(ListNode* head, int val) {
+        ListNode* dummyHead = new ListNode(0); // è®¾ç½®ä¸€ä¸ªè™šæ‹Ÿå¤´ç»“ç‚¹
+        dummyHead->next = head; // å°†è™šæ‹Ÿå¤´ç»“ç‚¹æŒ‡å‘headï¼Œè¿™æ ·æ–¹é¢åé¢åšåˆ é™¤æ“ä½œ
+        ListNode* cur = dummyHead;
+        while (cur->next != NULL) {
+            if(cur->next->val == val) {
+                ListNode* tmp = cur->next;
+                cur->next = cur->next->next;
+                delete tmp;
+            } else {
+                cur = cur->next;
+            }
+        }
+        head = dummyHead->next;
+        delete dummyHead;
+        return head;
+    }
+};
+
+//ç›´æ¥ä½¿ç”¨åŸæ¥çš„é“¾è¡¨
+class Solution {
+public:
+    ListNode* removeElements(ListNode* head, int val) {
+        // åˆ é™¤å¤´ç»“ç‚¹
+        while (head != NULL && head->val == val) { // æ³¨æ„è¿™é‡Œä¸æ˜¯if
+            ListNode* tmp = head;
+            head = head->next;
+            delete tmp;
+        }
+
+        // åˆ é™¤éå¤´ç»“ç‚¹
+        ListNode* cur = head;
+        while (cur != NULL && cur->next!= NULL) {
+            if (cur->next->val == val) {
+                ListNode* tmp = cur->next;
+                cur->next = cur->next->next;
+                delete tmp;
+            } else {
+                cur = cur->next;
+            }
+        }
+        return head;
+    }
+};
+```
+## [707.è®¾è®¡é“¾è¡¨](https://leetcode-cn.com/problems/design-linked-list/)
+```c++
+
 ```
