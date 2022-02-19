@@ -663,5 +663,291 @@ public:
 ```
 ## [707.设计链表](https://leetcode-cn.com/problems/design-linked-list/)
 ```c++
+class MyLinkedList {
+public:
+    // 定义链表节点结构体
+    struct Node {
+        int val;
+        Node* next;
+        Node(int val):val(val), next(nullptr){}
+    };
 
+    // 初始化链表
+    MyLinkedList() {
+        dummyhead = new Node(0); // 这里定义的头结点 是一个虚拟头结点，而不是真正的链表头结点
+        size = 0;
+    }
+
+    // 获取到第index个节点数值，如果index是非法数值直接返回-1， 注意index是从0开始的，第0个节点就是头结点
+    int get(int index) {
+        if (index > (size - 1) || index < 0) {
+            return -1;
+        }
+        Node* cur = dummyhead->next;
+        while(index--){ // 如果--index 就会陷入死循环
+            cur = cur->next;
+        }
+        return cur->val;
+    }
+
+    // 在链表最前面插入一个节点，插入完成后，新插入的节点为链表的新的头结点
+    void addAtHead(int val) {
+        Node* newNode = new Node(val);
+        newNode->next = dummyhead->next;
+        dummyhead->next = newNode;
+        size++;
+    }
+
+    // 在链表最后面添加一个节点
+    void addAtTail(int val) {
+        Node* newNode = new Node(val);
+        Node* cur = dummyhead;
+        while(cur->next != nullptr){
+            cur = cur->next;
+        }
+        cur->next = newNode;
+        size++;
+    }
+
+    // 在第index个节点之前插入一个新节点，例如index为0，那么新插入的节点为链表的新头节点。
+    // 如果index 等于链表的长度，则说明是新插入的节点为链表的尾结点
+    // 如果index大于链表的长度，则返回空
+    void addAtIndex(int index, int val) {
+        if (index > size) {
+            return;
+        }
+        Node* newNode = new Node(val);
+        Node* cur = dummyhead;
+        while(index--) {
+            cur = cur->next;
+        }
+        newNode->next = cur->next;
+        cur->next = newNode;
+        size++;
+    }
+
+    // 删除第index个节点，如果index 大于等于链表的长度，直接return，注意index是从0开始的
+    void deleteAtIndex(int index) {
+        if (index >= size || index < 0) {
+            return;
+        }
+        Node* cur = dummyhead;
+        while(index--) {
+            cur = cur ->next;
+        }
+        Node* tmp = cur->next;
+        cur->next = cur->next->next;
+        delete tmp;
+        size--;
+    }
+
+    // 打印链表
+    void printLinkedList() {
+        Node* cur = dummyhead;
+        while (cur->next != nullptr) {
+            cout << cur->next->val << " ";
+            cur = cur->next;
+        }
+        cout << endl;
+    }
+private:
+    int size;
+    Node* dummyhead;
+
+};
+```
+## [206.反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+```c++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* temp; // 保存cur的下一个节点
+        ListNode* cur = head;
+        ListNode* pre = NULL;
+        while(cur) {
+            temp = cur->next;  // 保存一下 cur的下一个节点，因为接下来要改变cur->next
+            cur->next = pre; // 翻转操作
+            // 更新pre 和 cur指针
+            pre = cur;
+            cur = temp;
+        }
+        return pre;
+    }
+};
+```
+## [19.删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
+```c++
+//递归法
+class Solution {
+public:
+    int cur=0;
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+       if(!head) return NULL;
+       head->next = removeNthFromEnd(head->next,n);
+       cur++;
+       if(n==cur) return head->next;
+       return head;
+    }
+};
+//虚拟头结点+双指针
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode* dummyHead = new ListNode(0);
+        dummyHead->next = head;
+        ListNode* slow = dummyHead;
+        ListNode* fast = dummyHead;
+        while(n-- && fast != NULL) {
+            fast = fast->next;
+        }
+        fast = fast->next; // fast再提前走一步，因为需要让slow指向删除节点的上一个节点
+        while (fast != NULL) {
+            fast = fast->next;
+            slow = slow->next;
+        }
+        slow->next = slow->next->next;
+        return dummyHead->next;
+    }
+};
+//双指针
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        if(!head | !head -> next) return NULL;
+        ListNode * fast = head, *slow = head;
+        for(int i = 0; i < n; i++){
+            fast = fast -> next;
+        }
+        if(!fast){
+            return head -> next;    
+        }
+        
+        while(fast -> next){
+            fast = fast -> next;
+            slow = slow -> next;
+        }
+        slow -> next = slow -> next -> next;
+        return head;
+    }
+};
+```
+## [24.两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
+```c++
+//虚拟头结点
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        ListNode* dummyHead = new ListNode(0); // 设置一个虚拟头结点
+        dummyHead->next = head; // 将虚拟头结点指向head，这样方面后面做删除操作
+        ListNode* cur = dummyHead;
+        while(cur->next != nullptr && cur->next->next != nullptr) {
+            ListNode* tmp = cur->next; // 记录临时节点
+            ListNode* tmp1 = cur->next->next->next; // 记录临时节点
+
+            cur->next = cur->next->next;    // 步骤一
+            cur->next->next = tmp;          // 步骤二
+            cur->next->next->next = tmp1;   // 步骤三
+
+            cur = cur->next->next; // cur移动两位，准备下一轮交换
+        }
+        return dummyHead->next;
+    }
+};
+//递归法，只看2个元素
+ListNode swapPairs(ListNode head)
+{
+	 if(head == null || head.next == null){
+            return head;
+        }
+        ListNode next = head.next;
+        head.next = swapPairs(next.next);
+        next.next = head;
+        return next;
+}
+```
+![](picture/24.两两交换链表中的节点.png)
+
+## [面试题 02.07. 链表相交](https://leetcode-cn.com/problems/intersection-of-two-linked-lists-lcci/)
+```c++
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        ListNode *A = headA, *B = headB;
+        while (A != B) {
+            A = A != nullptr ? A->next : headB;
+            B = B != nullptr ? B->next : headA;
+        }
+        return A;
+    }
+};
+作者：jyd
+链接：https://leetcode-cn.com/problems/intersection-of-two-linked-lists-lcci/solution/mian-shi-ti-0207-lian-biao-xiang-jiao-sh-b8hn/
+```
+
+## [142.环形链表II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+```c++
+//链表地址判断法
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        while(head) {
+            if(!less<ListNode *>()(head, head->next)) {
+                return head->next;
+            }
+            head = head->next;
+        }
+        return nullptr;
+    }
+};
+```
+![](picture/142.环形链表快慢指针.png)
+```c++
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode* slow=head,*fast=head;
+	while(fast&&fast->next)
+	{
+		fast=fast->next->next;
+		slow=slow->next;
+		if(fast==slow)
+		{
+			ListNode* left=head;
+			ListNode* right=fast;
+			while(left!=right)
+			{
+				left=left->next;
+				right=right->next;
+			}
+			return left;
+		}
+	}
+	return NULL;
+    }
+};
+```
+# 哈希表
+## [242.有效的字母异位词](https://leetcode-cn.com/problems/valid-anagram/)
+```c++
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        int record[26] = {0};
+        for (int i = 0; i < s.size(); i++) {
+            // 并不需要记住字符a的ASCII，只要求出一个相对数值就可以了
+            record[s[i] - 'a']++;
+        }
+        for (int i = 0; i < t.size(); i++) {
+            record[t[i] - 'a']--;
+        }
+        for (int i = 0; i < 26; i++) {
+            if (record[i] != 0) {
+                // record数组如果有的元素不为零0，说明字符串s和t 一定是谁多了字符或者谁少了字符。
+                return false;
+            }
+        }
+        // record数组所有元素都为零0，说明字符串s和t是字母异位词
+        return true;
+    }
+};
 ```
