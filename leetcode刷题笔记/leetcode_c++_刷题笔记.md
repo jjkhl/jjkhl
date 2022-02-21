@@ -1118,3 +1118,28 @@ bool isHappy(int n)
 };
 ```
 ## [287.寻找重复数](https://leetcode-cn.com/problems/find-the-duplicate-number/)
+```c++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+    int len=nums.size();
+	int slow=0,fast=0;
+	while(true)
+	{
+		fast=nums[nums[fast]];
+		slow=nums[slow];
+		if(slow==fast)
+		{
+			fast=0;
+			while(nums[slow]!=nums[fast])
+			{
+				fast=nums[fast];
+				slow=nums[slow];
+			}
+			return nums[fast];
+		}
+	}
+}
+};
+```
+## [1两数之和](https://leetcode-cn.com/problems/two-sum/)
