@@ -900,7 +900,9 @@ public:
     }
 };
 ```
+参考网址：https://programmercarl.com/0142.%E7%8E%AF%E5%BD%A2%E9%93%BE%E8%A1%A8II.html#%E6%80%9D%E8%B7%AF
 ![](picture/142.环形链表快慢指针.png)
+
 ```c++
 class Solution {
 public:
@@ -951,3 +953,168 @@ public:
     }
 };
 ```
+## [383.赎金信](https://leetcode-cn.com/problems/ransom-note/)
+```c++
+class Solution {
+public:
+    bool canConstruct(string ransomNote, string magazine) {
+    int a[26] = { 0 };
+	for (int i = 0; i < magazine.size(); i++)
+		++a[magazine[i] - 'a'];
+	for (int i = 0; i < ransomNote.size(); i++)
+	{
+		--a[ransomNote[i] - 'a'];
+		if (a[ransomNote[i] - 'a'] < 0)
+			return false;
+	}
+	return true;
+    }
+};
+```
+## [49.字母异位词分组](https://leetcode-cn.com/problems/group-anagrams/)
+```c++
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs)
+{
+	vector<vector<string>> res;
+	map<string,vector<string>> s_map;
+	for(int i=0;i<strs.size();i++)
+	{
+		string key=strs[i];
+		sort(key.begin(),key.end());
+		s_map[key].push_back(strs[i]);
+	}
+	for(auto iter=s_map.begin();iter!=s_map.end();iter++)
+	{
+		res.push_back(iter->second);
+	}
+	return res;
+}
+};
+```
+## [438.找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string/)
+```c++
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        vector<int> res; /* 存放这些子串的起始索引startPos */
+        int restCount = p.size(); /* 维护一个固定长度的窗口, 长度= len(p), restCount: 剩下的待匹配字符的数量 */
+        int pFreq[26]; /* 模拟一个计数哈希表 */
+        memset(pFreq, 0, sizeof(pFreq));
+        for (int i = 0; i < p.size(); i++)
+            pFreq[p[i] - 'a']++;
+        int sFreq[26]; /* 模拟一个计数哈希表, sFreq: s中处于滑动窗口内的字符的频次 */
+        memset(sFreq, 0, sizeof(sFreq));        
+        for (int i = 0; i < s.size(); i++)
+        {
+            char c = s[i];
+            sFreq[c - 'a']++;
+            if (sFreq[c - 'a'] <= pFreq[c - 'a']) /* 匹配到了一个待匹配的字符 */
+                restCount--;
+            if (i >= p.size()) /* 删除最前面的1个字符 */
+            {
+                char h = s[i - p.size()];
+                sFreq[h - 'a']--;
+                if (sFreq[h - 'a'] < pFreq[h - 'a'])
+                    restCount++;
+            }
+            // check is anagram
+            if (restCount == 0) /* i - startPos + 1 = len(p) => startPos = i - len(p) + 1 */
+                res.push_back(i - p.size() + 1);
+        }
+        return res;
+    }
+};
+```
+## [349. 两个数组的交集](https://leetcode-cn.com/problems/intersection-of-two-arrays/)
+```c++
+//unordered_set版本
+class Solution {
+public:
+    vector<int> intersection(vector<int>& nums1, vector<int>& nums2) {
+    unordered_set<int> res_set;
+	unordered_set<int> uset(nums1.begin(),nums1.end());
+	for(const int& num:nums2)
+	{
+		if(uset.find(num)!=uset.end())
+			res_set.emplace(num);
+	}
+	return vector<int>(res_set.begin(),res_set.end());
+    }
+};
+//int数组版本，时间更短，内存更小
+class Solution {
+public:
+    vector<int> intersection(vector<int>& nums1, vector<int>& nums2) {
+vector<int> ans;
+	int f1[1000] = { 0 };
+	int f2[1000] = { 0 };
+	for (int i = 0; i < nums1.size(); i++)
+		f1[nums1[i]]++;
+	for (int i = 0; i < nums2.size(); i++)
+		f2[nums2[i]]++;
+	for (int i = 0; i < 1000; i++)
+	{
+		if (f1[i]&&f2[i])
+			ans.push_back(i);
+	}
+	return ans;
+    }
+};
+```
+## [350.两个数组的交集II](https://leetcode-cn.com/problems/intersection-of-two-arrays-ii/)
+```c++
+class Solution {
+public:
+    vector<int> intersect(vector<int>& nums1, vector<int>& nums2) {
+    vector<int> res;
+	int a[1001]={0};
+	for(int i=0;i<nums1.size();i++)
+		a[nums1[i]]++;
+	for(int j=0;j<nums2.size();j++)
+	{
+		if(a[nums2[j]]>0)
+		{
+			res.emplace_back(nums2[j]);
+			a[nums2[j]]--;
+		}
+	}
+	return res;
+    }
+};
+```
+## [202.快乐数](https://leetcode-cn.com/problems/happy-number/)
+```c++
+//参考英文网站热评第一。这题可以用快慢指针的思想去做，有点类似于检测是否为环形链表那道题
+//如果给定的数字最后会一直循环重复，那么快的指针（值）一定会追上慢的指针（值），也就是
+//两者一定会相等。如果没有循环重复，那么最后快慢指针也会相等，且都等于1。
+class Solution {
+public:
+    int squareSum(int m)
+{
+	int res = 0;
+	while (m > 0)
+	{
+		res += (m % 10) * (m % 10);
+		m /= 10;
+	}
+	return res;
+}
+bool isHappy(int n)
+{
+	int fast = n;
+	int slow = n;
+	do
+	{
+		slow = squareSum(slow);
+		fast = squareSum(fast);
+		fast = squareSum(fast);
+	} while (slow != fast);
+	if (fast == 1)
+		return true;
+	return false;
+}
+};
+```
+## [287.寻找重复数](https://leetcode-cn.com/problems/find-the-duplicate-number/)
