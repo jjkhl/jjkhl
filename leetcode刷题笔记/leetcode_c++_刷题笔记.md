@@ -1,10 +1,8 @@
 # C++基础知识点
-* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是**1**，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是**1**。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=**4**;在64位机器上，一个指针占8字节，此时sizeof=**8**。
-* 
-* 
+* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是**1**，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是**1**。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=<strong style="color:red">4</strong>;在64位机器上，一个指针占8字节，此时sizeof=<strong style="color:red">8</strong>
 # 剑指OFFER
 ## 第二章
-### 面试题1：复制运算函数
+### 面试题1：赋值运算函数
 为CMyString的声明添加赋值运算符函数
 ```c++
 class CMyString
@@ -52,6 +50,17 @@ CMyString& CMyString::operator=(const CMyString& str)
 }
 ```
 [测试代码](CodingInterviewChinese2/01_AssignmentOperator/AssignmentOperator.cpp)
+## 实现Singleton模式
+方案1:加同步锁前后两次判断实例是否存在
+```c++
+public: sealed class Singleton
+{
+private:
+Singleton{}
+static object syncObj=new object();
+static Sin
+}
+```
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
