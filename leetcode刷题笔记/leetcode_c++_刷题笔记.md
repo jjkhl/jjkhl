@@ -51,7 +51,7 @@ CMyString& CMyString::operator=(const CMyString& str)
     return *this;
 }
 ```
-[测试代码](Cod)
+[测试代码](CodingInterviewChinese2/01_AssignmentOperator/AssignmentOperator.cpp)
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
@@ -1234,5 +1234,23 @@ int result=0;
 ```
 ### [383. 赎金信](https://leetcode-cn.com/problems/ransom-note/)
 ```c++
-`
-``
+class Solution {
+public:
+    bool canConstruct(string ransomNote, string magazine) {
+    int a[26] = { 0 };
+	for (int i = 0; i < magazine.size(); i++)
+		++a[magazine[i] - 'a'];
+	for (int i = 0; i < ransomNote.size(); i++)
+	{
+		--a[ransomNote[i] - 'a'];
+		if (a[ransomNote[i] - 'a'] < 0)
+			return false;
+	}
+	return true;
+    }
+};
+```
+### [15.三数之和](https://leetcode-cn.com/problems/3sum/)
+```c++
+
+```
