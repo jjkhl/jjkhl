@@ -1,8 +1,57 @@
 # C++基础知识点
-
+* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是**1**，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是**1**。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=**4**;在64位机器上，一个指针占8字节，此时sizeof=**8**。
+* 
+* 
 # 剑指OFFER
-## 第二章C++
+## 第二章
+### 面试题1：复制运算函数
+为CMyString的声明添加赋值运算符函数
+```c++
+class CMyString
+{
+public:
+    CMyString(char* pData=nullptr);
+    CMyString(const CMYString& str);
+    ~CMyString(void);
+private:
+    char* m_pData;
+};
+```
+方案一：
+```c++
+CMyString& CMyString::operator=(const CMyString& str)
+	{
+		if(this==&str)
+			return *this;//this和str不能为同一个实例，否则当前空间会被delete
+		delete[] m_pData;
+		m_pData=nullptr;
 
+		m_pData=new char[strlen(m_pData)+1];//分配失败抛出异常怎么办
+		strcpy(m_pData,str.m_pData);
+
+		return *this;
+	}
+```
+最佳方案：先创建一个临时实例，在交换临时实例和原来实例。
+```c++
+CMyString& CMyString::operator=(const CMyString& str)
+{
+    //第一步：创建temp临时对象，让temp.m_pData指向str.m_pData的地址(A)
+    //第二步：创建data_t临时对象(地址B)，让它指向temp.m_pData的地址(A)
+    //第三步：让地址A(temp.m_pData地址)指向m_pData的地址(C)
+    //此时：data_t(地址A,str的地址)，temp.mpData(地址C,原this指针地址),m_pData(地址B,原data_t的地址,指向str.m_pData)
+    //最后结束时，临时对象都会被释放掉，即地址C被delete，地址C因为是只读属性而无法进行操作。
+    if(this!=&str)
+    {
+        CMyString temp(str);
+        char* data_t=temp.m_pData;//相当于new空间
+        temp.m_pData=m_pData;//相当于delete[] m_pData;
+        m_pData=data_t;
+    }
+    return *this;
+}
+```
+[测试代码](Cod)
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
@@ -1165,3 +1214,25 @@ public:
     }
 };
 ```
+### [454.四数相加II](https://leetcode-cn.com/problems/4sum-ii/)
+```c++
+class Solution {
+public:
+    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {
+int result=0;
+	unordered_map<int,int> umap;
+	for (int a : nums1)
+		for (int b : nums2)
+			umap[a + b]++;
+	for (int c : nums3)
+		for (int d : nums4)
+			if (umap.find(0 - (c + d)) != umap.end())
+				result += umap[0 - (c + d)];
+	return result;
+    }
+};
+```
+### [383. 赎金信](https://leetcode-cn.com/problems/ransom-note/)
+```c++
+`
+``
