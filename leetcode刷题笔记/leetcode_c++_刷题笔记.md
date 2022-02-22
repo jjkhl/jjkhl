@@ -1,4 +1,9 @@
-刷题网址：https://programmercarl.com/
+# C++基础知识点
+
+# 剑指OFFER
+## 第二章C++
+
+# [代码随想录](https://programmercarl.com/)
 # [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
 ## 二分查找
@@ -1119,6 +1124,7 @@ bool isHappy(int n)
 ```
 ## [287.寻找重复数](https://leetcode-cn.com/problems/find-the-duplicate-number/)
 ```c++
+//数组中存在环
 class Solution {
 public:
     int findDuplicate(vector<int>& nums) {
@@ -1143,3 +1149,19 @@ public:
 };
 ```
 ## [1两数之和](https://leetcode-cn.com/problems/two-sum/)
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        std::unordered_map <int,int> map;
+        for(int i = 0; i < nums.size(); i++) {
+            auto iter = map.find(target - nums[i]);
+            if(iter != map.end()) {
+                return {iter->second, i};
+            }
+            map[nums[i]]=i;
+        }
+        return {};
+    }
+};
+```
