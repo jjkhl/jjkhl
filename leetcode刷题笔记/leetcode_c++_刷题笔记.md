@@ -1,12 +1,12 @@
 # C++基础知识点
-* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是**1**，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是**1**。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=<strong style="color:red">4</strong>;在64位机器上，一个指针占8字节，此时sizeof=<strong style="color:red">8</strong>
+* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是<strong style="color:red">1</strong>，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是<strong style="color:red">1</strong>system("pause");system("pause");system("pause");。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=<strong style="color:red">4</strong>;在64位机器上，一个指针system("pause");system("pause");system("pause");8字节，此时sizeof=<strong style="color:resystem("pause");d">8</strong>
 # 剑指OFFER
 ## 第二章
 ### 面试题1：赋值运算函数
 为CMyString的声明添加赋值运算符函数
 ```c++
 class CMyString
-{
+{system("pause");system("pause");system("pause");
 public:
     CMyString(char* pData=nullptr);
     CMyString(const CMYString& str);
@@ -50,17 +50,140 @@ CMyString& CMyString::operator=(const CMyString& str)
 }
 ```
 [测试代码](CodingInterviewChinese2/01_AssignmentOperator/AssignmentOperator.cpp)
-## 实现Singleton模式
-方案1:加同步锁前后两次判断实例是否存在
+## 面试题2：实现[Singleton模式](https://www.cnblogs.com/sunchaothu/p/10389842.html#%E4%B8%80%E4%BB%80%E4%B9%88%E6%98%AF%E5%8D%95%E4%BE%8B)
+方案1:有缺陷的懒汉式
+内容：只有使用时才实例化对象，如果不被调用就不会占用内存
+问题：
+1.线程安全——加锁解决
+2.内存泄漏：无delete对象——使用共享指针
 ```c++
-public: sealed class Singleton
-{
+#include <iostream>
+// version1:
+// with problems below:
+// 1. thread is not safe
+// 2. memory leak
+
+class Singleton{
 private:
-Singleton{}
-static object syncObj=new object();
-static Sin
+    Singleton(){
+        std::cout<<"constructor called!"<<std::endl;
+    }
+    Singleton(Singleton&)=delete;
+    Singleton& operator=(const Singleton&)=delete;
+    static Singleton* m_instance_ptr;
+public:
+    ~Singleton(){
+        std::cout<<"destructor called!"<<std::endl;
+    }
+    static Singleton* get_instance(){
+        if(m_instance_ptr==nullptr){
+              m_instance_ptr = new Singleton;
+        }
+        return m_instance_ptr;
+    }
+    void use() const { std::cout << "in use" << std::endl; }
+};
+
+Singleton* Singleton::m_instance_ptr = nullptr;
+
+int main(){
+    Singleton* instance = Singleton::get_instance();
+    Singleton* instance_2 = Singleton::get_instance();
+    return 0;
 }
+//输出结果:constructor called!
 ```
+方案2：线程安全、内存安全的懒汉式单例
+问题：使用智能指针会要求用户也得使用智能指针，非必要不应该提出这种约束; 使用锁也有开销; 同时代码量也增多了，实现上我们希望越简单越好。还有更加严重的问题，在某些平台（与编译器和指令集架构有关），双检锁会失效！
+```c++
+#include <iostream>
+#include <memory> // shared_ptr
+#include <mutex>  // mutex
+
+// version 2:
+// with problems below fixed:
+// 1. thread is safe now
+// 2. memory doesn't leak
+
+class Singleton{
+public:
+    typedef std::shared_ptr<Singleton> Ptr;
+    ~Singleton(){
+        std::cout<<"destructor called!"<<std::endl;
+    }
+    Singleton(Singleton&)=delete;
+    Singleton& operator=(const Singleton&)=delete;
+    static Ptr get_instance(){
+
+        // "double checked lock"
+        if(m_instance_ptr==nullptr){
+            std::lock_guard<std::mutex> lk(m_mutex);
+            if(m_instance_ptr == nullptr){
+              m_instance_ptr = std::shared_ptr<Singleton>(new Singleton);
+            }
+        }
+        return m_instance_ptr;
+    }
+
+
+private:
+    Singleton(){
+        std::cout<<"constructor called!"<<std::endl;
+    }
+    static Ptr m_instance_ptr;
+    static std::mutex m_mutex;
+};
+
+// initialization static variables out of class
+Singleton::Ptr Singleton::m_instance_ptr = nullptr;
+std::mutex Singleton::m_mutex;
+
+int main(){
+    Singleton::Ptr instance = Singleton::get_instance();
+    Singleton::Ptr instance2 = Singleton::get_instance();
+    return 0;
+}
+//输出：constructor called!
+//     destructor called!
+```
+方案3：局部静态变量
+解释：如果当变量在初始化的时候，并发同时进入声明语句，并发线程将会阻塞等待初始化结束。这样保证了并发线程在获取静态局部变量的时候一定是初始化过的，且<strong style="color:red">只有一次初始化</strong>，所以具有线程安全性，而c++静态变量的生存期是从声明到程序结束。
+```c++
+#include <iostream>
+
+class Singleton
+{
+public:
+    ~Singleton(){
+        std::cout<<"destructor called!"<<std::endl;
+    }
+    Singleton(const Singleton&)=delete;
+    Singleton& operator=(const Singleton&)=delete;
+    static Singleton& get_instance(){//返回引用才能获取对象
+        static Singleton instance;
+        return instance;
+
+    }
+private:
+    Singleton(){
+        std::cout<<"constructor called!"<<std::endl;
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    Singleton& instance_1 = Singleton::get_instance();
+    Singleton& instance_2 = Singleton::get_instance();
+    return 0;
+}
+//输出：constructor called!
+//     destructor called!
+```
+## 面试题3：[数组中重复的数字](https://www.nowcoder.com/practice/6fe361ede7e54db1b84adc81d09d8524?tpId=13&tqId=1375279&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+```c++
+
+```
+
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
@@ -1294,4 +1417,8 @@ public:
 	return res;
     }
 };
+```
+### [18.四数之和](https://leetcode-cn.com/problems/4sum/)
+```c++
+
 ```
