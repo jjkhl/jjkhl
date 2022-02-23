@@ -179,9 +179,25 @@ int main(int argc, char *argv[])
 //输出：constructor called!
 //     destructor called!
 ```
-## 面试题3：[数组中重复的数字](https://www.nowcoder.com/practice/6fe361ede7e54db1b84adc81d09d8524?tpId=13&tqId=1375279&ru=/ta/coding-interviews&qru=/ta/coding-interviews/question-ranking)
+## 面试题3：[数组中重复的数字](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/)
+[思路地址](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/solution/mian-shi-ti-03-shu-zu-zhong-zhong-fu-de-shu-zi-yua/)
 ```c++
-
+class Solution {
+public:
+    int findRepeatNumber(vector<int>& nums) {
+        int i = 0;
+        while(i < nums.size()) {
+            if(nums[i] == i) {
+                i++;
+                continue;
+            }
+            if(nums[nums[i]] == nums[i])
+                return nums[i];
+            swap(nums[i],nums[nums[i]]);
+        }
+        return -1;
+    }
+};
 ```
 
 # [代码随想录](https://programmercarl.com/)
