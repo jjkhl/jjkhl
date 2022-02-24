@@ -199,7 +199,113 @@ public:
     }
 };
 ```
+## 面试题4：[二维数组中的查找](https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof/)
+```c++
+//左下角查找
+class Solution {
+public:
+    bool findNumberIn2DArray(vector<vector<int>>& matrix, int target) {
+        int i = matrix.size() - 1, j = 0;
+        while(i >= 0 && j < matrix[0].size())
+        {
+            if(matrix[i][j] > target) i--;
+            else if(matrix[i][j] < target) j++;
+            else return true;
+        }
+        return false;
+    }
+};
+//右上角查找
+class Solution {
+public:
+    bool findNumberIn2DArray(vector<vector<int>>& matrix, int target) {
+        if(matrix.size()==0||matrix[0].size()==0) return false;
+        int i=0,j=matrix[0].size()-1;
+        while(i<matrix.size()&&j>=0)
+        {
+            if(target>matrix[i][j])
+                ++i;
+            else if(target<matrix[i][j])
+                --j;
+            else return true;
+        }
+        return false;
+    }
+};
+```
+## 面试题5：[替换空格](https://leetcode-cn.com/problems/ti-huan-kong-ge-lcof/)
+```c++
+//库函数的使用
+class Solution {
+public:
+    string replaceSpace(string s) {
+        int size = s.size();
+        for(int i=0;i<size;i++)
+        {
+            if(s[i]==' ')
+            {
+                s.insert(i,"%20");
+                i+=2;
+                s.erase(i+1,1);
+                size+=2;
 
+                }
+        }
+        return s;
+    }
+};
+//原数组改动
+class Solution {
+public:
+    string replaceSpace(string s) {
+int count=0,len=s.size();
+    for(char c:s)
+        if(c==' ')
+            ++count;
+    s.resize(len+2*count);
+    for(int i=len-1,j=s.size()-1;i<j;i--,j--)
+    {
+        if(s[i]==' ')
+        {
+            s[j-2]='%';
+            s[j-1]='2';
+            s[j]='0';
+            j-=2;
+        }
+        else
+            s[j]=s[i];
+    }
+    return s;
+    }
+};
+```
+## 面试题6：[从头到尾打印链表](https://leetcode-cn.com/problems/cong-wei-dao-tou-da-yin-lian-biao-lcof/)
+```c++
+//时间换空间：先反转链表
+class Solution {
+public:
+    vector<int> reversePrint(ListNode* head) {
+    vector<int> res;
+    if(head==NULL) return res;
+    ListNode* pre=NULL;
+    ListNode* cur=head;
+    ListNode* tmp;
+    while(cur)
+    {
+        tmp=cur->next;
+        cur->next=pre;
+        pre=cur;
+        cur=tmp;
+    }
+    while(pre)
+    {
+        res.emplace_back(pre->val);
+        pre=pre->next;
+    }
+    return res;
+    }
+};
+```
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
@@ -1436,5 +1542,69 @@ public:
 ```
 ### [18.四数之和](https://leetcode-cn.com/problems/4sum/)
 ```c++
+class Solution {
+public:
+    vector<vector<int>> fourSum(vector<int>& nums, int target) {
+        int len = nums.size();
+        vector<vector<int>> ve;
+        if(len < 4) {
+            return ve;
+        }
 
+        sort(nums.begin(),nums.end());
+
+        for(int i = 0;i < len - 3;i++) {
+            if(i > 0 && nums[i] == nums[i - 1]) {
+                continue;
+            }
+
+            if(nums[i] + nums[i + 1] + nums[i+ 2] + nums[i + 3] > target) {
+                break;
+            }
+
+            if (nums[i] + nums[len - 3] + nums[len - 2] + nums[len - 1] < target) {
+                continue;
+            }
+
+            for(int j = i + 1;j < len - 2;j++) {
+                if(j > i + 1 && nums[j] == nums[j - 1]) {
+                    continue;
+                }
+
+                if (nums[i] + nums[j] + nums[j + 1] + nums[j + 2] > target) {
+                    break;
+                }
+
+                if (nums[i] + nums[j] + nums[len - 2] + nums[len - 1] < target) {
+                    continue;
+                }
+
+                int left = j + 1;
+                int right = len - 1;
+
+                while (left < right) {
+                    int sum = nums[i] + nums[j] + nums[left] + nums[right];
+                    if (sum == target) {
+                        ve.push_back({nums[i],nums[j],nums[left],nums[right]});
+                        while (left < right && nums[left] == nums[left + 1]) {
+                            left++;
+                        }
+                        left++;
+                        while (left < right && nums[right] == nums[right - 1]) {
+                            right--;
+                        }
+                        right--;
+                    } else if (sum < target) {
+                        left++;
+                    } else {
+                        right--;
+                    }
+                }
+            }
+        }
+
+        return ve;
+
+    }
+};
 ```
