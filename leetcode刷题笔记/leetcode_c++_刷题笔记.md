@@ -490,7 +490,7 @@ long long left = 0;
     }
 };
 ```
-### 移除元素-双指针法
+### 双指针法
 #### [27.移除元素](https://leetcode-cn.com/problems/remove-element/)
 方法一(双指针法)：
 ```c++
@@ -1628,4 +1628,177 @@ public:
 
     }
 };
+```
+## 栈和队列
+### [232.用栈实现队列]
+```c++
+class MyQueue {
+public:
+    stack<int> stIn;
+    stack<int> stOut;
+    /** Initialize your data structure here. */
+    MyQueue() {
+
+    }
+    /** Push element x to the back of queue. */
+    void push(int x) {
+        stIn.push(x);
+    }
+
+    /** Removes the element from in front of queue and returns that element. */
+    int pop() {
+        // 只有当stOut为空的时候，再从stIn里导入数据（导入stIn全部数据）
+        if (stOut.empty()) {
+            // 从stIn导入数据直到stIn为空
+            while(!stIn.empty()) {
+                stOut.push(stIn.top());
+                stIn.pop();
+            }
+        }
+        int result = stOut.top();
+        stOut.pop();
+        return result;
+    }
+
+    /** Get the front element. */
+    int peek() {
+        int res = this->pop(); // 直接使用已有的pop函数
+        stOut.push(res); // 因为pop函数弹出了元素res，所以再添加回去
+        return res;
+    }
+
+    /** Returns whether the queue is empty. */
+    bool empty() {
+        return stIn.empty() && stOut.empty();
+    }
+};
+```
+### [225. 用队列实现栈](https://leetcode-cn.com/problems/implement-stack-using-queues/)
+```c++
+class MyStack
+{
+private:
+    queue<int> que1;
+    queue<int> que2;
+public:
+    MyStack()
+    {
+    }
+
+    void push(int x)
+    {
+        que1.emplace(x);
+    }
+
+    int pop()
+    {
+        int size=que1.size();
+        --size;
+        while(size--)
+        {
+            que2.emplace(que1.front());
+            que1.pop();
+        }
+        int res=que1.front();
+        que1.pop();
+        que1=que2;
+        while(!que2.empty())
+            que2.pop();
+        return res;
+    }
+
+    int top()
+    {
+        return que1.back();
+    }
+
+    bool empty()
+    {
+        return que1.empty();
+    }
+};
+```
+### [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        stack<int> st;
+        for (int i = 0; i < s.size(); i++) {
+            if (s[i] == '(') st.push(')');
+            else if (s[i] == '{') st.push('}');
+            else if (s[i] == '[') st.push(']');
+            // 第三种情况：遍历字符串匹配的过程中，栈已经为空了，没有匹配的字符了，说明右括号没有找到对应的左括号 return false
+            // 第二种情况：遍历字符串匹配的过程中，发现栈里没有我们要匹配的字符。所以return false
+            else if (st.empty() || st.top() != s[i]) return false;
+            else st.pop(); // st.top() 与 s[i]相等，栈弹出元素
+        }
+        // 第一种情况：此时我们已经遍历完了字符串，但是栈不为空，说明有相应的左括号没有右括号来匹配，所以return false，否则就return true
+        return st.empty();
+    }
+};
+```
+### [1047. 删除字符串中的所有相邻重复项](https://leetcode-cn.com/problems/remove-all-adjacent-duplicates-in-string/)
+```c++
+class Solution {
+public:
+    string removeDuplicates(string S) {
+        string result;
+        for(char s : S) {
+            if(result.empty() || result.back() != s) {
+                result.push_back(s);
+            }
+            else {
+                result.pop_back();
+            }
+        }
+        return result;
+    }
+};
+```
+### [150.逆波兰表达式求值](https://leetcode-cn.com/problems/evaluate-reverse-polish-notation/)
+```c++
+class Solution {
+public:
+    int evalRPN(vector<string>& tokens) {
+    stack<int> st;
+    for(const string& i:tokens)
+    {
+        if(i=="+")
+        {
+            int a=st.top();
+            st.pop();
+            st.top()+=a;
+        }
+        else if(i=="-")
+        {
+            int a=st.top();
+            st.pop();
+            st.top()-=a;
+        }
+        else if(i=="*")
+        {
+            int a=st.top();
+            st.pop();
+            st.top()*=a;
+        }
+        else if(i=="/")
+        {
+            int a=st.top();
+            st.pop();
+            st.top()/=a;
+        }
+        else
+        {
+            st.emplace(stoi(i));
+        }
+
+    }
+    return st.top();
+    }
+};
+```
+### [239.滑动窗口最大值](https://leetcode-cn.com/problems/sliding-window-maximum/)
+```c++
+
 ```
