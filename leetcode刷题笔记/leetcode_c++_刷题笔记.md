@@ -1817,5 +1817,119 @@ public:
 ```
 ### [347.前K个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements/)
 ```c++
+//最佳解法
+class Solution {
+public:
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+ sort(nums.begin(), nums.end());
+ if(nums.size()==1)return {nums[0]};
+        vector<pair<int, int>> s;
+        s.push_back({});
+        int count = 1;
+        for (int i = 0; i < nums.size() - 1; ++i)
+        {
+            s.back().second = nums[i];
+            if (nums[i + 1] == nums[i])
+            {
+                ++count;
+            }
+            else
+            {
+                s.back().first = count;
+                count = 1;
+                s.push_back({1,nums[i+1]});
+            }
+        }if(count>1)s.back().first=count;
+        sort(s.rbegin(), s.rend());
+        vector<int> res;
+        for (int i = 0; i < k; ++i)
+            res.push_back(s[i].second);
+        return res;
+    }
+};
 
+//堆+快排
+// 时间复杂度：O(nlogk)
+// 空间复杂度：O(n)
+//例如我们在写快排的cmp函数的时候，return left>right 就是从大到小，return left<right 就是从小到大。优先级队列的定义正好反过来了。
+class Solution {
+public:
+    // 小顶堆
+    class mycomparison {
+    public:
+        bool operator()(const pair<int, int>& lhs, const pair<int, int>& rhs) {
+            return lhs.second > rhs.second;
+        }
+    };
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        // 要统计元素出现频率
+        unordered_map<int, int> map; // map<nums[i],对应出现的次数>
+        for (int i = 0; i < nums.size(); i++) {
+            map[nums[i]]++;
+        }
+
+        // 对频率排序
+        // 定义一个小顶堆，大小为k
+        priority_queue<pair<int, int>, vector<pair<int, int>>, mycomparison> pri_que;
+
+        // 用固定大小为k的小顶堆，扫面所有频率的数值
+        for (unordered_map<int, int>::iterator it = map.begin(); it != map.end(); it++) {
+            pri_que.push(*it);
+            if (pri_que.size() > k) { // 如果堆的大小大于了K，则队列弹出，保证堆的大小一直为k
+                pri_que.pop();
+            }
+        }
+
+        // 找出前K个高频元素，因为小顶堆先弹出的是最小的，所以倒序来输出到数组
+        vector<int> result(k);
+        for (int i = k - 1; i >= 0; i--) {
+            result[i] = pri_que.top().first;
+            pri_que.pop();
+        }
+        return result;
+
+    }
+};
+```
+### [71.简化路径](https://leetcode-cn.com/problems/simplify-path/)
+```c++
+//以'/'为分界线完strs中添加对应文件名
+class Solution {
+public:
+    string simplifyPath(string path) {
+    stringstream ss(path);
+    vector<string> strs;
+    strs.reserve(20);
+    string curr;
+    while (getline(ss, curr, '/'))
+    {
+        if (curr != "." && curr != "")
+        {
+            if (curr != "..")
+            {
+                strs.push_back(curr);
+            }
+            else if (!strs.empty())
+            {
+                strs.pop_back();
+            }
+        }
+    }
+
+    if (!strs.empty())
+    {
+        string res = "";
+        for (string str : strs)
+        {
+            res=res+'/'+str;
+        }
+        return res;
+    }
+    else
+    {
+        // 为空，直接返回 "/"
+        return "/";
+    }
+    }
+};
 ```
