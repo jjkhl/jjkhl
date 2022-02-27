@@ -1933,3 +1933,48 @@ public:
     }
 };
 ```
+## 二叉树
+二叉树的创建：
+```c++
+struct TreeNode
+{
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode():val(0),left(nullptr),right(nullptr){}
+    TreeNode(int x):val(x),left(nullptr),right(nullptr){}
+    TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+};
+
+TreeNode* createTree(vector<int> a,int i)
+{
+    if(a[i]=='#') return NULL;
+    TreeNode* res = new TreeNode(a[i]);
+	int lnode = 2 * i + 1;
+	int rnode = 2 * i + 2;
+	if (lnode < a.size())res->left = createTree(a,lnode);
+	if (rnode < a.size()) res->right = createTree(a, rnode);
+		return res;
+}
+```
+
+### [144.二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
+```c++
+//递归法
+class Solution {
+public:
+void traversal(TreeNode* cur,vector<int>& v)
+{
+    if(cur==NULL) return;
+    v.emplace_back(cur->val);
+    traversal(cur->left,v);
+    traversal(cur->right,v);
+}
+vector<int> preorderTraversal(TreeNode* root)
+{
+    vector<int> res;
+    traversal(root,res);
+    return res;
+}
+};
+```
