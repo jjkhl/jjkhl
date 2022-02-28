@@ -1,5 +1,5 @@
 # C++基础知识点
-* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是<strong style="color:red">1</strong>，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是<strong style="color:red">1</strong>system("pause");system("pause");system("pause");。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=<strong style="color:red">4</strong>;在64位机器上，一个指针system("pause");system("pause");system("pause");8字节，此时sizeof=<strong style="color:resystem("pause");d">8</strong>
+* 定义一个空的类型，里面没有任何成员变量和成员函数，对该类型求sizeof，得到的结果是<strong style="color:red">1</strong>，因为空类型的实例中不包含任何信息，但是当我们声明该类型的实例时，它必须在内存中占有一定的空间。在Visual Studio中，每个空类型的实例占用1字节空间。此外，构造函数和析构函数只需要知道函数地址即可，即这些函数的地址只与类型相关，而与类型的实例无关，所以此时得到的结果还是<strong style="color:red">1</strong>。但是将析构函数标记为虚函数后，c++编译器就会为该类型生成虚函数表，并在该类型的每一个实例中添加一个直线虚函数表的指针，在32位机器上，一个指针占4字节，此时sizeof=<strong style="color:red">4</strong>;在64位机器上，一个指针8字节，此时sizeof=<strong style="color:red">8</strong>
 # 剑指OFFER
 ## 第二章
 ### 面试题1：赋值运算函数
@@ -1957,18 +1957,18 @@ TreeNode* createTree(vector<int> a,int i)
 		return res;
 }
 ```
-
-### [144.二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
+[二叉树遍历的统一写法](https://programmercarl.com/%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E7%BB%9F%E4%B8%80%E8%BF%AD%E4%BB%A3%E6%B3%95.html#%E8%BF%AD%E4%BB%A3%E6%B3%95%E5%89%8D%E5%BA%8F%E9%81%8D%E5%8E%86)：
 ```c++
+//前序遍历：中左右
 //递归法
 class Solution {
 public:
 void traversal(TreeNode* cur,vector<int>& v)
 {
     if(cur==NULL) return;
-    v.emplace_back(cur->val);
-    traversal(cur->left,v);
-    traversal(cur->right,v);
+    v.emplace_back(cur->val);//中
+    traversal(cur->left,v);//左
+    traversal(cur->right,v);//右
 }
 vector<int> preorderTraversal(TreeNode* root)
 {
@@ -1976,5 +1976,76 @@ vector<int> preorderTraversal(TreeNode* root)
     traversal(root,res);
     return res;
 }
+};
+//迭代统一写法
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> result;
+        stack<TreeNode*> st;
+        if (root != NULL) st.push(root);
+        while (!st.empty()) {
+            TreeNode* node = st.top();
+            if (node != NULL) {
+                st.pop();
+                if (node->right) st.push(node->right);  // 右
+                if (node->left) st.push(node->left);    // 左
+                st.push(node);                          // 中
+                st.push(NULL);
+            } else {
+                st.pop();
+                node = st.top();
+                st.pop();
+                result.push_back(node->val);
+            }
+        }
+        return result;
+    }
+};
+```
+### [102.二叉树的层序遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/)
+```c++
+//递归，前序遍历
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> ans;
+        pre(root, 0, ans);
+        return ans;
+    }
+    
+    void pre(TreeNode *root, int depth, vector<vector<int>> &ans) {
+        if (!root) return ;
+        if (depth >= ans.size())
+            ans.push_back(vector<int> {});
+        ans[depth].push_back(root->val);
+        pre(root->left, depth + 1, ans);
+        pre(root->right, depth + 1, ans);
+    }
+};
+//迭代法
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+       queue<TreeNode*> que;
+       vector<vector<int>> res;
+       if(root!=NULL)
+       que.push(root);
+       while(!que.empty())
+       {
+           int size=que.size();
+           vector<int> vec;
+           for(int i=0;i<size;i++)
+           {
+               TreeNode *node=que.front();
+               que.pop();
+               vec.push_back(node->val);
+               if(node->left) que.push(node->left);
+               if(node->right) que.push(node->right);
+           }
+           res.push_back(vec);
+       }
+       return res;
+    }
 };
 ```
