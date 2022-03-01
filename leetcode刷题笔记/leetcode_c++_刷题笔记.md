@@ -2014,7 +2014,7 @@ public:
         return ans;
     }
     
-    void pre(TreeNode *root, int depth, vector<vector<int>> &ans) {
+    void bfs(TreeNode *root, int depth, vector<vector<int>> &ans) {
         if (!root) return ;
         if (depth >= ans.size())
             ans.push_back(vector<int> {});
@@ -2049,3 +2049,203 @@ public:
     }
 };
 ```
+### [199.二叉树的右视图](https://leetcode-cn.com/problems/binary-tree-right-side-view/)
+```c++
+//深度优先dfs递归法
+class Solution {
+public:
+    vector<int> res;
+    void dfs(TreeNode* cur,int depth)
+    {
+        if(!cur) return;
+        if(depth==res.size())
+            res.emplace_back(cur->val);
+        dfs(cur->right,depth+1);
+        dfs(cur->left,depth+1);
+    }
+    vector<int> rightSideView(TreeNode* root) {
+        dfs(root,0);
+        return res;
+    }
+};
+//广度优先(bsf)迭代法
+class Solution {
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        queue<TreeNode*> que;
+        vector<int> res;
+        if(root) que.push(root);
+        while(!que.empty())
+        {
+            int size=que.size();
+            for(int i=0;i<size;i++)
+            {
+                if(i==size-1)
+                    res.emplace_back(que.front()->val);
+                if(que.front()->left) que.push(que.front()->left);
+                if(que.front()->right) que.push(que.front()->right);
+                que.pop();
+            }
+        }
+        return res;
+    }
+};
+```
+### [226.翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/comments/)
+```c++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if(!root) return NULL;
+        TreeNode *rightTree=root->right;
+        root->right=invertTree(root->left);
+        root->left=invertTree(rightTree);
+        return root;
+    }
+};
+
+
+利用后序遍历
+class Solution {
+public:
+TreeNode* invertTree(TreeNode* root)
+{
+    if(!root) return NULL;
+    TreeNode* leftNode=invertTree(root->left);
+    TreeNode* rightNode=invertTree(root->right);
+    root->right=leftNode;
+    root->left=rightNode;
+    return root;
+}
+};
+
+利用层次遍历
+   class Solution {
+        public:
+         TreeNode invertTree(TreeNode root) {
+            // 层次遍历--直接左右交换即可
+            if (root == null) return null;
+            Queue<TreeNode> queue = new LinkedList<>();
+            queue.offer(root);
+            while (!queue.isEmpty()){
+                TreeNode node = queue.poll();
+                TreeNode rightTree = node.right;
+                node.right = node.left;
+                node.left = rightTree;
+                if (node.left != null){
+                    queue.offer(node.left);
+                }
+                if (node.right != null){
+                    queue.offer(node.right);
+                }
+            }
+            return root;
+        }
+    }
+```
+### [101.对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)
+```c++
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+    if(!root) return true;
+    queue<TreeNode*> que;
+    que.emplace(root->left);
+    que.emplace(root->right);
+    while(!que.empty())
+    {
+        TreeNode* leftNode=que.front();
+        que.pop();
+        TreeNode* rightNode=que.front();
+        que.pop();
+        if(!leftNode&&!rightNode) continue;
+        if(!leftNode||!rightNode||leftNode->val!=rightNode->val)
+            return false;
+        que.emplace(leftNode->left);
+        que.emplace(rightNode->right);
+        que.emplace(leftNode->right);
+        que.emplace(rightNode->left);
+    }
+    return true;
+    }
+};
+```
+### [104.二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/submissions/)
+```c++
+//递归精简
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+if(!root) return 0;
+    return 1+max(maxDepth(root->right),maxDepth(root->left));
+    }
+};
+//迭代层序遍历
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+    int depth=0;
+    queue<TreeNode*> que;
+    if(root) que.push(root);
+    else return depth;
+    while(!que.empty())
+    {
+        int size=que.size();
+        for(int i=0;i<size;i++)
+        {
+            TreeNode* node=que.front();
+            que.pop();
+            if(node->left) que.push(node->left);
+            if(node->right) que.push(node->right);
+        }
+        depth++;
+    }
+    return depth;
+    }
+};
+```
+### [111.二叉树的最小深度](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/)
+```c++
+//层序遍历，当左节点和右节点都为NULL时停止
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        int depth=0;
+    queue<TreeNode*> que;
+    if(!root) return depth;
+    que.emplace(root);
+    while(!que.empty())
+    {
+        int size=que.size();
+        depth++;
+        for(int i=0;i<size;i++)
+        {
+            TreeNode* node=que.front();
+            que.pop();
+            if(node->left) que.push(node->left);
+            if(node->right) que.push(node->right);
+            if(!node->left&&!node->right) return depth;
+        }
+    }
+    return depth;
+    }
+};
+
+//极简递归法
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if (!root)
+        return 0;
+    int left = minDepth(root->left);
+    int right = minDepth(root->right);
+    //表示左节点(右节点)有NULL指针，则返回右节点(左节点)的深度+1；否则取1+min(left,right)
+    // return (left && right) ? 1 + min(left, right) : 1 + left + right;
+    if(left==0||right==0)
+        return 1+left+right;
+    else
+        return 1+min(left,right);
+    }
+};
+```
+
