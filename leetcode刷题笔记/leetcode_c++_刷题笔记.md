@@ -2248,4 +2248,43 @@ public:
     }
 };
 ```
-
+### [222.完全二叉树的节点个数](https://leetcode-cn.com/problems/count-complete-tree-nodes/)
+```c++
+//迭代法(前序遍历)
+class Solution {
+public:
+    int countNodes(TreeNode* root) {
+stack<TreeNode *> st;
+    int count = 0;
+    if (!root)
+        return count;
+    st.push(root);
+    while (!st.empty())
+    {
+        TreeNode *node = st.top();
+        if (node)
+        {
+            st.pop();
+            if (node->right)
+            {
+                st.push(node->right);
+            }
+            if (node->left)
+            {
+                st.push(node->left);
+            }       
+            st.push(node);
+            st.push(NULL);
+        }
+        else
+        {
+            st.pop();
+            node=st.top();
+            st.pop();
+            count++;
+        }
+    }
+    return count;
+    }
+};
+```
