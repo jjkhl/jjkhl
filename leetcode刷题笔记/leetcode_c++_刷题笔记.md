@@ -2288,3 +2288,298 @@ stack<TreeNode *> st;
     }
 };
 ```
+### [110.平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
+```c++
+class Solution {
+public:
+    // 返回以该节点为根节点的二叉树的高度，如果不是二叉搜索树了则返回-1
+    int getHeight(TreeNode* node) {
+        if (node == NULL) {
+            return 0;
+        }
+        int leftHeight = getHeight(node->left);
+        if (leftHeight == -1) return -1;
+        int rightHeight = getHeight(node->right);
+        if (rightHeight == -1) return -1;
+        return abs(leftHeight - rightHeight) > 1 ? -1 : 1 + max(leftHeight, rightHeight);
+    }
+    bool isBalanced(TreeNode* root) {
+        return getHeight(root) == -1 ? false : true;
+    }
+};
+```
+### [257. 二叉树的所有路径](https://leetcode-cn.com/problems/binary-tree-paths/)
+```c++
+//迭代法
+class Solution {
+public:
+    vector<string> binaryTreePaths(TreeNode* root) {
+        stack<TreeNode*> st;
+    stack<string> pathst;
+    vector<string> res;
+    if(!root) return res;
+    st.push(root);
+    pathst.push(to_string(root->val));
+    while(!st.empty())
+    {
+        TreeNode* node=st.top();
+        st.pop();
+        string path=pathst.top();
+        pathst.pop();
+        if(node->left==NULL&&node->right==NULL)
+            res.emplace_back(path);
+        if(node->right)
+        {
+            st.push(node->right);
+            pathst.push(path+"->"+to_string(node->right->val));
+        }
+        if(node->left)
+        {
+            st.push(node->left);
+            pathst.push(path+"->"+to_string(node->left->val));
+        }
+    }
+    return res;
+    }
+};
+//递归法
+class Solution
+{
+public:
+    void traversal(TreeNode* node,string path,vector<string>& res)
+    {
+        path+=to_string(node->val);
+        if(!node->left&&!node->right)
+        {
+            res.push_back(path);
+            return;
+        }
+        if(node->left) traversal(node->left,path+"->",res);
+        if(node->right) traversal(node->right,path+"->",res);
+    }
+    vector<string> binaryTreePaths(TreeNode* root)
+    {
+        vector<string> res;
+        traversal(root,"",res);
+        return res;
+    }
+};
+```
+### [100.相同的树](https://leetcode-cn.com/problems/same-tree/)
+```c++
+//迭代法
+class Solution {
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+    queue<TreeNode *> que;
+    if (!p&&!q)
+        return true;
+    if(!p||!q) return false;
+    que.push(p);
+    que.push(q);
+    while(!que.empty())
+    {
+        TreeNode* pNode=que.front();
+        que.pop();
+        TreeNode* qNode=que.front();
+        que.pop();
+        if(!pNode&&!qNode)
+            continue;
+        if((!pNode||!qNode||(pNode->val!=qNode->val)))
+            return false;
+        que.push(pNode->left);
+        que.push(qNode->left);
+        que.push(pNode->right);
+        que.push(qNode->right);
+    }
+    return true;
+    }
+};
+//递归法
+bool compare(TreeNode* left,TreeNode* right)
+{
+    if(!left&&!right) return true;
+    if(!left||!right) return false;
+    if(left->val!=right->val) return false;
+    return compare(left->left,right->left)&&compare(left->right,right->right);
+}
+bool isSameTree(TreeNode *p, TreeNode *q)
+{
+    return compare(p,q);
+}
+```
+### [572.另一棵树的子树](https://leetcode-cn.com/problems/subtree-of-another-tree/)
+```c++
+class Solution {
+public:
+bool compare(TreeNode* root,TreeNode* subRoot)
+{
+    if(root==NULL&&subRoot==NULL)
+        return true;
+    if(root==NULL||subRoot==NULL)
+        return false;
+    if(root->val!=subRoot->val)
+        return false;
+    return compare(root->left,subRoot->left)&&compare(root->right,subRoot->right);
+}
+    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+    if(!root)  return false;
+    if(!subRoot) return true;
+    return compare(root,subRoot)||isSubtree(root->left,subRoot)||isSubtree(root->right,subRoot);
+    }
+};
+```
+### [404.左叶子之和](https://leetcode-cn.com/problems/sum-of-left-leaves/)
+```c++
+//递归法
+class Solution {
+public:
+    int sumOfLeftLeaves(TreeNode* root) {
+        if (root == NULL) return 0;
+        int midValue = 0;
+        if (root->left != NULL && root->left->left == NULL && root->left->right == NULL) {
+            midValue = root->left->val;
+        }
+        return midValue + sumOfLeftLeaves(root->left) + sumOfLeftLeaves(root->right);
+    }
+};
+//迭代法
+class Solution {
+public:
+    int sumOfLeftLeaves(TreeNode* root) {
+        stack<TreeNode*> st;
+        if (root == NULL) return 0;
+        st.push(root);
+        int result = 0;
+        while (!st.empty()) {
+            TreeNode* node = st.top();
+            st.pop();
+            if (node->left != NULL && node->left->left == NULL && node->left->right == NULL) {
+                result += node->left->val;
+            }
+            if (node->right) st.push(node->right);
+            if (node->left) st.push(node->left);
+        }
+        return result;
+    }
+};
+```
+### [513.找树左下角的值](https://leetcode-cn.com/problems/find-bottom-left-tree-value/)
+```c++
+//迭代法
+class Solution {
+public:
+    int findBottomLeftValue(TreeNode* root) {
+        queue<TreeNode*> que;
+        if (root != NULL) que.push(root);
+        int result = 0;
+        while (!que.empty()) {
+            int size = que.size();
+            for (int i = 0; i < size; i++) {
+                TreeNode* node = que.front();
+                que.pop();
+                if (i == 0) result = node->val; // 记录最后一行第一个元素
+                if (node->left) que.push(node->left);
+                if (node->right) que.push(node->right);
+            }
+        }
+        return result;
+    }
+};
+//递归法
+class Solution {
+public:
+int maxleftValue=0;
+int maxLen=INT_MIN;
+    void traversal(TreeNode* root,int leftLen)
+{
+    if(!root->left&&!root->right)
+    {
+        if(leftLen>maxLen)
+        {
+            maxLen=leftLen;
+            maxleftValue=root->val;
+        }
+        return;
+    }
+    if(root->left)
+        traversal(root->left,leftLen+1);
+    if(root->right)
+        traversal(root->right,leftLen+1);
+}
+int findBottomLeftValue(TreeNode* root)
+{
+    traversal(root,0);
+    return maxleftValue;
+}
+};
+```
+### [112.路径总和](https://leetcode-cn.com/problems/path-sum/)
+```c++
+//递归法
+class Solution {
+public:
+bool hasPathSum(TreeNode *root, int targetSum)
+{
+    if(root==NULL) return false;
+    if(!root->left&&!root->right&&targetSum==root->val)
+        return true;
+    return hasPathSum(root->left,targetSum-root->val)||hasPathSum(root->right,targetSum-root->val);
+}
+};
+//迭代法
+class solution {
+public:
+    bool haspathsum(treenode* root, int sum) {
+        if (root == null) return false;
+        // 此时栈里要放的是pair<节点指针，路径数值>
+        stack<pair<treenode*, int>> st;
+        st.push(pair<treenode*, int>(root, root->val));
+        while (!st.empty()) {
+            pair<treenode*, int> node = st.top();
+            st.pop();
+            // 如果该节点是叶子节点了，同时该节点的路径数值等于sum，那么就返回true
+            if (!node.first->left && !node.first->right && sum == node.second) return true;
+
+            // 右节点，压进去一个节点的时候，将该节点的路径数值也记录下来
+            if (node.first->right) {
+                st.push(pair<treenode*, int>(node.first->right, node.second + node.first->right->val));
+            }
+
+            // 左节点，压进去一个节点的时候，将该节点的路径数值也记录下来
+            if (node.first->left) {
+                st.push(pair<treenode*, int>(node.first->left, node.second + node.first->left->val));
+            }
+        }
+        return false;
+    }
+};
+```
+### [113. 路径总和ii](https://leetcode-cn.com/problems/path-sum-ii/)
+```c++
+class Solution {
+public:
+   void traversal(TreeNode* cur,int count,vector<int> v,vector<vector<int>>& res)
+{
+    if(!cur) return;
+    v.emplace_back(cur->val);
+    if(!cur->left&&!cur->right&&count==cur->val)
+    {
+        res.emplace_back(v);
+    }
+    traversal(cur->left,count-cur->val,v,res);
+    traversal(cur->right,count-cur->val,v,res);
+    v.pop_back();
+}
+vector<vector<int>> pathSum(TreeNode *root, int targetSum)
+{
+    vector<vector<int>> res;
+    traversal(root,targetSum,vector<int>{},res);
+    return res;
+}
+};
+```
+### [106.从中序与后序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
+```c++
+
+```
