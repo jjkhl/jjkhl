@@ -2624,5 +2624,41 @@ public:
 ```
 ### [105.从前序和中序遍历构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
 ```c++
+class Solution {
+public:
+TreeNode* traversal(vector<int>& preorder,int pBegin,int pEnd,vector<int>& inorder,int iBegin,int iEnd)
+{
+    //左闭右开
+    if(pBegin>=pEnd||iBegin>=pEnd) return NULL;
+    TreeNode* root=new TreeNode(preorder[pBegin]);
+    int rootValue=root->val;
+    int index=iBegin;
+    while(inorder[index++]!=rootValue);
+    index--;
+    
+    //分割中序区间,[iLeftBegin,iLeftEnd)
+    int iLeftBegin=iBegin;
+    int iLeftEnd=index;
+    //[iRightBegin,iRightEnd)
+    int iRightBegin=index+1;
+    int iRightEnd=iEnd;
+    //得到左子树和右子树节点个数
+    int LeftSize=iLeftEnd-iLeftBegin;
+    int RightSize=iRightBegin-iRightEnd;
+    //分割前序区间,[pLeftBegin,pLeftEnd)
+    int pLeftBegin=pBegin+1;
+    int pLeftEnd=pLeftBegin+LeftSize;
+    //[pRightBegin,pRightEnd)
+    int pRightBegin=pLeftEnd;
+    int pRightEnd=pEnd;
 
+    root->left=traversal(preorder,pLeftBegin,pLeftEnd,inorder,iLeftBegin,iLeftEnd);
+    root->right=traversal(preorder,pRightBegin,pRightEnd,inorder,iRightBegin,iRightEnd);
+    return root;
+}
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        return traversal(preorder,0,preorder.size(),inorder,0,inorder.size());
+    }
+};
 ```
+  
