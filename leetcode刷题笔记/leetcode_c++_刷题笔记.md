@@ -2661,4 +2661,221 @@ TreeNode* traversal(vector<int>& preorder,int pBegin,int pEnd,vector<int>& inord
     }
 };
 ```
-  
+> 代码随想录二叉树部分第20题及以后待做
+
+## 回溯算法
+模板
+```c++
+void backtracking(参数) {
+    if (终止条件) {
+        存放结果;
+        return;
+    }
+
+    for (选择：本层集合中元素（树中节点孩子的数量就是集合的大小）) {
+        处理节点;
+        backtracking(路径，选择列表); // 递归
+        回溯，撤销处理结果
+    }
+}
+```
+### [77.组合](https://leetcode-cn.com/problems/combinations/)
+```c++
+//剪枝优化
+class Solution {
+private:
+vector<vector<int>> res;
+vector<int> path;
+void backtracking(int n, int k, int start)
+{
+	if (path.size() == k)
+	{
+		res.push_back(path);
+		return;
+	}
+	for (int i = start; i <= n-(k-path.size())+1; i++)
+	{
+		path.push_back(i);
+		backtracking(n, k, i + 1);
+		path.pop_back();
+	}
+}
+public:
+    vector<vector<int>> combine(int n, int k) {
+     backtracking(n, k, 1);
+	return res;
+    }
+};
+```
+### [216.组合总和III](https://leetcode-cn.com/problems/combination-sum-iii/)
+```c++
+class Solution {
+public:
+vector<vector<int>> res;
+vector<int> path;
+int sum=0;
+void backtrack(int k,int n,int start)
+{
+    if(sum==n&&k==path.size())
+    {
+        res.emplace_back(path);
+        return;
+    }
+    if(path.size()>k||sum>n)
+    {
+        return;
+    }
+    for(int i=start;i<=9;i++)
+    {
+        path.emplace_back(i);
+        sum+=i;
+        backtrack(k,n,i+1);
+        sum-=i;
+        path.pop_back();
+    }
+}
+vector<vector<int>> combinationSum3(int k, int n)
+{
+    backtrack(k,n,1);
+    return res;
+}
+};
+```
+### [17.电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
+```c++
+class Solution {
+public:
+unordered_map<int,string> umap={
+{2,"abc"},{3,"def"},{4,"ghi"},{5,"jkl"},
+{6,"mno"},{7,"pqrs"},{8,"tuv"},{9,"wxyz"}
+};
+vector<string> res;
+string path;
+void backtrack(const string& digits,int index)
+{  
+    if(index==digits.size())
+    {
+        res.emplace_back(path);
+        return;
+    }
+    string letters=umap[digits[index]-'0'];
+    for(int i=0;i<letters.size();i++)
+    {
+        path+=letters[i];
+        backtrack(digits,index+1);
+        path.pop_back();
+    }
+}
+vector<string> letterCombinations(string digits)
+{
+    if(digits.size()==0) return res;
+    backtrack(digits,0);
+    return res;
+}
+};
+```
+### [39.组合](https://leetcode-cn.com/problems/combination-sum/)
+```c++
+class Solution {
+private:
+    vector<vector<int>> result;
+    vector<int> path;
+    void backtracking(vector<int>& candidates, int target, int sum, int startIndex) {
+        if (sum == target) {
+            result.push_back(path);
+            return;
+        }
+
+        // 如果 sum + candidates[i] > target 就终止遍历
+        for (int i = startIndex; i < candidates.size() && sum + candidates[i] <= target; i++) {
+            sum += candidates[i];
+            path.push_back(candidates[i]);
+            backtracking(candidates, target, sum, i);
+            sum -= candidates[i];
+            path.pop_back();
+
+        }
+    }
+public:
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        result.clear();
+        path.clear();
+        sort(candidates.begin(), candidates.end()); // 需要排序
+        backtracking(candidates, target, 0, 0);
+        return result;
+    }
+};
+```
+### [40.组合总和II](https://leetcode-cn.com/problems/combination-sum-ii/)
+```c++
+class Solution {
+public:
+vector<vector<int>> res;
+vector<int> path;
+void backtrack(vector<int>& candidates,int target,int sum,int index)
+{
+    if(sum==target)
+    {
+        res.push_back(path);
+        return;
+    }
+    for(int i=index;i<candidates.size()&&sum<target;i++)
+    {
+        if(i>index&&candidates[i]==candidates[i-1])
+            continue;
+        path.push_back(candidates[i]);
+        backtrack(candidates,target,sum+candidates[i],i+1);
+        path.pop_back();
+    }
+}
+vector<vector<int>> combinationSum2(vector<int>& candidates,int target)
+{
+    sort(candidates.begin(),candidates.end());
+    backtrack(candidates,target,0,0);
+    return res;
+}
+};
+```
+### [131.分割回文串](https://leetcode-cn.com/problems/palindrome-partitioning/)
+```c++
+class Solutions
+{
+    vector<vector<string>> res;
+vector<string> path;
+bool isHuiWen(const string &s, int start, int end)
+{
+    for (int i = start, j = end; i < j; i++, j--)
+    {
+        if (s[i] != s[j])
+            return false;
+    }
+    return true;
+}
+void backtrack(const string &s, int index)
+{
+    if (index >= s.size())
+    {
+        res.push_back(path);
+        return;
+    }
+    for (int i = index; i < s.size(); i++)
+    {
+        if (isHuiWen(s, index, i))
+        {
+            path.push_back(s.substr(index, i - index + 1));
+        }
+        else
+            continue;
+        backtrack(s, i + 1);
+        path.pop_back();
+    }
+}
+vector<vector<string>> partition(string s)
+{
+    res.clear();
+    path.clear();
+    backtrack(s, 0);
+    return res;
+}
+};
+```
