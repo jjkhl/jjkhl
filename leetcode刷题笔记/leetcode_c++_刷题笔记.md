@@ -325,8 +325,310 @@ public:
      return res;
     }
 };
-
 ```
+
+## 面试题7：[重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
+```c++
+//前序和中序遍历重构二叉树
+class Solution {
+public:
+TreeNode* helpBuildTree(
+vector<int>& preorder,int  preBegin,int preEnd,
+vector<int>& inorder,int inBegin,int inEnd)
+{
+    if(preBegin>=preEnd||inBegin>=inEnd) return NULL;
+    TreeNode* root=new TreeNode(preorder[preBegin]);
+    int index=inBegin;
+    while(inorder[index]!=root->val)
+    {
+        ++index;
+    }
+    int inLeftBegin=inBegin;
+    int inLeftEnd=index;
+    
+    int leftSize=inLeftEnd-inBegin;
+
+    int inRightBegin=index+1;
+    int inRightEnd=inEnd;
+
+    int rightSize=inRightBegin-inRightEnd;
+
+    int preLeftBegin=preBegin+1;
+    int preLeftEnd=preLeftBegin+leftSize;
+
+    int preRightBegin=preLeftEnd;
+    int preRightEnd=preEnd;
+
+    root->left=helpBuildTree(preorder,preLeftBegin,preLeftEnd,inorder,inLeftBegin,inLeftEnd);
+    root->right=helpBuildTree(preorder,preRightBegin,preRightEnd,inorder,inRightBegin,inRightEnd);
+    return root;
+}
+TreeNode *buildTree(vector<int> &preorder, vector<int> &inorder)
+{
+    return helpBuildTree(preorder,0,preorder.size(),inorder,0,inorder.size());
+}
+};
+```
+## 面试题8：[二叉树的下一个结点](https://www.nowcoder.com/practice/9023a0c988684a53960365b889ceaf5e?tpId=13&tqId=23451&ru=/practice/6fe361ede7e54db1b84adc81d09d8524&qru=/ta/coding-interviews/question-ranking)
+```c++
+/*
+struct TreeLinkNode {
+    int val;
+    struct TreeLinkNode *left;
+    struct TreeLinkNode *right;
+    struct TreeLinkNode *next;
+    TreeLinkNode(int x) :val(x), left(NULL), right(NULL), next(NULL) {
+
+    }
+};
+*/
+//next表示父节点
+class Solution {
+public:
+    TreeLinkNode* GetNext(TreeLinkNode* pNode) {
+        if (!pNode)
+            return NULL;
+        // 若该结点存在右子树
+        if (pNode->right) {
+            TreeLinkNode* rightChild = pNode->right; 
+            // 寻找右子树上的最左孩子
+            while (rightChild->left)
+                rightChild = rightChild->left;
+            return rightChild;
+        }
+        // 若不存在右子树，寻找第一个右父亲
+        while (pNode->next) {
+            if (pNode->next->left == pNode) 
+                return pNode->next; 
+            pNode = pNode->next;
+        }
+        return NULL;
+    }
+};
+```
+## 面试题9：[用两个栈实现队列](https://leetcode-cn.com/problems/yong-liang-ge-zhan-shi-xian-dui-lie-lcof/)
+```c++
+class CQueue {
+public:
+    CQueue() {
+    }
+    
+    void appendTail(int value) {
+        st1.push(value);
+    }
+    
+    int deleteHead() {
+        if(st1.empty()) return -1;
+        while(!st1.empty())
+        {
+            st2.push(st1.top());
+            st1.pop();
+        }
+        int res=st2.top();
+        st2.pop();
+        while(!st2.empty())
+        {
+            st1.push(st2.top());
+            st2.pop();
+        }
+        return res;
+    }
+public:
+    stack<int> st1;
+    stack<int> st2;
+};
+```
+## 面试题10-I：[斐波那契数列](https://leetcode-cn.com/problems/fei-bo-na-qi-shu-lie-lcof/)
+```c++
+class Solution {
+public:
+int fib(int n) {
+        if(n<=1)
+            return n;
+        int dp[2]={0,1};
+        for(int i=2;i<=n;i++)
+        {
+            long long tmp=dp[0]+dp[1];
+            dp[0]=dp[1];
+            dp[1]=tmp%1000000007;
+        }
+        //1000000007是因为题目要求要取模
+        return dp[1];
+    }
+};
+```
+## 面试题10-II：[青蛙跳台阶问题](https://leetcode-cn.com/problems/qing-wa-tiao-tai-jie-wen-ti-lcof/)
+```c++
+class Solution {
+public:
+    int numWays(int n) {
+        if(n==0) return 1;
+        if(n<3) return n;
+        int dp[2]={1,2};
+        for(int i=3;i<=n;i++)
+        {
+            long long tmp=dp[0]+dp[1];
+            dp[0]=dp[1];
+            dp[1]=tmp%1000000007;
+        }
+        return dp[1];
+    }
+};
+```
+## 面试题11：[旋转数组的最小数字](https://leetcode-cn.com/problems/xuan-zhuan-shu-zu-de-zui-xiao-shu-zi-lcof/)
+```c++
+class Solution {
+public:
+    int minArray(vector<int> &numbers)
+{
+    int left = 0;
+    int right = numbers.size() - 1;
+    while(left<right)
+    {
+        int mid=((right-left)>>1)+left;
+        if(numbers[mid]<numbers[right])
+            right=mid;
+        else if(numbers[mid]>numbers[right])
+            left=mid+1;
+        else
+            --right;
+    }
+    return numbers[left];
+}
+};
+```
+## 面试题12：[矩阵中的路径](https://leetcode-cn.com/problems/ju-zhen-zhong-de-lu-jing-lcof/)
+```c++
+class Solution {
+private:
+    int ROW, COL, LEN;
+    bool backtracking(vector<vector<char>>& board, string& word, int row, int col, int idx) {
+        if(idx >= LEN) {
+            return true;
+        }
+        if(row < 0 || row >= ROW || col < 0 || col >= COL || board[row][col] != word[idx]) {
+            return false;
+        }
+
+        char c = board[row][col];
+        board[row][col] = '*';
+        if (backtracking(board, word, row - 1, col, idx + 1) ||
+            backtracking(board, word, row + 1, col, idx + 1) ||
+            backtracking(board, word, row, col - 1, idx + 1) ||
+            backtracking(board, word, row, col + 1, idx + 1)) {
+                return true;
+        }
+        board[row][col] = c;
+        return false;
+    }
+public:
+    bool exist(vector<vector<char>>& board, string& word) {
+        ROW = board.size();
+        COL = board[0].size();
+        LEN = word.length();
+
+        for(int row = 0; row < ROW; ++row) {
+            for(int col = 0; col < COL; ++col) {
+                if(backtracking(board, word, row, col, 0)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+};
+```
+## 面试题13：[机器人的运动范围](https://leetcode-cn.com/problems/ji-qi-ren-de-yun-dong-fan-wei-lcof/)
+```c++
+//递归法
+class Solution {
+public:
+int getDigitSum(int num)
+{
+    int sum=0;
+    while(num>0)
+    {
+        sum+=num%10;
+        num/=10;
+    }
+    return sum;
+}
+int movingCount(int m, int n, int k)
+{
+    if(k==0) return 1;
+    vector<vector<int>> vec(m,vector<int>(n,0));
+    int res=1;
+    vec[0][0]=1;
+    for(int i=0;i<m;i++)
+    {
+        for(int j=0;j<n;j++)
+        {
+            if((i==0&&j==0)||getDigitSum(i)+getDigitSum(j)>k)
+                continue;
+            if(i>=1)
+                vec[i][j]|=vec[i-1][j];//或运算
+            if(j>=1)
+                vec[i][j]|=vec[i][j-1];
+            res+=vec[i][j];
+        }
+    }
+    return res;
+}
+};
+//递归法II
+class Solution {
+public:
+    int getDigitSum(int x)
+    {
+        int sum=0;
+        while(x)
+        {
+            sum+=x%10;
+            x/=10;
+        }
+        return sum;
+    }
+    int dfs(vector<vector<int>>& dp,int m,int n,int k,int i,int j)
+    {
+        //dp[i][j]==true表明该格子要是被访问过就继续
+        if(i>=m||j>=n||getDigitSum(i)+getDigitSum(j)>k||dp[i][j])
+         return 0;
+        dp[i][j]=1;
+        return 1+dfs(dp,m,n,k,i+1,j)+dfs(dp,m,n,k,i,j+1);
+    }
+    int movingCount(int m, int n, int k) {
+        vector<vector<int>> dp(m,vector<int>(n,0));
+        return dfs(dp,m,n,k,0,0);
+    }
+};
+```
+## 面试题14：[剪绳子](https://leetcode-cn.com/problems/jian-sheng-zi-lcof/)
+```c++
+class Solution {
+public:
+int cuttingRope(int n)
+{
+    if(n<=3)
+        return n-1;
+    vector<int> dp(n+1);
+    dp[1]=1;
+    dp[2]=2;
+    dp[3]=3;
+    for(int i=4;i<=n;i++)
+    {
+        int maxValue=0;
+        for(int j=1;j<=i/2;j++)
+        {
+            maxValue=maxValue>dp[j]*dp[i-j]?maxValue:dp[j]*dp[i-j];
+        }
+        dp[i]=maxValue;
+    }
+    return dp[dp.size()-1];
+}
+};
+```
+
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
@@ -2877,5 +3179,67 @@ vector<vector<string>> partition(string s)
     backtrack(s, 0);
     return res;
 }
+};
+```
+
+## 动态规划
+### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
+```c++
+class Solution {
+public:
+int fib(int n)
+{
+    if(n<=1) return n;
+    int dp[2];
+    dp[0]=0;
+    dp[1]=1;
+    for(int i=2;i<=n;i++)
+    {
+        int sum=dp[0]+dp[1];
+        dp[0]=dp[1];
+        dp[1]=sum;
+    }
+    return dp[1];
+}
+};
+```
+### [70.爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
+```c++
+class Solution {
+public:
+    int climbStairs(int n) {
+        if(n<=2)
+            return n;
+        int dp[3];
+        dp[0]=1;
+        dp[1]=2;
+        dp[2]=0;
+        for(int i=3;i<=n;i++)
+        {
+            dp[2]=dp[0]+dp[1];
+            dp[0]=dp[1];
+            dp[1]=dp[2];
+            dp[2]=0;
+        }
+        return dp[1];
+    }
+};
+```
+### [746.使用最小花费爬楼梯](https://leetcode-cn.com/problems/min-cost-climbing-stairs/)
+```c++
+class Solution {
+public:
+    int minCostClimbingStairs(vector<int>& cost) {
+        int dp[2];
+        dp[0]=cost[0];
+        dp[1]=cost[1];
+        for(int i=2;i<cost.size();i++)
+        {
+            int minCost=min(dp[0],dp[1])+cost[i];
+            dp[0]=dp[1];
+            dp[1]=minCost;
+        }
+        return min(dp[1],dp[0]);
+    }
 };
 ```
