@@ -603,7 +603,7 @@ public:
     }
 };
 ```
-## 面试题14：[剪绳子](https://leetcode-cn.com/problems/jian-sheng-zi-lcof/)
+## 面试题14-I：[剪绳子](https://leetcode-cn.com/problems/jian-sheng-zi-lcof/)
 ```c++
 class Solution {
 public:
@@ -626,6 +626,737 @@ int cuttingRope(int n)
     }
     return dp[dp.size()-1];
 }
+};
+``` 
+## 面试题14-II：[剪绳子II](https://leetcode-cn.com/problems/jian-sheng-zi-ii-lcof/)
+```c++
+//贪心算法：尽可能取3来保证最大
+class Solution {
+private:
+    const long long int mod = 1e9+7;
+public:
+    int cuttingRope(int n) {
+        if(n <= 3) return n - 1;
+        long res = 1;
+        while(n > 4) {
+            res = (res * 3) % mod;
+            n -= 3;
+        }
+        return (res * n) % mod;  
+    }
+};
+```
+## 面试题15：[二进制中1的个数](https://leetcode-cn.com/problems/er-jin-zhi-zhong-1de-ge-shu-lcof/)
+```c++
+class Solution {
+public:
+int hammingWeight(uint32_t n)
+{
+    int res=0;
+    while(n>0)
+    {
+        if(n%2)
+            res++;
+        n/=2;
+    }
+    return res;
+}
+};
+```
+## 面试题16：[数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
+```c++
+//递归
+class Solution {
+public:
+    double myPow(double x, int n) {
+        if(n==0) return 1;
+    else if(n==-1) return 1/x;
+    //cout<<n<<"\t"<<(n&1)<<endl;
+    if(n&1) return myPow(x*x,n>>1)*x;//单数
+    else return myPow(x*x,n>>1);//双数
+    }
+};
+```
+## 面试题17：[打印从1到最大的n位数](https://leetcode-cn.com/problems/da-yin-cong-1dao-zui-da-de-nwei-shu-lcof/)
+```c++
+//需要保证不溢出，需要用char或string字符串进行存储
+class Solution {
+public:
+    vector<int> printNumbers(int n) {
+        vector<int> res;
+        int maxValue=1;
+        maxValue=pow(10,n)
+        for(int i=1;i<maxValue;i++)
+            res.emplace_back(i);
+        return res;
+    }
+};class Solution {
+public:
+    vector<int> output;
+    vector<int> printNumbers(int n) {
+        // 以下注释的前提：假设 n = 3
+        if(n <= 0) return vector<int>(0);
+        string s(n, '0'); // s最大会等于999，即s的长度为n
+        while(!overflow(s)) inputNumbers(s);
+        return output;
+    }
+    bool overflow(string& s)
+    {
+        // 本函数用于模拟数字的累加过程，并判断是否越界（即 999 + 1 = 1000，就是越界情况）
+        bool isOverFlow = false;
+        int carry = 0; // carry表示进位
+        for(int i=s.length()-1; i>=0; --i)
+        {
+            int current = s[i] - '0' + carry; // current表示当前这次的操作
+            if(i == s.length() - 1) current ++; // 如果i此时在个位，current执行 +1 操作
+            if(current >= 10)
+            {
+                // 假如i已经在最大的那一位了，而current++之后>=10，说明循环到头了，即999 + 1 = 1000
+                if(i == 0) isOverFlow = true;
+                else
+                {
+                    // 只是普通进位，比如current从9变成10
+                    carry = 1;
+                    s[i] = current - 10 + '0'; 
+                }
+            }
+            else
+            {
+                // 如果没有进位，更新s[i]的值，然后直接跳出循环，这样就可以回去执行inputNumbers函数了，即往output里添加元素
+                s[i] = current + '0';
+                break;
+            }
+        }
+        return isOverFlow;
+    }
+    void inputNumbers(string s)
+    {
+        // 本函数用于循环往output中添加符合传统阅读习惯的元素。比如001，我们会添加1而不是001。
+        bool isUnwantedZero = true; // 判断是否是不需要添加的0，比如001前面的两个0
+        string temp = "";
+        for(int i=0; i<s.length(); ++i)
+        {
+            if(isUnwantedZero && s[i] != '0') isUnwantedZero = false;
+            if(!isUnwantedZero) temp += s[i];
+        }
+        output.push_back(stoi(temp));
+    }
+};
+// 作者：superkakayong
+// 链接：https://leetcode-cn.com/problems/da-yin-cong-1dao-zui-da-de-nwei-shu-lcof/solution/fei-zi-jie-ti-ku-jian-17-jian-dan-da-yin-cong-1dao/
+```
+## 面试题18：[删除链表的节点](https://leetcode-cn.com/problems/shan-chu-lian-biao-de-jie-dian-lcof/)
+```c++
+class Solution {
+public:
+    ListNode* deleteNode(ListNode* head, int val) {
+ListNode* dummyHead=new ListNode(0);
+        dummyHead->next=head;
+        ListNode* cur=dummyHead;
+        while(cur->next)
+        {
+            if(cur->next->val==val)
+            {
+                // ListNode* tmp=cur->next;
+                cur->next=cur->next->next;
+                // delete tmp;
+                break;
+            }
+            cur=cur->next;
+        }
+        cur=dummyHead->next;
+        delete dummyHead;
+        return cur;
+    }
+};
+```
+## 面试题19：[正则表达式匹配]([正则表达式匹配](https://leetcode-cn.com/problems/zheng-ze-biao-da-shi-pi-pei-lcof/))
+网址推荐：https://leetcode-cn.com/problems/regular-expression-matching/
+```c++
+//递归解法
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        return isMatch(s.c_str(), p.c_str());
+    }
+    
+    bool isMatch(const char* s, const char* p) {
+        if(*p == 0) return *s == 0;
+        
+        auto first_match = *s && (*s == *p || *p == '.');
+        
+        if(*(p+1) == '*'){
+            return isMatch(s, p+2) || (first_match && isMatch(++s, p));
+        }
+        else{
+            return first_match && isMatch(++s, ++p);
+        }
+    }
+};
+//官方题解
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        int m = s.size();
+        int n = p.size();
+
+        auto matches = [&](int i, int j) {
+            if (i == 0) {
+                return false;
+            }
+            if (p[j - 1] == '.') {
+                return true;
+            }
+            return s[i - 1] == p[j - 1];
+        };
+
+        vector<vector<int>> f(m + 1, vector<int>(n + 1));
+        f[0][0] = true;
+        for (int i = 0; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                if (p[j - 1] == '*') {
+                    f[i][j] |= f[i][j - 2];
+                    if (matches(i, j - 1)) {
+                        f[i][j] |= f[i - 1][j];
+                    }
+                }
+                else {
+                    if (matches(i, j)) {
+                        f[i][j] |= f[i - 1][j - 1];
+                    }
+                }
+            }
+        }
+        return f[m][n];
+    }
+};
+```
+## 面试题20：[表示数组的字符串](https://leetcode-cn.com/problems/biao-shi-shu-zhi-de-zi-fu-chuan-lcof/)
+```c++
+class Solution {
+private:
+    // 整数的格式可以用[+|-]B表示, 其中B为无符号整数
+    bool scanInteger(const string s, int& index){
+        if(s[index] == '+' || s[index] == '-')
+            ++index;
+        return scanUnsignedInteger(s, index);
+    }
+    bool scanUnsignedInteger(const string s, int& index){
+        int befor = index;
+        while(index != s.size() && s[index] >= '0' && s[index] <= '9')
+            index ++;
+        return index > befor;
+    }
+public:
+    // 数字的格式可以用A[.[B]][e|EC]或者.B[e|EC]表示，
+    // 其中A和C都是整数（可以有正负号，也可以没有），而B是一个无符号整数
+    bool isNumber(string s) {
+        if(s.size() == 0)
+            return false;
+        int index = 0;
+        //字符串开始有空格，可以返回true
+        while(s[index] == ' ')  //书中代码没有该项测试
+            ++index;
+        bool numeric = scanInteger(s, index);
+        // 如果出现'.'，接下来是数字的小数部分
+        if(s[index] == '.'){
+            ++index;
+            // 下面一行代码用||的原因：
+            // 1. 小数可以没有整数部分，例如.123等于0.123；
+            // 2. 小数点后面可以没有数字，例如233.等于233.0；
+            // 3. 当然小数点前面和后面可以有数字，例如233.666
+            numeric = scanUnsignedInteger(s, index) || numeric;
+        }
+        // 如果出现'e'或者'E'，接下来跟着的是数字的指数部分
+        if(s[index] == 'e' || s[index] == 'E'){
+            ++index;
+            // 下面一行代码用&&的原因：
+            // 1. 当e或E前面没有数字时，整个字符串不能表示数字，例如.e1、e1；
+            // 2. 当e或E后面没有整数时，整个字符串不能表示数字，例如12e、12e+5.4
+            numeric = numeric && scanInteger(s ,index);
+        }
+         //字符串结尾有空格，可以返回true
+        while(s[index] == ' ')
+            ++index;
+        return numeric && index == s.size();//最后看是否所有部分都符合，如1a3只会检测第一部分是整数然后是a就不会继续检测了，index!=size，所以返回false
+    }
+};
+// 作者：san-he-n
+// 链接：https://leetcode-cn.com/problems/biao-shi-shu-zhi-de-zi-fu-chuan-lcof/solution/jian-zhi-offerguan-fang-jie-da-bu-yong-c-e2wd/
+```
+## 面试题21：[调整数组顺序使奇数位于偶数前面](https://leetcode-cn.com/problems/diao-zheng-shu-zu-shun-xu-shi-qi-shu-wei-yu-ou-shu-qian-mian-lcof/)
+```c++
+//快慢指针
+class Solution {
+public:
+    vector<int> exchange(vector<int>& nums) {
+        int low = 0, fast = 0;
+        while (fast < nums.size()) {
+            if (nums[fast] & 1) {
+                swap(nums[low], nums[fast]);
+                low ++;
+            }
+            fast ++;
+        }
+        return nums;
+    }
+};
+//首尾指针class Solution {
+public:
+    vector<int> exchange(vector<int>& nums) {
+        int left = 0, right = nums.size() - 1;
+    while (left < right)
+    {
+        if ((nums[left] & 1) == 1)
+        {
+            left++;
+            continue;
+        }
+        if ((nums[right] & 1) == 0)
+        {
+            right--;
+            continue;
+        }
+        swap(nums[left], nums[right]);
+    }
+    return nums;
+    }
+};
+```
+## 面试题22：[链表中倒数第k个节点](https://leetcode-cn.com/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/)
+```c++
+class Solution {
+public:
+    ListNode* getKthFromEnd(ListNode* head, int k) {
+        ListNode* slow=head,*fast=head;
+        while(k--&&fast)
+        {
+            fast=fast->next;
+        }
+        while(fast)
+        {
+            slow=slow->next;
+            fast=fast->next;
+        }
+        return slow;
+    }
+};
+```
+## 面试题23：[环形链表II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+```c++
+//快慢指针
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode* fast = head;
+        ListNode* slow = head;
+        while(fast != NULL && fast->next != NULL) {
+            slow = slow->next;
+            fast = fast->next->next;
+            // 快慢指针相遇，此时从head 和 相遇点，同时查找直至相遇
+            if (slow == fast) {
+                ListNode* index1 = fast;
+                ListNode* index2 = head;
+                while (index1 != index2) {
+                    index1 = index1->next;
+                    index2 = index2->next;
+                }
+                return index2; // 返回环的入口
+            }
+        }
+        return NULL;
+    }
+};
+```
+## 面试题24：[反转链表](https://leetcode-cn.com/problems/fan-zhuan-lian-biao-lcof/)
+```c++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* tmp;
+        ListNode* cur=head;
+        ListNode* pre=NULL;
+        while(cur)
+        {
+            tmp=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=tmp;
+        }
+        return pre;
+    }
+};
+```
+## 面试题25：[合并两个排序的链表](https://leetcode-cn.com/problems/he-bing-liang-ge-pai-xu-de-lian-biao-lcof/)
+```c+
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        ListNode* dummy=new ListNode(0);
+        ListNode* ret=dummy;
+        while(l1&&l2)
+        {
+            if(l1->val<l2->val)
+            {
+                dummy->next=l1;
+                l1=l1->next;
+            }
+            else 
+            {
+                dummy->next=l2;
+                l2=l2->next;
+            }
+            dummy=dummy->next;
+        }
+        dummy->next=(l1==NULL)?l2:l1;
+        return ret->next;
+    }
+};
+```
+## 面试题26：[树的子结构](https://leetcode-cn.com/problems/shu-de-zi-jie-gou-lcof/)
+```c++
+class Solution {
+public:
+    bool hasSubStructure(TreeNode*A, TreeNode*B)
+    {
+        if(!B)   
+            return true;
+        if(!A)
+            return false;
+        if(A->val!=B->val)
+            return false;
+        return hasSubStructure(A->left, B->left) && hasSubStructure(A->right, B->right); 
+    }
+    bool isSubStructure(TreeNode* A, TreeNode* B) 
+    {
+         if (!A || !B)
+         {
+             //特殊判断
+             return false;
+         }   
+        // 根节点相同的话直接进入比较，根节点不相同看B是不是A的左/右子树的子结构
+        return hasSubStructure(A, B) || isSubStructure(A->left, B) || isSubStructure(A->right, B);
+    }
+};
+```
+## 面试题27：[二叉树的镜像](https://leetcode-cn.com/problems/er-cha-shu-de-jing-xiang-lcof/)
+```c++
+class Solution {
+public:
+    TreeNode* mirrorTree(TreeNode* root) {
+        if (root == nullptr) {
+            return nullptr;
+        }
+        TreeNode* left = mirrorTree(root->left);
+        TreeNode* right = mirrorTree(root->right);
+        root->left = right;
+        root->right = left;
+        return root;
+    }
+};
+```
+## 面试题28：[对称的二叉树](https://leetcode-cn.com/problems/dui-cheng-de-er-cha-shu-lcof/)
+```c++
+class Solution {
+public:
+    bool traversal(TreeNode* A,TreeNode* B)
+    {
+        if(!A&&!B) return true;
+        else if(!A&&B) return false;
+        else if(A&&!B) return false;
+        else if(A->val!=B->val) return false;
+        else 
+            return traversal(A->left,B->right)&&traversal(A->right,B->left);
+    }
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return true;
+        return traversal(root->left,root->right);
+    }
+};
+```
+## 面试题29：[顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
+类似题型：[54.螺旋矩阵](#54)
+```c++
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        if(matrix.empty()) return vector<int>{};
+        int up=0,left=0,right=matrix[0].size()-1,down=matrix.size()-1;
+        vector<int> res;
+        while(true)
+        {
+            for(int j=left;j<=right;j++)
+            {
+                res.emplace_back(matrix[up][j]);
+            }
+            if(++up>down) break;
+            for(int i=up;i<=down;i++)
+            {
+                res.emplace_back(matrix[i][right]);
+            }
+            if(--right<left) break;
+            for(int j=right;j>=left;j--)
+            {
+                res.emplace_back(matrix[down][j]);
+            }
+            if(--down<up) break;
+            for(int i=down;i>=up;i--)
+            {
+                res.emplace_back(matrix[i][left]);
+            }
+            if(++left>right) break;
+        }
+        return res;
+    }
+};
+```
+## 面试题30：[包含min函数的栈](https://leetcode-cn.com/problems/bao-han-minhan-shu-de-zhan-lcof/)
+```c++
+class MinStack {
+    public:
+        stack<int> st;
+        stack<int> minSt;
+public:
+    /** initialize your data structure here. */
+    MinStack() {
+
+    }
+    
+    void push(int x) {
+        st.push(x);
+        if(minSt.empty())
+            minSt.push(x);
+        else
+            minSt.push(std::min(minSt.top(),x));
+    }
+    
+    void pop() {
+        st.pop();
+        minSt.pop();
+    }
+    
+    int top() {
+        return st.top();
+    }
+    
+    int min() {
+       return minSt.top();
+    }
+};
+```
+## 面试题31：[栈的压入、弹出序列](https://leetcode-cn.com/problems/zhan-de-ya-ru-dan-chu-xu-lie-lcof/)
+```c++
+class Solution {
+public:
+    bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+    int len=pushed.size();
+    if(len==0) return true;
+    stack<int> st;
+    int indexPush=0,indexPop=0;
+    while(true)
+    {
+        if(st.empty()&&indexPush<len)
+        {
+            st.push(pushed[indexPush++]);
+        }
+        if(popped[indexPop]==st.top())
+        {
+            st.pop();
+            if(++indexPop==len)
+                break;
+        }
+        else
+        {
+            if(indexPush<len)
+            {
+                st.push(pushed[indexPush++]);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    if(indexPush==len&&indexPop==len) return true;
+    return false;
+    }
+};
+```
+
+## 面试题32：[从上到下打印二叉树](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-ii-lcof/)
+相同题目：[二叉树的层序遍历](#102)
+```c++
+class Solution {
+public:
+void traversal(TreeNode* root,int depth,vector<vector<int>>& rs)
+{
+    if(!root) return;
+    if(depth==rs.size())
+        rs.emplace_back(vector<int>{});
+    if(depth>rs.size())
+        return;
+    rs[depth].emplace_back(root->val);
+    traversal(root->left,depth+1,rs);
+    traversal(root->right,depth+1,rs);
+}
+vector<vector<int>> levelOrder(TreeNode *root)
+{
+    vector<vector<int>> rs;
+    traversal(root,0,rs);
+    return rs;
+}
+};
+```
+## 面试题32-III：[从上到下打印二叉树II](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/)
+```c++
+ class Solution{
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> ans;
+        if(root == NULL){
+            return ans;
+        }
+        queue<TreeNode*> q;
+        q.push(root);
+        bool isLeft = false;
+        while(!q.empty()){
+            int rowLen = q.size();
+            vector<int> temp;
+            for(int i = 0; i < rowLen; ++i){
+                TreeNode* curNode = q.front();
+                q.pop();
+                if(curNode != NULL){
+                    temp.push_back(curNode->val);
+                    if(curNode->left)q.push(curNode->left);
+                    if(curNode->right)q.push(curNode->right);
+                }
+            }
+            isLeft = !isLeft;
+            if(!isLeft){
+                ans.push_back(vector<int>(temp.rbegin(), temp.rend()));
+            }else{
+                ans.push_back(temp);
+            }
+        }
+        return ans;
+ }
+};
+```
+## 面试题33：[二叉搜索树的后序遍历序列](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/)
+```c++
+//递归法
+class Solution {
+public:
+    bool traversal(const vector<int>& postorder,int left,int right)
+{
+    if(left>=right) return true;
+    int rootVal=postorder[right];
+    int start=left;
+    while(start<right&&postorder[start]<rootVal) ++start;
+    for(int i=start;i<right;++i)
+    {
+        if(postorder[i]<=rootVal)
+            return false;
+    }
+    return traversal(postorder,left,start-1)&&traversal(postorder,start,right-1);
+}
+bool verifyPostorder(vector<int> &postorder)
+{
+    return traversal(postorder,0,postorder.size()-1);
+} 
+};
+
+//辅助栈
+class Solution {
+public:
+    bool verifyPostorder(vector<int>& postorder) {
+        stack<int> st;
+        int rootVal=INT_MAX;
+        for(auto it=postorder.rbegin();it!=postorder.rend();++it)
+        {
+            //左子树大于root值，所以返回false
+            if(*it>rootVal)
+                return false;
+            //压入root的右节点树
+            //*it<st.top()表示是root->right的左树节点
+            //排空root->right->right的右树节点
+            while(!st.empty()&&*it<st.top())
+            {
+                rootVal=st.top();
+                st.pop();
+            }
+            //更新根节点的值为root->right->val
+            st.push(*it);//压入
+        }
+        return true;
+    }
+};
+```
+## 面试题34：[二叉树中和为某一值的路径](https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof/)
+```c++
+//递归
+class Solution {
+public:
+    vector<vector<int>> res;
+    vector<int> vec;
+    void dfs(TreeNode* root,int target)
+    {
+        if(!root) return;
+        vec.push_back(root->val);
+        target-=root->val;
+        if(!root->left&&!root->right&&target==0)
+        {
+            res.push_back(vec);
+        }
+        dfs(root->left,target);
+        dfs(root->right,target);
+        vec.pop_back();
+    }
+    vector<vector<int>> pathSum(TreeNode *root, int target)
+    {
+        dfs(root,target);
+        return res;
+    }
+};
+```
+## 面试题35：[复杂链表的复制](https://leetcode-cn.com/problems/fu-za-lian-biao-de-fu-zhi-lcof/)
+```c++
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* next;
+    Node* random;
+    
+    Node(int _val) {
+        val = _val;
+        next = NULL;
+        random = NULL;
+    }
+};
+*/
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(head == nullptr) return nullptr;
+        Node* cur = head;
+        unordered_map<Node*, Node*> map;
+        // 3. 复制各节点，并建立 “原节点 -> 新节点” 的 Map 映射
+        while(cur != nullptr) {
+            map[cur] = new Node(cur->val);
+            cur = cur->next;
+        }
+        cur = head;
+        // 4. 构建新链表的 next 和 random 指向
+        while(cur != nullptr) {
+            map[cur]->next = map[cur->next];
+            map[cur]->random = map[cur->random];
+            cur = cur->next;
+        }
+        // 5. 返回新链表的头节点
+        return map[head];
+    }
 };
 ```
 
@@ -1132,6 +1863,7 @@ public:
 };
 ```
 #### [54.螺旋矩阵](https://leetcode-cn.com/problems/spiral-matrix/)
+<span id="54"></span>
 ```c++
 class Solution{
 public:
@@ -2306,6 +3038,7 @@ public:
 };
 ```
 ### [102.二叉树的层序遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/)
+<span id="102"></span>
 ```c++
 //递归，前序遍历
 class Solution {
