@@ -1359,6 +1359,316 @@ public:
     }
 };
 ```
+## 面试题36：[二叉搜索树和双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
+```c++
+class Solution {
+public:
+    Node *pre, *head;
+    Node* treeToDoublyList(Node* root) {
+        if(root==NULL) return NULL;
+        dfs(root);
+        head->left=pre;
+        pre->right=head;
+        return head;
+    }
+
+    void dfs(Node* cur){
+        if(cur==NULL) return;
+        dfs(cur->left);
+        if(pre!=NULL) pre->right=cur;
+        else head=cur;
+        cur->left=pre;
+        pre=cur; 
+        dfs(cur->right);
+    }
+};
+```
+## 面试题37：[序列化二叉树](https://leetcode-cn.com/problems/xu-lie-hua-er-cha-shu-lcof/)
+```c++
+class Codec {
+public:
+
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        string data;
+        queue<TreeNode*> que;
+        if (root) que.push(root);
+        
+        while (!que.empty()) {
+            auto curr = que.front();
+            que.pop();
+            
+            if (curr) {
+                data += to_string(curr->val) + ',';
+                que.push(curr->left);
+                que.push(curr->right);
+            } else {
+                data += "null,";
+            }
+        }
+        
+        if (!data.empty()) data.pop_back();
+        return data;
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        unique_ptr<TreeNode> dummy(new TreeNode(0));
+        queue<TreeNode*> que;
+        que.push(dummy.get());
+        size_t beg = 0, end = 0;
+        bool left_side = false;
+        
+        while (beg < data.size()) {
+            while (end < data.size() && data[end] != ',') ++end;
+            auto str = data.substr(beg, end - beg);
+            TreeNode *node = nullptr;
+            if (str != "null") node = new TreeNode(atoi(str.c_str()));
+            
+            auto curr = que.front();
+            if (left_side) {
+                curr->left = node;
+            } else {
+                curr->right = node;
+                que.pop();
+            }
+            
+            if (node) que.push(node);
+            left_side = !left_side;
+            beg = ++end;
+        }
+        
+        return dummy->right;
+    }
+};
+```
+## 面试题38：[字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
+```c++
+class Solution {
+public:
+    vector<string> res;
+    string path="";
+    void dfs(const string& s,vector<bool>& used,int index) 
+    {
+        if(path.size()==s.size())
+        {
+            res.emplace_back(path);
+            return;
+        }
+        for(int i=0;i<s.size();i++)
+        {
+            if(used[i]==true)
+            {
+                continue;
+            }
+            if(i>0&&used[i-1]==false&&s[i]==s[i-1])
+            {
+                continue;
+            }
+            used[i]=true;
+            path+=s[i];
+            dfs(s,used,index+1);
+            path.pop_back();
+            used[i]=false;
+        }
+    }
+    vector<string> permutation(string s) {
+        if(s.size()==0) return res;
+        vector<bool> used(s.size(),false);
+        sort(s.begin(),s.end());
+        dfs(s,used,0);
+        return res;
+    }
+};
+```
+## 面试题39：[数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
+```c++
+//摩尔投票法
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int x = 0, votes = 0;
+        for(int num : nums){
+            if(votes == 0) x = num;
+            votes += num == x ? 1 : -1;
+        }
+        return x;
+    }
+};
+//链接：https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/solution/mian-shi-ti-39-shu-zu-zhong-chu-xian-ci-shu-chao-3/
+```
+## 面试题40：[最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+```c++
+//自定义快排
+class Solution {
+public:
+ vector<int> getLeastNumbers(vector<int>& arr, int k) 
+{
+    mySort(arr,0,arr.size()-1);
+    vector<int> res;
+    res.assign(arr.begin(),arr.begin()+k);
+    return res;
+}
+private:
+    void mySort(vector<int>& arr,int left,int right)
+{
+    if(left>=right) return;
+    int i=left,j=right;
+    while(i<j)
+    {
+        while(i<j&&arr[j]>=arr[left]) --j;
+        while(i<j&&arr[i]<=arr[left]) ++i;
+        swap(arr[i],arr[j]);
+    }
+    swap(arr[i],arr[left]);//此时i=j
+    mySort(arr,left,i-1);
+    mySort(arr,i+1,right);
+}
+};
+//小顶堆
+class Solution {
+public:
+    vector<int> getLeastNumbers(vector<int>& arr, int k) {
+        vector<int> res;
+        if(k==0) return res;
+        priority_queue<int,vector<int>,greater<int>> que;
+        for(auto i:arr)
+        {
+            que.push(i);
+        }
+        for(int i=0;i<k;i++)
+        {
+            res.emplace_back(que.top());
+            que.pop();
+        }
+        return res;
+    }
+};
+```
+## 面试题41：[数据流中的中位数](https://leetcode-cn.com/problems/shu-ju-liu-zhong-de-zhong-wei-shu-lcof/)
+```c++
+class MedianFinder {
+private:
+    priority_queue<int,vector<int>,less<int>> small;//存储最小一半，使用大顶堆(堆顶为中位数)
+    priority_queue<int,vector<int>,greater<int>> big;//存储最大一半，使用小顶堆(堆顶为中位数)
+    int n=0;//n为数量
+public:
+    /** initialize your data structure here. */
+    MedianFinder() {}
+    
+    void addNum(int num) {
+        if(small.empty())
+        {
+            small.push(num);
+            ++n;
+            return;
+        }
+        if(num<=small.top())//num比中位数小，放到small堆里
+        {
+            small.push(num);
+            ++n;
+        }
+        else
+        {
+            big.push(num);
+            ++n;
+        }
+        //small和big相差2个数字，需要重新排序
+        if(small.size()-big.size()==2)
+        {
+            big.push(small.top());
+            small.pop();
+        }
+        if(big.size()-small.size()==2)
+        {
+            small.push(big.top());
+            big.pop();
+        }
+    }
+    
+    double findMedian() {
+        if(n%2)
+        {
+            if(small.size()>big.size()) return small.top();
+            return big.top();
+        }
+        else
+        {
+            return ((long long)small.top() + big.top()) * 0.5;
+    }
+    }
+};
+```
+## 面试题42：[连续子数组的最大和](https://leetcode-cn.com/problems/lian-xu-zi-shu-zu-de-zui-da-he-lcof/)
+```c++
+//动态规划
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+    if(nums.size()<=1) return nums[0];
+    vector<int> dp(2,0);
+    dp[0]=nums[0];
+    int ret=dp[0];
+    for(int i=1;i<nums.size();i++)
+    {
+        dp[1]=max(dp[0]+nums[i],nums[i]);
+        ret=max(ret,dp[1]);
+        dp[0]=dp[1];
+    }
+    return ret;
+    }
+};
+```
+## 面试题43：[1~n整数中1出现的次数](https://leetcode-cn.com/problems/1nzheng-shu-zhong-1chu-xian-de-ci-shu-lcof/)
+```c++
+class Solution {
+public:
+    int countDigitOne(int n) {
+       int count = 0;
+       long i = 1;//指向遍历的位数，如i=1即个位，i=10即十位，...，因为n可以有31位，所以10^31用long存储
+       while(n/i!=0){
+           //n/i控制遍历的次数，将所有的位数都遍历完毕
+            long high = n/(10*i);//将当前位之前的所有高位都存在high中
+            long cur = (n/i)%10;//将当前位记录在cur中，即我们每次都需要统计当前位上1出现的次数
+            long low = n-(n/i)*i;
+            if(cur == 0){
+                count += high * i;
+            } else if(cur == 1){
+                count += high * i + low + 1;
+            } else {
+                count += high * i + i;
+            }
+            i = i * 10;//准备遍历下一位
+       }
+       return count;
+    }
+};
+// 作者：lu-yang-shan-yu
+// 链接：https://leetcode-cn.com/problems/1nzheng-shu-zhong-1chu-xian-de-ci-shu-lcof/solution/c-cong-ge-wei-bian-li-dao-zui-gao-wei-yi-ci-qiu-ji/
+```
+## 面试题44：[数字序列中某一位数字](https://leetcode-cn.com/problems/shu-zi-xu-lie-zhong-mou-yi-wei-de-shu-zi-lcof/)
+```c++
+class Solution {
+public:
+    int findNthDigit(int n) {
+    int digit=1;//记录数字位数
+    long long start=1;//记录n所在数字
+    long long count=9;//记录数位个数
+    while(n>count)
+    {
+        n-=count;
+        start*=10;
+        digit++;
+        count=9*start*digit;
+    }
+    int num=start+(n-1)/digit;
+    string num_s=to_string(num);
+    int index=(n-1)%digit;
+    return num_s[index]-'0';
+    }
+};
+//参考网址：https://leetcode-cn.com/problems/shu-zi-xu-lie-zhong-mou-yi-wei-de-shu-zi-lcof/solution/mian-shi-ti-44-shu-zi-xu-lie-zhong-mou-yi-wei-de-6/
+```
 
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
@@ -3049,7 +3359,7 @@ public:
         return ans;
     }
     
-    void bfs(TreeNode *root, int depth, vector<vector<int>> &ans) {
+    void pre(TreeNode *root, int depth, vector<vector<int>> &ans) {
         if (!root) return ;
         if (depth >= ans.size())
             ans.push_back(vector<int> {});
