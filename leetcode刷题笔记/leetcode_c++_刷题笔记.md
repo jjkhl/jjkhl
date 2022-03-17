@@ -1669,7 +1669,761 @@ public:
 };
 //参考网址：https://leetcode-cn.com/problems/shu-zi-xu-lie-zhong-mou-yi-wei-de-shu-zi-lcof/solution/mian-shi-ti-44-shu-zi-xu-lie-zhong-mou-yi-wei-de-6/
 ```
+## 面试题45：[把数组排成最小的数](https://leetcode-cn.com/problems/ba-shu-zu-pai-cheng-zui-xiao-de-shu-lcof/)
+```c++
+class Solution {
+public:
+    void quickSort(vector<string>& strs,int left,int right)
+{
+    if(left>=right) return;
+    int i=left,j=right;
+    while(i<j)
+    {
+        while(strs[j]+strs[left]>=strs[left]+strs[j]&&i<j) --j;
+        while(strs[i]+strs[left]<=strs[left]+strs[i]&&i<j) ++i;
+        swap(strs[i],strs[j]);
+    }
+    swap(strs[left],strs[i]);
+    quickSort(strs,left,i-1);
+    quickSort(strs,i+1,right);
+}
+string minNumber(vector<int>& nums)
+{
+    vector<string> strs;
+    string res;
+    for(int i=0;i<nums.size();i++)
+    {
+        strs.emplace_back(to_string(nums[i]));
+    }
+    quickSort(strs,0,strs.size()-1);
+    for(string s:strs)
+        res+=s;
+    return res;
+}
+};
+//lambda表达式
+class Solution {
+public:
+    struct cmp{
+        bool operator()(string s1, string s2){
+            return s1 + s2 < s2 + s1;
+        }
+    };
+    string minNumber(vector<int>& nums) {
+        vector<string> strs;
+        string ans;
+        for(int i = 0; i < nums.size(); i++){
+            strs.push_back(to_string(nums[i]));
+        }
 
+        sort(strs.begin(), strs.end(), cmp());
+
+        for(int i = 0; i < strs.size(); i++){
+            ans += strs[i];
+        }
+
+        return ans;
+    }
+};
+```
+
+## 面试题46：[把数字翻译为字符串](https://leetcode-cn.com/problems/ba-shu-zi-fan-yi-cheng-zi-fu-chuan-lcof/)
+```c++
+class Solution {
+public:
+int translateNum(int num)
+{
+    if(num<10) return 1;
+    //0-25编号一共26个英文字母
+    if(num%100<10||num%100>25)//表示只能单字符
+        return translateNum(num/10);
+    else
+        return translateNum(num/10)+translateNum(num/100);
+}
+};
+//参考网址：https://leetcode-cn.com/problems/ba-shu-zi-fan-yi-cheng-zi-fu-chuan-lcof/solution/cjian-ji-dai-ma-shuang-bai-by-orangeman/
+//动态规划
+class Solution {
+public:
+    int translateNum(int num) {
+        // 0 - 25;
+        //类似于跳台阶，只能一步或者两步跳
+        string s = to_string(num);
+        int n = s.size();
+        vector<int>dp (n + 1, 1);
+        //dp[0]无意义，dp[1]表示第一个数字字符
+        for(int i = 2; i <= n; i++){
+            int sum = (s[i - 2] - '0') * 10 + s[i - 1] - '0';
+            if(sum >= 10 && sum <= 25) dp[i] = dp[i - 1] + dp[i - 2];
+            else dp[i] = dp[i - 1];
+        }
+        return dp[n];
+    }
+};
+```
+## 面试题47：[礼物的最大价值](https://leetcode-cn.com/problems/li-wu-de-zui-da-jie-zhi-lcof/)
+```c++
+//滑动窗口
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+    if (s.empty())
+        return 0;
+    if (s.size() == 1)
+        return 1;
+    int res = 0, left = -1;
+    unordered_map<char, int> hash;
+    for (int i = 0; i < s.length(); i++)
+    {
+        if (hash.find(s[i]) != hash.end())
+        {
+            left = max(hash[s[i]], left);
+        }
+        hash[s[i]] = i;
+        res = max(res, i - left);
+    }
+    return res;
+    }
+};
+```
+## 面试题48：[最长不含重复字符的子字符串](https://leetcode-cn.com/problems/zui-chang-bu-han-zhong-fu-zi-fu-de-zi-zi-fu-chuan-lcof/)
+```c++
+//滑动窗口
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+int len=s.size();
+    int start(0),end(0),res(0),length(0);
+    while(end<len)
+    {
+        char tmp=s[end];
+        for(int index=start;index<end;index++)
+        {
+            if(tmp==s[index])
+            {
+                start=index+1;
+                length=end-start;
+                break;
+            }
+        }
+        end++;
+        length++;
+        res=max(res,length);
+    }
+    return res;
+    }
+};
+```
+## 面试题49：[丑数](https://leetcode-cn.com/problems/chou-shu-lcof/)
+```c++
+class Solution {
+public:
+int min(int a,int b,int c)
+{
+    a=a>b?b:a;
+    return a>c?c:a;
+}
+int nthUglyNumber(int n)
+{
+    vector<int> dp(n,1);
+    int a(0),b(0),c(0);
+    for(int i=1;i<n;i++)
+    {
+        dp[i]=min(dp[a]*2,dp[b]*3,dp[c]*5);
+        if(dp[i]==(dp[a]*2)) ++a;
+        if(dp[i]==(dp[b]*3)) ++b;
+        if(dp[i]==(dp[c]*5)) ++c;
+    }
+    return dp[n-1];
+}
+};
+```
+## 面试题50：[第一个只出现一次的字符](https://leetcode-cn.com/problems/di-yi-ge-zhi-chu-xian-yi-ci-de-zi-fu-lcof/)
+```c++
+class Solution {
+public:
+    char firstUniqChar(string s) {
+    unordered_map<char,int> umap;
+    for(char i:s)
+    {
+        umap[i]++;
+    }
+    for(int i=0;i<s.size();i++)
+    {
+        if(umap[s[i]]==1)
+            return s[i];
+    }
+    return ' ';
+    }
+};
+```
+## 面试题51：[数组中的逆序对](https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/)
+```c++
+//参考网址：https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/solution/jian-zhi-offer-51-shu-zu-zhong-de-ni-xu-pvn2h/
+class Solution {
+public:
+    int merge_sort(int left, int right, vector<int> &nums, vector<int> &saveNums)
+{
+    if (left >= right)
+        return 0;
+    int mid = (left + right) >> 1;
+    int res = merge_sort(left, mid, nums, saveNums) + merge_sort(mid + 1, right, nums, saveNums);
+    //保存数组
+    for (int i = left; i <= right; i++)
+    {
+        saveNums[i] = nums[i];
+    }
+    int i = left;    //左集合的起点
+    int j = mid + 1; //右集合的起点
+    for (int k = left; k <= right; k++)
+    {
+        if (i == mid + 1) //右集合使用完毕
+        {
+            nums[k] = saveNums[j++];
+        }
+        //左集合使用完毕或在左集合小于右集合
+        else if (j == right + 1 || saveNums[i] <= saveNums[j])
+        {
+            nums[k] = saveNums[i++];
+        }
+        else //右集合大于左集合
+        {
+            nums[k] = saveNums[j++];
+            res += mid - i + 1;
+        }
+    }
+    return res;
+}
+int reversePairs(vector<int> &nums)
+{
+    vector<int> vec(nums.size());
+    return merge_sort(0, nums.size() - 1, nums, vec);
+}
+};
+```
+## 面试题52：[两个链表的第一个公共节点](https://leetcode-cn.com/problems/liang-ge-lian-biao-de-di-yi-ge-gong-gong-jie-dian-lcof/)
+```c++
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        ListNode *node1 = headA;
+        ListNode *node2 = headB;
+        
+        while (node1 != node2) {
+            node1 = node1 != NULL ? node1->next : headB;
+            node2 = node2 != NULL ? node2->next : headA;
+        }
+        return node1;
+    }
+};
+```
+## 面试题53：[在排序数组中查找数字I](https://leetcode-cn.com/problems/zai-pai-xu-shu-zu-zhong-cha-zhao-shu-zi-lcof/)
+```c++
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int left=0,right=nums.size()-1;
+        if(nums.empty()) return 0;
+        int pos=-1;
+        while(left<=right)
+        {
+            int mid=left+((right-left)>>1);
+            if(nums[mid]>target)
+            {
+                right=mid-1;
+            }
+            else if(nums[mid]<target)
+            {
+                left=mid+1;
+            }
+            else
+            {
+                pos=mid;
+                break;
+            }
+        }
+        if(pos==-1) return 0;
+        int i=pos,j=pos;
+        while(i>=0&&nums[i]==target) i--;
+        while(j<nums.size()&&nums[j]==target) j++;
+        return j-i-1;
+    }
+};
+```
+## 面试题53-II：[0~n-1中缺失的数字](https://leetcode-cn.com/problems/que-shi-de-shu-zi-lcof/)
+```c++
+//二分法
+class Solution {
+public:
+    int missingNumber(vector<int>& nums) {
+        int left=0,right=nums.size()-1;
+        while(left<=right)
+        {
+            int mid=left+((right-left)>>1);
+            if(nums[mid]==mid)
+            {
+                left=mid+1;
+            }
+            else if(nums[mid]>mid)
+            {
+                right=mid-1;
+            }
+        }
+        return left;
+    }
+};
+//最佳写法
+class Solution {
+public:
+     int missingNumber(vector<int>& nums) {
+        if (nums[0]==1) return 0;
+        for (int i = 0;i<nums.size();i++){
+            if (nums[i]!=i) return i;
+        }
+        return nums.size();
+    }
+};
+```
+## 面试题54：[二叉搜索树的第K大节点](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-di-kda-jie-dian-lcof/)
+```c++
+class Solution {
+public:
+    int res;
+    void dfs(TreeNode* root,int &k)
+    {
+        if(!root) return;
+        dfs(root->right,k);
+        --k;
+        if(k==0) 
+        {
+            res=root->val;
+            return;
+        }
+        dfs(root->left,k);
+    }
+    int kthLargest(TreeNode* root, int k) {
+        dfs(root,k);
+        return res;
+    }
+};
+```
+## 面试题55-I：[二叉树的深度](https://leetcode-cn.com/problems/er-cha-shu-de-shen-du-lcof/)
+```c++
+//递归
+class Solution {
+public:
+    int getDepth(TreeNode* node)
+    {
+        if(!node) return 0;
+        int leftDepth=getDepth(node->left);
+        int rightDepth=getDepth(node->right);
+        int depth=1+max(leftDepth,rightDepth);
+        return depth;
+    }
+    int maxDepth(TreeNode* root) {
+        return getDepth(root);
+    }
+};
+```
+## 面试题55-II：[平衡二叉树](https://leetcode-cn.com/problems/ping-heng-er-cha-shu-lcof/)
+```c++
+class Solution {
+public:
+    int getDepth(TreeNode* root)
+    {
+        if(!root) return 0;
+        int left=getDepth(root->left);
+        if(left==-1) return -1;
+        int right=getDepth(root->right);
+        if(right==-1) return -1;
+        return abs(left-right)>1?-1:1+max(left,right);
+    }
+    bool isBalanced(TreeNode* root) {
+        return getDepth(root)==-1?false:true;
+    }
+};
+```
+## 面试题56-I：[数组中数字出现的次数](https://leetcode-cn.com/problems/shu-zu-zhong-shu-zi-chu-xian-de-ci-shu-lcof/)
+```c++
+class Solution {
+public:
+    vector<int> singleNumbers(vector<int>& nums) {
+        int a=0,b=0;
+        int a_b=0,aDifb=1;
+        //0^(异或)任何数都为原来的数
+        //a^a=0
+        //a_b表示最后剩下a异或b的值
+        //aDifb表示在某一位置上a和b异或为1，及a和b在某一位置上不同，作为分界线
+        for(int num:nums)
+            a_b^=num;
+        while((a_b&aDifb)==0)
+            aDifb<<=1;//找到为1的位置
+        for(int num:nums)
+        {
+            if(num&aDifb)
+                a^=num;
+            else
+                b^=num;
+        }
+        return vector<int>{a,b};
+    }
+};
+```
+## 面试题56-II：[数组中数字出现的次数II](https://leetcode-cn.com/problems/shu-zu-zhong-shu-zi-chu-xian-de-ci-shu-ii-lcof/)
+```c++
+class Solution
+{
+public:
+    int singleNumber(vector<int> &nums)
+    {
+        int bits[32] = {0};
+        for (int i = 0; i < nums.size(); i++)
+        {
+            int j = 0;
+            while (nums[i])
+            {
+                bits[j++] += nums[i] % 2;
+                nums[i] >>= 1;
+            }
+        }
+        //得到二进制上各位数之和
+        int ans = 0;
+        //二进制装十进制并%n位数
+        for (int i = 0; i < 32; i++)
+        {
+            ans+=(1<<i)*(bits[i]%3);
+        }
+        return ans;
+    }
+};
+```
+## 面试题57：[和为s的两个数字](https://leetcode-cn.com/problems/he-wei-sde-liang-ge-shu-zi-lcof/)
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        int left=0,right=nums.size()-1;
+        while(left<right)
+        {
+            if(target-nums[left]<nums[right])
+            {
+                right--;
+            }
+            else if(target-nums[left]>nums[right])
+            {
+                left++;
+            }
+            else
+            {
+                return {nums[left],nums[right]};
+            }
+        }
+        return vector<int>{};
+    }
+};
+```
+## 面试题57-II：[和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> findContinuousSequence(int target) {
+       vector<vector<int>> res;
+       int left=1,right=1;
+       int saveTarget=target;
+        while(left<=(saveTarget>>1))
+        {
+            if(target>0)
+            {
+                target-=right++;
+            }
+            else if(target<0)
+            {
+                target+=left++;
+            }
+            else
+            {
+                vector<int> tmp;
+                for(int i=left;i<right;i++)
+                {
+                    tmp.emplace_back(i);
+                }
+                res.emplace_back(tmp);
+                target+=left++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+## 面试题58-I：[翻转单词顺序](https://leetcode-cn.com/problems/fan-zhuan-dan-ci-shun-xu-lcof/)
+```c++
+//头文件<sstream>
+//stringstream的使用
+class Solution {
+public:
+    string reverseWords(string s) {
+       stringstream istr(s);
+       string res,word;
+       while(istr>>word)
+       {
+           res=word+" "+res;
+       }
+       res.pop_back();
+       return res;
+    }
+};
+//双指针用法
+class Solution {
+public:
+    string reverseWords(string s) {
+        int left=s.size()-1;
+        int right=left;
+        string res;
+        while(left>=0)
+        {
+            while(s[left]==' ')
+            {
+                --left;
+                right=left;
+                if(left<0) break;
+            }
+            if(left<0) break;
+            while(s[left]!=' ')
+            {
+                --left;
+                if(left<0) break;
+            }
+            res+=s.substr(left+1,right-left)+" ";
+            right=left;
+        }
+        return res.substr(0,res.size()-1);
+    }
+};
+```
+## 面试题58-II：[左旋转字符串](https://leetcode-cn.com/problems/zuo-xuan-zhuan-zi-fu-chuan-lcof/)
+```c++
+class Solution {
+public:
+    string reverseLeftWords(string s, int n) {
+        for(int i=0;i<n;i++){
+            s.push_back(s[i]);
+        }
+        s.erase(0,n);
+        return s;
+    }
+};
+```
+## 面试题59-I：[滑动窗口的最大值](https://leetcode-cn.com/problems/hua-dong-chuang-kou-de-zui-da-zhi-lcof/)
+```c++
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+    int n = nums.size();
+	priority_queue<pair<int, int>> q;
+	for (int i = 0; i < k; ++i)
+		q.emplace(nums[i], i);
+	vector<int> ans = { q.top().first };
+	for (int i = k; i < n; ++i)
+	{
+		q.emplace(nums[i], i);
+		while (q.top().second <= i - k)
+			q.pop();
+		ans.push_back(q.top().first);
+	}
+	return ans;
+    }
+};
+```
+## 面试题59-II：[队列的最大值](https://leetcode-cn.com/problems/dui-lie-de-zui-da-zhi-lcof/)
+```c++
+class MaxQueue
+{
+    queue<int> que;
+    deque<int> deq;
+public:
+    MaxQueue(){}
+    int max_value()
+    {
+        if(deq.empty()) return -1;
+        return deq.front();
+    }
+    void push_back(int value)
+    {
+        que.emplace(value);
+        while(!deq.empty()&&deq.back()<value)
+        {
+            deq.pop_back();
+        }
+        deq.push_back(value);
+    }
+    int pop_front()
+    {
+        if(que.empty()) return -1;
+        int ret=que.front();
+        que.pop();
+        if(ret==deq.front())
+            deq.pop_front();
+        return ret;
+    }
+};
+```
+## 面试题60：[n个骰子的点数](https://leetcode-cn.com/problems/nge-tou-zi-de-dian-shu-lcof/)
+```c++
+class Solution {
+public:
+    vector<double> dicesProbability(int n) {
+        int dp[70]={0};//骰子点数和的可能方案数
+        for(int i=1;i<=6;i++)
+            dp[i]++;
+        //从第二个骰子开始
+        for(int i=2;i<=n;i++)
+        {
+            //从点数和最大的开始
+            for(int j=6*i;j>=i;j--)
+            {
+                dp[j]=0;
+                //一个骰子的点数
+                //所有点数和范围j：[i,6*j]
+                //除去第一个骰子后j的范围：[i-1,6*j-6]
+                //所以下面需要判断让剩余点数(点数和-当前点数，即j-cur)<i-1
+                for(int cur=1;cur<=6;cur++)
+                {
+                    if(j-cur<i-1) break;
+                    dp[j]+=dp[j-cur];
+                }
+            }
+        }
+        int all=pow(6,n);
+        vector<double> ret;
+        for(int i=n;i<=6*n;i++)
+            ret.emplace_back(dp[i]*1.0/all);
+        return ret;
+    }
+};
+```
+## 面试题61：[扑克牌中的顺子](https://leetcode-cn.com/problems/bu-ke-pai-zhong-de-shun-zi-lcof/)
+```c++
+class Solution {
+public:
+    bool isStraight(vector<int>& nums) {
+        bool card[15]={false};
+        int minVal=14,maxVal=0;
+        for(int num:nums)
+        {
+            if(num==0) continue;
+            if(card[num]) return false;
+            card[num]=true;
+            minVal=min(minVal,num);
+            maxVal=max(maxVal,num);
+        }
+        return maxVal-minVal<5;
+    }
+};
+```
+## 面试题62：[圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
+```c++
+//参考网站：https://blog.csdn.net/u011500062/article/details/72855826
+class Solution {
+public:
+    int lastRemaining(int n, int m) {
+        //dp[i]：表示最后胜利的人位置，i表示当前人数
+        int dp[n+1];
+        //初始化dp，当人数为1时，获胜的人位置为0
+        dp[1]=0;
+        for(int i=2;i<=n;i++)
+        {
+            //参考网址：https://blog.csdn.net/u011500062/article/details/72855826
+            //解释：当人数为2时，相当于将人数为1时获胜位置0向右移动m位，
+            //此时胜利位置为(人数为0时的胜利位置)0+m(移动位数)，
+            //但是为了防止数组越界，需要对人数取余(%i)
+            //综上所述，dp[i]=(dp[i-1]+m)%i
+            dp[i]=(dp[i-1]+m)%i;
+        }
+        return dp[n];
+    }
+};
+```
+## 面试题63：[股票的最大利润](https://leetcode-cn.com/problems/gu-piao-de-zui-da-li-run-lcof/)
+```c+
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int len=prices.size();
+        if(len<=1) return 0;
+        //dp[0][0]表示持有股票，dp[0][1]表示未持有股票
+        vector<vector<int>> dp(2,vector<int>(2,0));
+        dp[0][0]=-prices[0];
+        for(int i=1;i<len;i++)
+        {
+            dp[i%2][0]=max(dp[(i-1)%2][0],-prices[i]);
+            dp[(i%2)][1]=max(dp[(i-1)%2][1],dp[(i-1)%2][0]+prices[i]);
+        }
+        return dp[(len-1)%2][1];
+    }
+};
+```
+## 面试题64：[求1+2+...+n](https://leetcode-cn.com/problems/qiu-12n-lcof/)
+```c++
+class Solution {
+public:
+    int sumNums(int n) {
+        //如果n为0返回0，然后从1开始计算
+        n && (n += sumNums(n-1));
+        return n;
+    }
+};
+```
+## 面试题65：[不用加减乘除做加法](https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/)
+```c++
+class Solution {
+public:
+    int add(int a, int b) {
+        if (a == 0 || b == 0) {
+            return a == 0 ? b : a;
+        }
+
+        int sum = 0, carry = 0;
+
+        while (b != 0) { // 当没有进位的时候退出循环
+            sum = a ^ b; 
+            carry = (unsigned int) (a & b) << 1; // C++ 不允许负数进行左移操作，故要加 unsigned int
+
+            a = sum;
+            b = carry;
+        }
+
+        return a;
+    }
+}
+// 链接：https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/solution/zi-jie-ti-ku-jian-65-jian-dan-bu-yong-ji-5k3q/
+```
+## 面试题66：[构建乘积数组](https://leetcode-cn.com/problems/gou-jian-cheng-ji-shu-zu-lcof/)
+```c++
+class Solution {
+public:
+    vector<int> constructArr(vector<int>& a) {
+        int n = a.size();
+        vector<int> ret(n, 1);
+        int left = 1;
+        for (int i = 0; i < n; i ++) {
+            ret[i] = left;
+            left = left * a[i];
+        } 
+        int right = 1;
+        for (int i = n-1; i >= 0; i --) {
+            ret[i] *= right;
+            right *= a[i];
+        }
+        return ret;
+    }
+};
+//链接：https://leetcode-cn.com/problems/gou-jian-cheng-ji-shu-zu-lcof/solution/gou-jian-cheng-ji-shu-zu-dui-cheng-bian-li-by-huwt/
+```
+## 面试题67：[把字符串变为整数](https://leetcode-cn.com/problems/ba-zi-fu-chuan-zhuan-huan-cheng-zheng-shu-lcof/)
+```c++
+
+```
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
