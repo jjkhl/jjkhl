@@ -2422,13 +2422,28 @@ public:
 ```
 ## 面试题67：[把字符串变为整数](https://leetcode-cn.com/problems/ba-zi-fu-chuan-zhuan-huan-cheng-zheng-shu-lcof/)
 ```c++
-
+class Solution {
+public:
+    int strToInt(string str) {
+        int i = 0, flag = 1;
+        int res=0;
+        while (str[i] == ' ') i ++;
+        if (str[i] == '-') flag = -1;
+        if (str[i] == '-' || str[i] == '+') i ++;
+        for (; i < str.size(); i++)  {
+            if(str[i]<'0'||str[i]>'9') break;
+            if(res>INT_MAX/10||(res==INT_MAX/10&&str[i]-'0'>7))
+                return flag==1?INT_MAX:INT_MIN;
+            res = res * 10 + (str[i] - '0');
+        } 
+        return flag * res;
+    }
+};
 ```
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
-### 二分查找
-#### [704.二分法查找](https://leetcode-cn.com/problems/binary-search/submissions/)
+### [704.二分法查找](https://leetcode-cn.com/problems/binary-search/submissions/)
 二分法第一种写法，条件`[left,right]`，注意点：
 * while(left<=right)要用<=，因为left==right有意义
 * if(nums[middle]>target)时right要赋值为middle-1，因为翻墙这个nums[middle]不一定是target，接下来要查找middle-1
@@ -2478,7 +2493,7 @@ public:
     }
 };
 ```
-#### [35.搜索插入位置](https://leetcode-cn.com/problems/search-insert-position/)
+### [35.搜索插入位置](https://leetcode-cn.com/problems/search-insert-position/)
 ```c++
 class Solution {
 public:
@@ -2500,7 +2515,7 @@ public:
     }
 };
 ```
-#### [34.在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
+### [34.在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
 解题思路：先用二分法找到目标元素，然后找到开始位置和结束位置
 ```c++
 class Solution {
@@ -2547,7 +2562,7 @@ public:
 }
 };
 ```
-#### [69.x的平方根](https://leetcode-cn.com/problems/sqrtx/)
+### [69.x的平方根](https://leetcode-cn.com/problems/sqrtx/)
 ```c++
 class Solution {
 public:
@@ -2566,7 +2581,7 @@ public:
     }
 };
 ```
-#### [267.有效的完全平方数](https://leetcode-cn.com/problems/valid-perfect-square/)
+### [267.有效的完全平方数](https://leetcode-cn.com/problems/valid-perfect-square/)
 ```c++
 class Solution {
 public:
@@ -2587,8 +2602,7 @@ long long left = 0;
     }
 };
 ```
-### 双指针法
-#### [27.移除元素](https://leetcode-cn.com/problems/remove-element/)
+### [27.移除元素](https://leetcode-cn.com/problems/remove-element/)
 方法一(双指针法)：
 ```c++
 class Solution {
@@ -2623,7 +2637,7 @@ public:
 ```
 remove函数返回最后一个空元素迭代器位置，erase函数删除范围内的所有元素
 ![](picture/move函数示意图.jpg)
-#### [26.删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+### [26.删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
 ```c++
 class Solution {
 public:
@@ -2637,7 +2651,7 @@ public:
     }
 };
 ```
-#### [283.移动零](https://leetcode-cn.com/problems/move-zeroes/)
+### [283.移动零](https://leetcode-cn.com/problems/move-zeroes/)
 ```c++
 class Solution {
 public:
@@ -2653,7 +2667,7 @@ int t=0;
     }
 };
 ```
-#### [844.比较含退格的字符串](https://leetcode-cn.com/problems/backspace-string-compare/)
+### [844.比较含退格的字符串](https://leetcode-cn.com/problems/backspace-string-compare/)
 ```c++
 class Solution {
 public:
@@ -2748,7 +2762,7 @@ public:
     }
 };
 ```
-#### [977.有序数组的平方](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
+### [977.有序数组的平方](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
 ```c++
 class Solution {
 public:
@@ -2782,7 +2796,7 @@ public:
   }
 };
 ```
-#### [209.长度最小的子数组](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
+### [209.长度最小的子数组](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
 滑动窗口解法
 ```c++
 class Solution {
@@ -2807,7 +2821,7 @@ public:
     }
 };
 ```
-#### [904.水果成篮](https://leetcode-cn.com/problems/fruit-into-baskets/)
+### [904.水果成篮](https://leetcode-cn.com/problems/fruit-into-baskets/)
 ```c++
 class Solution {
 public:
@@ -2837,7 +2851,7 @@ public:
     }
 };
 ```
-#### [76.最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
+### [76.最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring/)
 ```c++
 class Solution
 {
@@ -2879,7 +2893,7 @@ public:
     }
 };
 ```
-#### [59.螺旋矩阵II](https://leetcode-cn.com/problems/spiral-matrix-ii/)
+### [59.螺旋矩阵II](https://leetcode-cn.com/problems/spiral-matrix-ii/)
 ```c++
 class Solution
 {
@@ -2926,7 +2940,7 @@ public:
     }
 };
 ```
-#### [54.螺旋矩阵](https://leetcode-cn.com/problems/spiral-matrix/)
+### [54.螺旋矩阵](https://leetcode-cn.com/problems/spiral-matrix/)
 <span id="54"></span>
 ```c++
 class Solution{
