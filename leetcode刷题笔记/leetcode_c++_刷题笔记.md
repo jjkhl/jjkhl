@@ -2440,6 +2440,46 @@ public:
     }
 };
 ```
+## 面试题68-I：[二叉搜索树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-zui-jin-gong-gong-zu-xian-lcof/)
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        TreeNode* ancestor = root;
+        while (true) {
+            if (p->val < ancestor->val && q->val < ancestor->val) {
+                ancestor = ancestor->left;
+            }
+            else if (p->val > ancestor->val && q->val > ancestor->val) {
+                ancestor = ancestor->right;
+            }
+            else {
+                break;
+            }
+        }
+        return ancestor;
+    }
+};
+```
+## 面试题69-II：[二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root==NULL||p==root||q==root)
+        {
+            return root;
+        }
+        TreeNode* left=lowestCommonAncestor(root->left,p,q);
+        TreeNode* right=lowestCommonAncestor(root->right,p,q);
+        if(!left&&!right) return NULL;
+        if(!left) return right;
+        if(!right) return left;
+        return root;
+        // return left==NULL?right:(right==NULL?left:root);
+    }
+};
+```
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
