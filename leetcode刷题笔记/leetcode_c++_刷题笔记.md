@@ -4814,7 +4814,134 @@ TreeNode* traversal(vector<int>& preorder,int pBegin,int pEnd,vector<int>& inord
     }
 };
 ```
-> 代码随想录二叉树部分第20题及以后待做
+### [654.最大二叉树](https://leetcode-cn.com/problems/maximum-binary-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& nums,int left,int right)
+    {
+        if(left>right)
+        {
+            return NULL;
+        }
+        if(left==right)
+        {
+            TreeNode *root=new TreeNode(nums[left]);
+            return root;
+        }
+        int index=left;
+        for(int i=left;i<=right;i++)
+        {
+            index=nums[index]>nums[i]?index:i;
+        }
+        TreeNode *root=new TreeNode(nums[index]);
+        root->left=buildTree(nums,left,index-1);
+        root->right=buildTree(nums,index+1,right);
+        return root;
+    }
+    TreeNode* constructMaximumBinaryTree(vector<int>& nums) {
+        return buildTree(nums,0,nums.size()-1);
+    }
+};
+```
+### [617.合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
+```c++
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* root1, TreeNode* root2) {
+        if(!root1) return root2;
+        if(!root2) return root1;
+        root1->val+=root2->val;
+        root1->left=mergeTrees(root1->left,root2->left);
+        root1->right=mergeTrees(root1->right,root2->right);
+        return root1;
+    }
+};
+```
+## [700.二叉搜索树中的搜索](https://leetcode-cn.com/problems/search-in-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* searchBST(TreeNode* root, int val) {
+        while(root)
+        {
+            if(root->val==val)
+            {
+                return root;
+            }
+            else if(root->val>val)
+            {
+                root=root->left;
+            }
+            else
+            {
+                root=root->right;
+            }
+        }
+        return NULL;
+    }
+};
+//递归
+class Solution {
+public:
+    TreeNode* searchBST(TreeNode* root, int val) {
+        if (root == NULL || root->val == val) return root;
+        if (root->val > val) return searchBST(root->left, val);
+        if (root->val < val) return searchBST(root->right, val);
+        return NULL;
+    }
+};
+```
+## [98.验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* pre=NULL;
+    bool isValidBST(TreeNode* root) {
+        if(!root) return true;
+        bool left=isValidBST(root->left);
+        if(pre&&pre->val>=root->val) return false;
+        pre=root;
+        bool right=isValidBST(root->right);
+        return left&&right;
+    }
+};
+```
+## [530.二叉搜索树的最小绝对差](https://leetcode-cn.com/problems/minimum-absolute-difference-in-bst/)
+```c++
+class Solution {
+public:
+    int getMinimumDifference(TreeNode* root) {
+        stack<TreeNode*> st;
+        if(!root) return 0;
+        st.push(root);
+        TreeNode* pre=NULL;
+        int res=INT_MAX;
+        while(!st.empty())
+        {
+            TreeNode* node=st.top();
+            if(node)
+            {
+                st.pop();
+                if(node->right) st.push(node->right);
+                st.push(node);
+                st.push(NULL);
+                if(node->left) st.push(node->left);
+            }
+            else
+            {
+                st.pop();
+                node=st.top();
+                st.pop();
+                if(pre)
+                    res=min(res,node->val-pre->val);
+                pre=node;
+            }
+        }
+        return res;
+    }
+};
+```
 
 ## 回溯算法
 模板
