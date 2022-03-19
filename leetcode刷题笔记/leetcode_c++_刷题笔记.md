@@ -4858,7 +4858,7 @@ public:
     }
 };
 ```
-## [700.二叉搜索树中的搜索](https://leetcode-cn.com/problems/search-in-a-binary-search-tree/)
+### [700.二叉搜索树中的搜索](https://leetcode-cn.com/problems/search-in-a-binary-search-tree/)
 ```c++
 class Solution {
 public:
@@ -4892,7 +4892,7 @@ public:
     }
 };
 ```
-## [98.验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
+### [98.验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
 ```c++
 class Solution {
 public:
@@ -4907,7 +4907,7 @@ public:
     }
 };
 ```
-## [530.二叉搜索树的最小绝对差](https://leetcode-cn.com/problems/minimum-absolute-difference-in-bst/)
+### [530.二叉搜索树的最小绝对差](https://leetcode-cn.com/problems/minimum-absolute-difference-in-bst/)
 ```c++
 class Solution {
 public:
@@ -4942,6 +4942,56 @@ public:
     }
 };
 ```
+###    [501.二叉搜索树中的众数](https://leetcode-cn.com/problems/find-mode-in-binary-search-tree/)
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int maxCount=0;
+    int count=0;
+    TreeNode* pre=NULL;
+    vector<int> res;
+    void bfs(TreeNode* cur)
+    {
+        if(!cur) return;
+        bfs(cur->left);
+        if(!pre)//第一个节点
+            count=1;
+        else if(pre->val==cur->val)
+            count++;
+        else
+            count=1;//重置节点
+        pre=cur;//更新节点
+        if(count==maxCount)
+        {
+            res.push_back(cur->val);
+        }
+        if(count>maxCount)
+        {
+            maxCount=count;
+            res.clear();
+            res.push_back(cur->val);
+        }
+        bfs(cur->right);
+    }
+    vector<int> findMode(TreeNode* root) {
+        res.clear();
+        bfs(root);
+        return res;
+    }
+};
+```
+
 
 ## 回溯算法
 模板
