@@ -4991,8 +4991,97 @@ public:
     }
 };
 ```
+### [236.二叉树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root==p||root==q||root==NULL) return root;
+        TreeNode *left=lowestCommonAncestor(root->left,p,q);
+        TreeNode *right=lowestCommonAncestor(root->right,p,q);
+        if(left&&right) return root;
+        else if(left&&!right) return left;
+        else if(!left&&right) return right;
+        else return NULL;
+    }
+};
+```
+### [235.二叉搜索树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root->val>p->val&&root->val>q->val)
+            return lowestCommonAncestor(root->left,p,q);
+        else if(root->val<p->val&&root->val<q->val)
+            return lowestCommonAncestor(root->right,p,q);
+        else
+            return root;
+    }
+};
+```
+### [701.二叉搜索树中的插入操作](https://leetcode-cn.com/problems/insert-into-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* insertIntoBST(TreeNode* root, int val) {
+        if (root == NULL) {
+				return new TreeNode(val);
+			}
 
+			if (val < root->val) {
+				root->left = insertIntoBST(root->left, val);
+			}
+			else {
+				root->right = insertIntoBST(root->right, val);
+			}
+			return root;
+    }
+};
+```
 
+### [450.删除二叉搜索树中的节点](https://leetcode-cn.com/problems/delete-node-in-a-bst/)
+```c++
+class Solution {
+public:
+    TreeNode* deleteNode(TreeNode* root, int key) 
+    {
+        if (root == nullptr)    return nullptr;
+        if (key > root->val)    root->right = deleteNode(root->right, key);     // 去右子树删除
+        else if (key < root->val)    root->left = deleteNode(root->left, key);  // 去左子树删除
+        else    // 当前节点就是要删除的节点
+        {
+            if (! root->left)   return root->right; // 情况1，欲删除节点无左子
+            if (! root->right)  return root->left;  // 情况2，欲删除节点无右子
+            TreeNode* node = root->right;           // 情况3，欲删除节点左右子都有 
+            while (node->left)          // 寻找欲删除节点右子树的最左节点
+                node = node->left;
+            node->left = root->left;    // 将欲删除节点的左子树成为其右子树的最左节点的左子树
+            root = root->right;         // 欲删除节点的右子顶替其位置，节点被删除
+        }
+        return root;    
+    }
+};
+```
+### [669.修剪二叉搜索树](https://leetcode-cn.com/problems/trim-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* trimBST(TreeNode* root, int low, int high) {
+      if(!root) return NULL;
+      //如果root值大于区间，则返回左子树
+      if(root->val>high)
+      return trimBST(root->left,low,high);
+      //如果root值小于区间，则返回右子树
+      if(root->val<low)
+      return trimBST(root->right,low,high);
+      //如果root值在区间内，正常迭代即可
+      root->left=trimBST(root->left,low,high);
+      root->right=trimBST(root->right,low,high);
+      return root;
+    }
+};
+```
 ## 回溯算法
 模板
 ```c++
