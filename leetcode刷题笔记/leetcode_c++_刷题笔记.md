@@ -5101,6 +5101,25 @@ public:
     }
 };
 ```
+### [838.把二叉搜索树转换为累加树](https://leetcode-cn.com/problems/convert-bst-to-greater-tree/)
+```c++
+class Solution {
+public:
+    int sum=0;
+    void dfs(TreeNode* root)
+    {
+        if(root==NULL) return;
+        dfs(root->right);
+        sum+=root->val;
+        root->val=sum;
+        dfs(root->left);
+    }
+    TreeNode* convertBST(TreeNode* root) {
+        dfs(root);
+        return root;
+    }
+};
+```
 
 ## 回溯算法
 模板
@@ -5318,7 +5337,78 @@ vector<vector<string>> partition(string s)
 }
 };
 ```
-
+### [93.复原IP地址](https://leetcode-cn.com/problems/restore-ip-addresses/)
+```c++
+class Solution
+{
+public:
+    vector<string> res;
+    void backTrack(string &s, int start, int point)
+    {
+        if (point == 3)
+        {
+            if (isVaild(s,start,s.size()-1))
+                res.emplace_back(s);
+            return;
+        }
+        for(int i=start;i<s.size();i++)
+        {
+            if(!isVaild(s,start,i)) break;
+            s.insert(s.begin()+i+1,'.');
+            backTrack(s,i+2,point+1);
+            s.erase(s.begin()+i+1);
+        }
+    }
+    bool isVaild(const string &s, int start, int end)
+    {
+        if (start > end)
+            return false;
+        if (s[start] == '0' && start != end)
+            return false;
+        int num=0;
+        for(int i=start;i<=end;i++)
+        {
+            if(s[i]>'9'||s[i]<'0')
+                return false;
+            num=num*10+(s[i]-'0');
+            if(num>255)
+                return false;
+        }
+        return true;
+    }
+    vector<string> restoreIpAddresses(string s)
+    {
+        if(s.size()>12) return res;
+        backTrack(s, 0, 0);
+        return res;
+    }
+};
+```
+### [78.子集](https://leetcode-cn.com/problems/subsets/)
+```c++
+class Solution {
+private:
+vector<vector<int>> result;
+vector<int> path;
+void backtracking(vector<int>& nums, int startIndex)
+{
+	result.push_back(path); // 收集子集
+	for (int i = startIndex; i < nums.size(); i++) {
+		path.push_back(nums[i]);
+		backtracking(nums, i + 1);
+		path.pop_back();
+	}
+}
+public:
+vector<vector<int>> subsets(vector<int>& nums)
+{
+	result.clear();
+	path.clear();
+	backtracking(nums, 0);
+	return result;
+}
+};
+```
 ## 动态规划
 ### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
 ```c++
