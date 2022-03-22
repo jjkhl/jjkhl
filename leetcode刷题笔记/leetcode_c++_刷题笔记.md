@@ -5409,6 +5409,241 @@ vector<vector<int>> subsets(vector<int>& nums)
 }
 };
 ```
+### [90.子集II](https://leetcode-cn.com/problems/subsets-ii/)
+```c++
+class Solution {
+private:
+    vector<vector<int>> result;
+    vector<int> path;
+    void backtracking(vector<int>& nums, int startIndex) {
+        result.push_back(path);
+        for (int i = startIndex; i < nums.size(); i++) {
+            // 而我们要对同一树层使用过的元素进行跳过
+            if (i > startIndex && nums[i] == nums[i - 1] ) { // 注意这里使用i > startIndex
+                continue;
+            }
+            path.push_back(nums[i]);
+            backtracking(nums, i + 1);
+            path.pop_back();
+        }
+    }
+
+public:
+    vector<vector<int>> subsetsWithDup(vector<int>& nums) {
+        result.clear();
+        path.clear();
+        sort(nums.begin(), nums.end()); // 去重需要排序
+        backtracking(nums, 0);
+        return result;
+    }
+};
+```
+### [491.递增子序列](https://leetcode-cn.com/problems/increasing-subsequences/)
+```c++
+class Solution {
+private:
+    vector<vector<int>> result;
+    vector<int> path;
+    void backtracking(vector<int>& nums, int startIndex) {
+        if (path.size() > 1) {
+            result.push_back(path);
+        }
+        int used[201] = {0}; // 这里使用数组来进行去重操作，题目说数值范围[-100, 100]
+        for (int i = startIndex; i < nums.size(); i++) {
+            if ((!path.empty() && nums[i] < path.back())
+                    || used[nums[i] + 100] == 1) {
+                    continue;
+            }
+            used[nums[i] + 100] = 1; // 记录这个元素在本层用过了，本层后面不能再用了
+            path.push_back(nums[i]);
+            backtracking(nums, i + 1);
+            path.pop_back();
+        }
+    }
+public:
+    vector<vector<int>> findSubsequences(vector<int>& nums) {
+        result.clear();
+        path.clear();
+        backtracking(nums, 0);
+        return result;
+    }
+};
+```
+### [46.全排列](https://leetcode-cn.com/problems/permutations/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> result;
+    vector<int> path;
+    void backtracking (vector<int>& nums, vector<bool>& used) {
+        // 此时说明找到了一组
+        if (path.size() == nums.size()) {
+            result.push_back(path);
+            return;
+        }
+        for (int i = 0; i < nums.size(); i++) {
+            if (used[i] == true) continue; // path里已经收录的元素，直接跳过
+            used[i] = true;
+            path.push_back(nums[i]);
+            backtracking(nums, used);
+            path.pop_back();
+            used[i] = false;
+        }
+    }
+    vector<vector<int>> permute(vector<int>& nums) {
+        result.clear();
+        path.clear();
+        vector<bool> used(nums.size(), false);
+        backtracking(nums, used);
+        return result;
+    }
+};
+```
+### [47.全排列II](https://leetcode-cn.com/problems/permutations-ii/)
+```c++
+class Solution
+{
+public:
+    vector<vector<int>> res;
+    vector<int> path;
+    void backTrack(vector<int> &nums, vector<bool> &used)
+    {
+        if (path.size() == nums.size())
+        {
+            res.emplace_back(path);
+            return;
+        }
+        for (int i = 0; i < nums.size(); i++)
+        {
+            if (i > 0 && nums[i - 1] == nums[i] && used[i - 1] == false)
+                continue;
+            if (used[i] == false)
+            {
+                used[i] = true;
+                path.emplace_back(nums[i]);
+                backTrack(nums, used);
+                used[i] = false;
+                path.pop_back();
+            }
+        }
+    }
+    vector<vector<int>> permuteUnique(vector<int> &nums)
+    {
+        res.clear();
+        path.clear();
+        sort(nums.begin(), nums.end());
+        vector<bool> used(nums.size(), false);
+        backTrack(nums, used);
+        return res;
+    }
+};
+```
+## 贪心算法
+### [455.分发饼干](https://leetcode-cn.com/problems/assign-cookies/)
+```c++
+class Solution {
+public:
+    int findContentChildren(vector<int>& g, vector<int>& s) {
+        sort(g.begin(),g.end());
+        sort(s.begin(),s.end());
+        //g为孩子，s为饼干
+        int g_index=0;
+        int s_index=0;
+        while(g_index<g.size()&&s_index<s.size())
+        {
+            if(g[g_index]<=s[s_index])
+            {
+                g_index++;
+                s_index++;
+            }
+            else
+            {
+                s_index++;
+            }
+        }
+        return g_index;
+    }
+};
+```
+### [376.摆动序列](https://leetcode-cn.com/problems/wiggle-subsequence/)
+```c++
+//贪心算法
+class Solution {
+public:
+    int wiggleMaxLength(vector<int>& nums) {
+        if(nums.size()<=1) return nums.size();
+        int curDiff=0;
+        int preDiff=0;
+        int ret=1;
+        for(int i=0;i<nums.size()-1;i++)
+        {
+            curDiff=nums[i+1]-nums[i];
+            if((curDiff>0&&preDiff<=0)||(curDiff<0&&preDiff>=0))
+            {
+                ret++;
+                preDiff=curDiff;
+            }
+        }
+        return ret;
+    }
+};
+//动态规划
+class Solution {
+public:
+    int wiggleMaxLength(vector<int>& nums) {
+        int m = nums.size();
+        if(m <= 1)
+            return m;
+        vector<vector<int>> dp(m,vector<int>(2,0));
+        //dp[i][0]表示nums[i]-nums[i-1]<0的最大序列长度
+        //dp[i][1]表示nums[i]-nums[i-1]>0的最大序列长度
+        //因为是摆动序列，所以当(nums[i]-nums[i-1]<0)，dp[i][0]=dp[i-1][1]+1，dp[i][1]=dp[i-1][1]
+        //当(nums[i]-nums[i-1]>0)，dp[i][1]=dp[i-1][0]+1，dp[i][0]=dp[i-1][0]
+        //当nums[i]-nums[i-1]==0，dp[i][1]=d[i-1][1],d[i][0]=dp[i][0]
+        dp[0][0] = 1;
+        dp[0][1] = 1;
+        int res = 0;
+        for(int i = 1; i < m; i++)
+        {
+            if(nums[i] - nums[i-1] < 0)
+            {
+                dp[i][0] = dp[i-1][1] + 1;
+                dp[i][1] = dp[i-1][1];
+            }     
+            else if(nums[i] - nums[i-1] > 0)
+            {
+                dp[i][1] = dp[i-1][0] + 1;
+                dp[i][0] = dp[i-1][0];
+            }
+            else{
+                dp[i][1] = dp[i-1][1];
+                dp[i][0] = dp[i-1][0];
+            }
+        }
+        return max(dp[m-1][0],dp[m-1][1]);
+    }
+};
+// 作者：excusejie-kou
+// 链接：https://leetcode-cn.com/problems/wiggle-subsequence/solution/jian-dan-yi-dong-dong-tai-gui-hua-by-exc-dbp9/
+```
+### [53.最大子数组和](https://leetcode-cn.com/problems/maximum-subarray/)
+```c++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        if (nums.size() == 0) return 0;
+        vector<int> dp(nums.size(), 0); // dp[i]表示包括i之前的最大连续子序列和
+        dp[0] = nums[0];
+        int result = dp[0];
+        for (int i = 1; i < nums.size(); i++) {
+            dp[i] = max(dp[i - 1] + nums[i], nums[i]); // 状态转移公式
+            if (dp[i] > result) result = dp[i]; // result 保存dp[i]的最大值
+        }
+        return result;
+    }
+};
+```
+
 ## 动态规划
 ### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
 ```c++
