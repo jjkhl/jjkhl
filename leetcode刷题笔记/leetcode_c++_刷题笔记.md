@@ -5783,3 +5783,97 @@ public:
     }
 };
 ```
+### [62.不同路径](https://leetcode-cn.com/problems/unique-paths/)
+```c++
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        if(m==1||n==1) return 1;
+        vector<int> dp(n,1);
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                dp[j]+=dp[j-1];
+            }
+        }
+        return dp[n-1];
+    }
+};
+```
+### [63.不同路径II](https://leetcode-cn.com/problems/unique-paths-ii/)
+```c++
+class Solution {
+public:
+    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {
+        int row=obstacleGrid.size();//行
+        int col=obstacleGrid[0].size();//列
+        vector<vector<int>> dp(row,vector<int>(col,0));
+        for(int j=0;j<col;j++)
+        {
+            if(obstacleGrid[0][j]==1)
+                break;
+            dp[0][j]=1;
+        }
+        for(int i=0;i<row;i++)
+        {
+            if(obstacleGrid[i][0]==1)
+                break;
+            dp[i][0]=1;
+        }
+        for(int i=1;i<row;i++)
+        {
+            for(int j=1;j<col;j++)
+            {
+                if(obstacleGrid[i][j]==1)
+                    continue;
+                dp[i][j]=dp[i-1][j]+dp[i][j-1];
+            }
+        }
+        return dp[row-1][col-1];
+    }
+};
+```
+### [343.整数拆分](https://leetcode-cn.com/problems/integer-break/)
+```c++
+class Solution {
+public:
+    int max(int a,int b,int c)
+    {
+        return a>b?(a>c?a:c):(b>c?b:c);
+    }
+    int integerBreak(int n) {
+        vector<int> dp(n+1,0);
+        dp[2]=1;
+        for(int i=3;i<=n;i++)
+        {
+            for(int j=1;j<i;j++)
+            {
+                dp[i]=max(dp[i],(i-j)*j,dp[i-j]*j);
+            }
+        }
+        return dp[n];
+    }
+};
+```
+### [96.不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
+```c++
+class Solution {
+public:
+    int numTrees(int n) {
+        if(n<=2) return n;
+        vector<int> dp(n+1,0);
+        dp[0]=1;
+        dp[1]=1;
+        dp[2]=2;
+        for(int i=3;i<=n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                dp[i]+=dp[j]*dp[i-j-1];
+            }
+        }
+        return dp.back();
+    }
+};
+```
