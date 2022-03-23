@@ -5643,7 +5643,85 @@ public:
     }
 };
 ```
-
+### [买卖股票的最佳时机II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        vector<pair<int,int>> dp(prices.size(),make_pair<int,int>(0,0));
+        dp[0]=make_pair(0,-prices[0]);
+        for(int i=1;i<dp.size();i++)
+        {
+            dp[i].first=max(dp[i-1].first,dp[i-1].second+prices[i]);//未持有股票
+            dp[i].second=max(dp[i-1].second,dp[i-1].first-prices[i]);//持有股票
+        }
+        return max(dp.back().first,dp.back().second);
+    }
+};
+```
+### [55.跳跃游戏](https://leetcode-cn.com/problems/jump-game/)
+```c++
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int k=0;
+        for(int i=0;i<nums.size();i++)
+        {
+            if(i>k) return false;
+            k=max(k,i+nums[i]);
+        }
+        return true;
+    }
+};
+```
+### [45.跳跃游戏II](https://leetcode-cn.com/problems/jump-game-ii/)
+```c++
+class Solution
+{
+public:
+    int jump(vector<int> &nums)
+    {
+        int curDis = 0;
+        int res = 0;
+        int nextDis = 0;
+        for (int i = 0; i < nums.size() - 1; i++)
+        {
+            nextDis=max(i+nums[i],nextDis);
+            if(i==curDis)
+            {
+                curDis=nextDis;
+                res++;
+            }
+        }
+        return res;
+    }
+};
+```
+### [1005.k次取反后最大化的数组和](https://leetcode-cn.com/problems/maximize-sum-of-array-after-k-negations)
+```c++
+class Solution {
+public:
+    int largestSumAfterKNegations(vector<int>& nums, int k) {
+        sort(nums.begin(),nums.end(),[](int a,int b){return abs(a)>abs(b);});
+        for(int i=0;i<nums.size();i++)
+        {
+            if(nums[i]<0&&k>0)
+            {
+                nums[i]*=-1;
+                k--;
+            }
+        }
+        //如果k为偶数，则无需变化；为奇数只需要将绝对值最小的变为负数
+        if(k&1==1)
+            nums.back()*=-1;
+        int res=0;
+        for(int i:nums)
+            res+=i;
+        return res;
+    }
+};
+```
+> 后续待做
 ## 动态规划
 ### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
 ```c++
