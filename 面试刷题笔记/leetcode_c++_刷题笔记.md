@@ -5721,7 +5721,41 @@ public:
     }
 };
 ```
-> 后续待做
+### [332.重新安排行程](https://leetcode-cn.com/problems/reconstruct-itinerary/)
+```c++
+class Solution {
+private:
+// unordered_map<出发机场, map<到达机场, 航班次数>> targets
+unordered_map<string, map<string, int>> targets;
+bool backtracking(int ticketNum, vector<string>& result) {
+    if (result.size() == ticketNum + 1) {
+        return true;
+    }
+    for (pair<const string, int>& target : targets[result.back()]) {
+        //如果到过该目标机场就查看下一张票
+        if (target.second > 0 ) { // 如果飞机没飞到过到达机场，则放入出发站
+            result.push_back(target.first);
+            target.second--;
+            if (backtracking(ticketNum, result)) return true;
+            result.pop_back();
+            target.second++;
+        }
+    }
+    return false;
+}
+public:
+    vector<string> findItinerary(vector<vector<string>>& tickets) {
+        targets.clear();
+        vector<string> result;
+        for (const vector<string>& vec : tickets) {
+            targets[vec[0]][vec[1]]++; // 记录映射关系
+        }
+        result.push_back("JFK"); // 起始机场
+        backtracking(tickets.size(), result);
+        return result;
+    }
+};
+```
 ## 动态规划
 ### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
 ```c++
@@ -5879,5 +5913,74 @@ public:
 ```
 ### [416.分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
 ```c++
-
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        vector<int> dp(10001,0);
+        int target=0;
+        for(auto &i: nums)
+        {
+            target+=i;
+        }
+        if(target&1) return false;
+        target>>=1;
+        for(int i=0;i<nums.size();i++)
+        {
+            for(int j=target;j>=nums[i];j--)
+            {
+                dp[j]=max(dp[j],dp[j-nums[i]]+nums[i]);
+            }
+        }
+        if(dp[target]==target)
+            return true;
+        return false;
+    }
+};
+```
+### [1049.最后一块石头的重量II](https://leetcode-cn.com/problems/last-stone-weight-ii/)
+```c++
+class Solution {
+public:
+    int lastStoneWeightII(vector<int>& stones) {
+        int target=0;
+        for(int& i:stones)
+            target+=i;
+        int sum=target;
+        target>>=1;
+        vector<int> dp(target+1,0);
+        for(int i=0;i<stones.size();i++)
+        {
+            for(int j=target;j>=stones[i];j--)
+            {
+                dp[j]=max(dp[j],dp[j-stones[i]]+stones[i]);
+            }
+        }
+        return sum-dp[target]*2;
+    }
+};
+```
+### [494.目标和](https://leetcode-cn.com/problems/target-sum/)
+```c++
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        int sum=0;//目标和的范围：[-sum,sum]
+        for(int i:nums)
+            sum+=i;
+        int bagSize=(sum+target)>>1;
+        if((sum+target)&1) return 0;
+        if(abs(target)>sum) return 0;
+        vector<int> dp(bagSize+1,0);//填满容量j的背包有dp[j]中方法
+        //初始化dp
+        dp[0]=1;
+        for(int i=0;i<nums.size();i++)
+        {
+            for(int j=bagSize;j>=nums[i];j--)
+            {
+                dp[j]+=dp[j-nums[i]];
+            }
+        }
+        return dp[bagSize];
+    }
+};
 ```
