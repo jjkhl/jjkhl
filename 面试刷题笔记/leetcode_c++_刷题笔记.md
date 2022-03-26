@@ -5756,6 +5756,54 @@ public:
     }
 };
 ```
+### [51.N皇后](https://leetcode-cn.com/problems/n-queens/)
+```c++
+class Solution
+{
+public:
+    vector<vector<string>> res;
+    void backTrack(int n, int row, vector<string> &chessboard)
+    {
+        if (n == row)
+        {
+            res.emplace_back(chessboard);
+            return;
+        }
+        for (int col = 0; col < n; col++)
+        {
+            if(isValid(row,col,chessboard,n))
+            {
+                chessboard[row][col]='Q';
+                backTrack(n,row+1,chessboard);
+                chessboard[row][col]='.';
+            }
+        }
+    }
+    bool isValid(int row, int col, vector<string> &chessboard, int n)
+    {
+        int count = 0;
+        //检查列
+        for (int i = 0; i < row; i++)
+            if (chessboard[i][col] == 'Q')
+                return false;
+        // 45°角
+        for (int i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
+            if (chessboard[i][j] == 'Q')
+                return false;
+        //135°角
+        for(int i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++)
+            if(chessboard[i][j]=='Q')
+                return false;
+        return true;
+    }
+    vector<vector<string>> solveNQueens(int n)
+    {
+        vector<string> chessBoard(n,string(n,'.'));
+        backTrack(n,0,chessBoard);
+        return res;
+    }
+};
+```
 ## 动态规划
 ### [509.斐波那契数](https://leetcode-cn.com/problems/fibonacci-number/)
 ```c++
@@ -5911,6 +5959,41 @@ public:
     }
 };
 ```
+## [01背包问题](https://programmercarl.com/%E8%83%8C%E5%8C%85%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%8001%E8%83%8C%E5%8C%85-1.html)
+**问题描述：**
+假设有n件物品和一个最多装入w的背包，第i件物品的重量为`weight[i]`,得到的价值是`value[i]`，每个物品只能被使用一次，求背包装入物品的价值总和最大值
+**解题步骤：**
+1. 二维dp数组的步骤
+* dp[i][j]：表示从标号0-i的物品任取，放进容量为j的背包，价值最大总和
+* 递推公式：`dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - weight[i]] + value[i])`
+* 初始化：背包j容量为0，dp[i][0]=0；然后初始化dp[0][j]
+* 遍历顺序：
+```c++
+//先遍历物品再背包
+// weight数组的大小 就是物品个数
+for(int i = 1; i < weight.size(); i++) { // 遍历物品
+    for(int j = 0; j <= bagweight; j++) { // 遍历背包容量
+        if (j < weight[i]) dp[i][j] = dp[i - 1][j]; 
+        else dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - weight[i]] + value[i]);
+
+    }
+}
+```
+2. 一维dp数组的步骤
+* dp[j]：容量为j的背包，物品价值最大值
+* 递推公式：`dp[j] = max(dp[j], dp[j - weight[i]] + value[i])`
+* 初始化：全部初始化为0
+* 遍历顺序：
+```c++
+//背包容量从大到小是为了保证物品i只被放入一次
+for(int i = 0; i < weight.size(); i++) { // 遍历物品
+    for(int j = bagWeight; j >= weight[i]; j--) { // 遍历背包容量
+        dp[j] = max(dp[j], dp[j - weight[i]] + value[i]);
+
+    }
+}
+```
+
 ### [416.分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
 ```c++
 class Solution {
@@ -5981,6 +6064,197 @@ public:
             }
         }
         return dp[bagSize];
+    }
+};
+```
+### [474.一和零](https://leetcode-cn.com/problems/ones-and-zeroes/submissions/)
+```c++
+class Solution {
+public:
+    int findMaxForm(vector<string>& strs, int m, int n) {
+        //2个01背包
+        //dp[i][j]：最多有i个0和j个1的strs的最大子集的大小
+        vector<vector<int>> dp(m + 1, vector<int> (n + 1, 0)); // 默认初始化0
+        for (string str : strs) { // 遍历物品
+            int oneNum = 0, zeroNum = 0;
+            for (char c : str) {
+                if (c == '0') zeroNum++;
+                else oneNum++;
+            }
+            for (int i = m; i >= zeroNum; i--) { // 遍历背包容量且从后向前遍历！
+                for (int j = n; j >= oneNum; j--) {
+                    dp[i][j] = max(dp[i][j], dp[i - zeroNum][j - oneNum] + 1);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+## [完全背包](https://programmercarl.com/%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85.html#%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85)
+**问题描述：**
+有N件物品和一个最多能背重量为W的背包。第i件物品的重量是weight[i]，得到的价值是value[i] 。每件物品都有无限个（也就是可以放入背包多次），求解将哪些物品装入背包里物品价值总和最大。
+**解题步骤：**
+1. 一维dp数组的步骤
+* dp[j]：容量为j的背包，物品价值最大值
+* 递推公式：`dp[j] = max(dp[j], dp[j - weight[i]] + value[i])`
+* 初始化：全部初始化为0
+* 遍历顺序：
+> 如果求组合数(无重复)，先物品再背包；如果排列数，先背包再物品
+```c++
+//默认物品都为i，背包都为j
+//以力扣322.零钱兑换为例
+// 先遍历物品，再遍历背包
+//完全背包的物品可以被添加多次，所以要从小到大去遍历
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int i=0;i<coins.size();i++)//物品
+            for(int j=coins[i];j<=amount;j++)//背包
+                if(dp[j-coins[i]]!=INT_MAX)
+                    dp[j]=min(dp[j],dp[j-coins[i]]+1);
+        return dp.back()==INT_MAX?-1:dp.back();
+    }
+};
+//先遍历背包，再遍历物品
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int j=1;j<=amount;j++)//背包
+        {
+            for(int i=0;i<coins.size();i++)//物品
+            {
+                //j-coins[i]>=0表示背包能容纳coins[i]
+                if(j-coins[i]>=0&&dp[j-coins[i]]!=INT_MAX)
+                    dp[j]=min(dp[j],dp[j-coins[i]]+1);
+            }
+        }
+        return dp.back()==INT_MAX?-1:dp.back();
+    }
+};
+```
+### [518.零钱兑换II](https://leetcode-cn.com/problems/coin-change-2/)
+```c++
+class Solution {
+public:
+    int change(int amount, vector<int>& coins) {
+        vector<int> dp(amount+1,0);//表示总金额为i，放入的方法
+        dp[0]=1;//表示0金额只有1种方法
+        for(int i=0;i<coins.size();i++)
+            for(int j=coins[i];j<=amount;j++)
+                dp[j]+=dp[j-coins[i]];
+        return dp.back();           
+    }
+};
+```
+### [377.组合总和IV](https://leetcode-cn.com/problems/combination-sum-iv/)
+```c++
+class Solution
+{
+public:
+    int combinationSum4(vector<int> &nums, int target)
+    {
+        vector<int> dp(target + 1, 0);
+        dp[0] = 1;
+        for (int i = 0; i <= target; i++) //背包
+        {
+            for (int j = 0; j<nums.size(); j++) //物品
+            {
+                if(i-nums[j]>=0&&dp[i]<INT_MAX-dp[i-nums[j]])
+                    dp[i]+=dp[i-nums[j]];
+            }
+        }
+        return dp.back();
+    }
+};
+```
+### [70.爬楼梯进阶](https://leetcode-cn.com/problems/climbing-stairs/)
+```c++
+//假设每次可以爬1到m个台阶
+class Solution {
+public:
+    int climbStairs(int n) {
+        vector<int> dp(n + 1, 0);
+        dp[0] = 1;
+        //m=2就是答案
+        // int m=2;
+        for (int i = 1; i <= n; i++) { // 遍历背包
+            for (int j = 1; j <= m; j++) { // 遍历物品
+                if (i - j >= 0) dp[i] += dp[i - j];
+            }
+        }
+        return dp[n];
+    }
+};
+```
+### [零钱兑换](https://leetcode-cn.com/problems/coin-change/)
+```c++
+// 先遍历物品，再遍历背包
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int i=0;i<coins.size();i++)//物品
+            for(int j=coins[i];j<=amount;j++)//背包
+                if(dp[j-coins[i]]!=INT_MAX)
+                    dp[j]=min(dp[j],dp[j-coins[i]]+1);
+        return dp.back()==INT_MAX?-1:dp.back();
+    }
+};
+//先遍历背包，再遍历物品
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int j=1;j<=amount;j++)//背包
+        {
+            for(int i=0;i<coins.size();i++)//物品
+            {
+                //j-coins[i]>=0表示背包能容纳coins[i]
+                if(j-coins[i]>=0&&dp[j-coins[i]]!=INT_MAX)
+                    dp[j]=min(dp[j],dp[j-coins[i]]+1);
+            }
+        }
+        return dp.back()==INT_MAX?-1:dp.back();
+    }
+};
+```
+### [279.完全平方数](https://leetcode-cn.com/problems/perfect-squares/)
+```c++
+//先背包后物品
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n + 1, INT_MAX);
+        dp[0] = 0;
+        for (int i = 0; i <= n; i++) { // 遍历背包
+            for (int j = 1; j * j <= i; j++) { // 遍历物品
+                dp[i] = min(dp[i - j * j] + 1, dp[i]);
+            }
+        }
+        return dp[n];
+    }
+};
+//先物品后背包
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n + 1, INT_MAX);
+        dp[0] = 0;
+        for (int i = 1; i * i <= n; i++) { // 遍历物品
+            for (int j = 1; j <= n; j++) { // 遍历背包
+                if (j - i * i >= 0) {
+                    dp[j] = min(dp[j - i * i] + 1, dp[j]);
+                }
+            }
+        }
+        return dp[n];
     }
 };
 ```
