@@ -6258,3 +6258,295 @@ public:
     }
 };
 ```
+### [139.单词拆分](https://leetcode-cn.com/problems/word-break/)
+```c++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string> wordSet(wordDict.begin(),wordDict.end());
+        vector<bool> dp(s.size()+1,false);
+        //初始化为true
+        dp[0]=true;
+        //dp[i]：dp[j]=true表示j个字符串可以拆分成功
+        //对于背包容量为i的背包，只需要查找[0,i)范围内个数的字符串
+        for(int i=1;i<=s.size();i++)//背包
+        {
+            for(int j=0;j<i;j++)//物品
+            {
+                string word=s.substr(j,i-j);
+                //字符串范围为[j,i]，所以需要判断dp[j]
+                //下面的if判断相当于分别判断[0,j]的字符和[j,i]字符是否存在对应
+                if(wordSet.count(word)!=0&&dp[j])
+                {
+                    dp[i]=true;
+                }
+            }
+        }
+        return dp.back();
+    }
+};
+```
+### [198.打家劫舍](https://leetcode-cn.com/problems/house-robber/)
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        //dp[i]：编号i内的房屋最多可以偷盗的金额为dp[i]
+        if(nums.size()==1) return nums[0];
+        vector<int> dp(nums.size(),0);
+        dp[0]=nums[0];
+        dp[1]=max(nums[0],nums[1]);
+        for(int i=2;i<nums.size();i++)
+        {
+            dp[i]=max(dp[i-2]+nums[i],dp[i-1]);
+        }
+        return dp.back();
+    }
+};
+```
+### [213.打家劫舍II](https://leetcode-cn.com/problems/house-robber-ii/)
+```c++
+class Solution {
+public:
+    int robRange(vector<int>& nums, int start, int end)
+    {
+        if(end==start) return nums[end];
+        vector<int> dp(nums.size());
+        dp[start]=nums[start];
+        dp[start+1]=max(nums[start],nums[start+1]);
+        for(int i=start+2;i<=end;i++)
+        {
+            dp[i]=max(dp[i-2]+nums[i],dp[i-1]);
+        }
+        return dp[end];
+    }
+    int rob(vector<int>& nums) {
+        //dp[i]：编号i内的房屋最多可以偷盗的金额为dp[i]
+        if(nums.size()==1) return nums[0];
+        return max(robRange(nums,1,nums.size()-1),robRange(nums,0,nums.size()-2));
+    }
+};
+```
+### [337.打家劫舍III](https://leetcode-cn.com/problems/house-robber-iii/)
+```c++
+class Solution {
+public:
+vector<int> robTree(TreeNode* cur)
+{
+	if (!cur) return vector<int>{0, 0};
+	vector<int> left = robTree(cur->left);
+	vector<int> right = robTree(cur->right);
+	//偷cur
+	int val1 = cur->val + left[0] + right[0];
+	//不偷cur
+	int val2 = max(left[0], left[1])+ max(right[0], right[1]);
+	return { val2,val1 };
+}
+int rob(TreeNode* root)
+{
+	vector<int> res = robTree(root);
+	return max(res[0], res[1]);
+}
+};
+```
+### [121.买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int dp[2]={-prices[0],0};
+        for(int i=1;i<prices.size();i++)
+        {
+            //dp数组：持有，未持有
+            int lastHold=dp[0];
+            dp[0]=max(-prices[i],dp[0]);
+            dp[1]=max(dp[1],prices[i]+lastHold);
+        }
+        return max(dp[0],dp[1]);
+    }
+};
+```
+
+### [122.买卖股票的最佳时机II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int dp[2]={-prices[0],0};
+        //dp[0]：持有；dp[1]：未持有
+        for(int i=1;i<prices.size();i++)
+        {
+            int lastHold=dp[0];
+            dp[0]=max(dp[0],dp[1]-prices[i]);
+            dp[1]=max(lastHold+prices[i],dp[1]);
+        }
+        return max(dp[1],dp[0]);
+    }
+};
+```
+### [123.买卖股票的最佳时机III](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if(prices.size()<=1) return 0;
+        //第i天所持有的最大金额
+        //0：无操作
+        //1：第一次持有股票
+        //2：第一次未持有股票
+        //3：第二次持有股票
+        //4：第二次未持有股票
+        int dp[5]={0};
+        dp[1]=-prices[0];
+        dp[3]=-prices[0];
+        //倒序的方式防止dp[i]使用前一天的dp[i-1]
+        for(int i=1;i<prices.size();i++)
+        {
+            dp[4]=max(dp[4],dp[3]+prices[i]);
+            dp[3]=max(dp[3],dp[2]-prices[i]);
+            dp[2]=max(dp[2],dp[1]+prices[i]);
+            dp[1]=max(dp[1],dp[0]-prices[i]);
+        }
+        return dp[4];
+    }
+};
+```
+### [188.买卖股票的最佳时机IV](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iv/)
+```c++
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        if(prices.size()<=1) return 0;
+        vector<int> dp(2*k+1,0);
+        for(int i=1;i<2*k+1;i+=2)
+            dp[i]=-prices[0];
+        for(int i=1;i<prices.size();i++)
+        {
+            for(int j=0;j+2<2*k+1;j+=2)
+            {
+                dp[j+2]=max(dp[j+2],dp[j+1]+prices[i]);
+                dp[j+1]=max(dp[j+1],dp[j]-prices[i]);
+            }
+        }
+        return dp[2*k];
+    }
+};
+```
+### [309.最佳买卖股票时机含冷冻期](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if(prices.size() == 0) return 0;
+        // 由于可以无限次交易，所以只定义两个维度，第一个维度是天数
+        // 第二个维度表示是否持有股票，0表示不持有（包括本来就不持有和处在冷冻期），1表示持有，2表示进入冷冻期
+        vector<vector<int>>dp (prices.size(), vector<int>(3, 0));
+        dp[0][0] = 0;
+        dp[0][1] = -prices[0];
+        dp[0][2] = 0;
+        for(int i = 1; i < prices.size(); i++)
+        {
+            // 第i天不持有股票的情况有两种          
+            // a.第i - 1天也不持有股票
+            // b.第i - 1天进入冷冻期（i - 1天卖出）
+            dp[i][0] = max(dp[i - 1][0], dp[i - 1][2]);  
+            // 第i天持有股票有两种情况            
+            // a.第i - 1天也持有股票
+            // b.第i - 1天不持有股票，在第i天买入
+            dp[i][1] = max(dp[i - 1][1], dp[i - 1][0] - prices[i]);
+            // 第i天进入冷冻期只有一种情况，第i - 1天持有股票且卖出（今天卖出）
+            dp[i][2] = dp[i - 1][1] + prices[i];
+        }
+        // 最后最大利润为最后一天，不持有股票或者进入冷冻期的情况 （今天卖出）
+        return max(dp[prices.size() - 1][0], dp[prices.size() - 1][2]);
+    }
+};
+
+//空间压缩的动态规划
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if (prices.empty()) {
+		return 0;
+	}
+
+	int n = prices.size();
+	// f[i][0]: 手上持有股票的最大收益
+	// f[i][1]: 手上不持有股票，并且处于冷冻期中的累计最大收益
+	// f[i][2]: 手上不持有股票，并且不在冷冻期中的累计最大收益
+	vector<vector<int>> f(2, vector<int>(3));
+	f[0][0] = -prices[0];
+	for (int i = 1; i < n; ++i) {
+		f[i%2][0] = max(f[(i - 1)%2][0], f[(i - 1) % 2][2] - prices[i]);
+		f[i%2][1] = f[(i - 1) % 2][0] + prices[i];
+		f[i%2][2] = max(f[(i - 1) % 2][1], f[(i - 1) % 2][2]);
+	}
+	return max(f[(n-1)%2][1], f[(n - 1) %2][2]);
+    }
+};
+```
+### [714.买卖股票的最佳时机含手续费](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices, int fee) {
+        vector<vector<int>> dp(prices.size(),vector<int>{0,0});
+        //dp[i][0]：未持有股票
+        //dp[i][1]：持有股票
+        //当买入股票的时候需要提交手续费
+        dp[0][1]=-prices[0]-fee;
+        for(int i=1;i<dp.size();i++)
+        {
+            //一直未持有股票    刚卖出股票
+            dp[i][0]=max(dp[i-1][0],dp[i-1][1]+prices[i]);
+            //一直持有股票      刚买入股票
+            dp[i][1]=max(dp[i-1][1],dp[i-1][0]-prices[i]-fee);
+        }
+        return dp.back()[0];
+    }
+};
+```
+### [300.最长递增子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
+```c++
+//来自题解：https://leetcode-cn.com/problems/longest-increasing-subsequence/solution/yi-bu-yi-bu-tui-dao-chu-guan-fang-zui-you-jie-fa-x/
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        vector<int> minnums;
+        for(int v : nums)
+        {
+            //在minnums找到大于等于v的第一个数的位置
+            auto pos = lower_bound(minnums.begin(), minnums.end(), v);
+            //没找到，所以可以添加数字v
+            if(pos == minnums.end()) {
+                minnums.push_back(v);
+            } 
+            //找到了，则将minnums对应位置的数替换为v
+            else {
+                *pos = v;
+            }
+        }
+        return minnums.size();
+    }
+};
+
+//动态规划版本
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        if (nums.size() <= 1) return nums.size();
+        //dp[i]：表示位置i的最长升序子序列的长度
+        vector<int> dp(nums.size(), 1);
+        int result = 0;
+        for (int i = 1; i < nums.size(); i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[i] > nums[j]) dp[i] = max(dp[i], dp[j] + 1);
+            }
+            if (dp[i] > result) result = dp[i]; // 取长的子序列
+        }
+        return result;
+    }
+};
+
+```
