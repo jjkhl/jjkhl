@@ -6568,3 +6568,196 @@ public:
     }
 };
 ```
+### [718.最长重复子数组](https://leetcode-cn.com/problems/maximum-length-of-repeated-subarray/)
+```c++
+//一维滚动数组
+class Solution
+{
+public:
+    int findLength(vector<int> &nums1, vector<int> &nums2)
+    {
+        int len1 = nums1.size(), len2 = nums2.size();
+        int res = INT_MIN;
+        vector<int> dp(len2+1, 0);
+        for(int i=1;i<=len1;i++)
+        {
+            for(int j=len2;j>0;j--)
+            {
+                if(nums1[i-1]==nums2[j-1])
+                {
+                    dp[j]=dp[j-1]+1;
+                }
+                else dp[j]=0;
+                res=max(res,dp[j]);
+            }
+        }
+        return res;
+    }
+};
+//二维动态规划
+class Solution {
+public:
+    int findLength(vector<int>& nums1, vector<int>& nums2) {
+        int len1=nums1.size(),len2=nums2.size();
+        int res=INT_MIN;
+        vector<vector<int>> dp(len1,vector<int>(len2,0));
+        for(int i=0;i<len1;i++)
+        {
+            if(nums2[0]==nums1[i])
+            {
+                res=1;
+                dp[i][0]=1;
+            }
+        }
+        for(int j=0;j<len2;j++)
+        {
+            if(nums1[0]==nums2[j])
+            {
+                res=1;
+                dp[0][j]=1;
+            }
+            
+        }
+        for(int i=1;i<len1;i++)
+        {
+            for(int j=1;j<len2;j++)
+            {
+                if(nums1[i]==nums2[j])
+                {
+                    dp[i][j]=max(dp[i][j],dp[i-1][j-1]+1);
+                }
+                res=max(res,dp[i][j]);
+            }
+        }
+        return res;
+    }
+};
+```
+### [1143.最长公共子序列](https://leetcode-cn.com/problems/longest-common-subsequence/)
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        vector<vector<int>> dp(1+text1.size(),vector<int>(text2.size()+1,0));
+        for(int i=1;i<dp.size();i++)
+        {
+            for(int j=1;j<dp[0].size();j++)
+            {
+                if(text1[i-1]==text2[j-1])
+                {
+                    dp[i][j]=max(dp[i][j],dp[i-1][j-1]+1);
+                }
+                else
+                {
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);
+                }
+            }
+        }
+        return dp.back().back();
+    }
+};
+```
+
+### [4035.不相交的线](https://leetcode-cn.com/problems/uncrossed-lines/)
+```c++
+//直线不能相交，这就是说明在字符串A中 找到一个与字符串B相同的子序列，且这个子序列不能改变相对顺序，只要相对顺序不改变，链接相同数字的直线就不会相交。
+class Solution {
+public:
+    int maxUncrossedLines(vector<int>& A, vector<int>& B) {
+        vector<vector<int>> dp(A.size() + 1, vector<int>(B.size() + 1, 0));
+        for (int i = 1; i <= A.size(); i++) {
+            for (int j = 1; j <= B.size(); j++) {
+                if (A[i - 1] == B[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                } else {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        return dp[A.size()][B.size()];
+    }
+};
+```
+### [53.最大子数组和](https://leetcode-cn.com/problems/maximum-subarray/)
+```c++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+    //    vector<int> dp(nums.size(),0);
+    int *dp=new int[nums.size()];
+        dp[0]=nums[0];
+        int res=nums[0];
+        for(int i=1;i<nums.size();i++)
+        {
+            dp[i]=max(nums[i],dp[i-1]+nums[i]);
+            res=max(res,dp[i]);
+        }
+        delete []dp;
+        return res;
+    }
+};
+```
+
+### [392.判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
+```c++
+class Solution {
+public:
+    bool isSubsequence(string s, string t) {
+        vector<vector<int>> dp(s.size() + 1, vector<int>(t.size() + 1, 0));
+        for (int i = 1; i <= s.size(); i++) {
+            for (int j = 1; j <= t.size(); j++) {
+                if (s[i - 1] == t[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
+                else dp[i][j] = dp[i][j - 1];
+            }
+        }
+        if (dp[s.size()][t.size()] == s.size()) return true;
+        return false;
+    }
+};
+```
+### [1145不同的子序列](https://leetcode-cn.com/problems/distinct-subsequences/)`
+```c++
+//c++易错点：数据溢出问题
+//方式1：dp改为long long类型，并对INT_MAX取余
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        vector<vector<long long>> dp(s.size() + 1, vector<long long>(t.size() + 1,0));
+        for (int i = 0; i < s.size(); i++) dp[i][0] = 1;
+        for (int j = 1; j < t.size(); j++) dp[0][j] = 0;
+        for (int i = 1; i <= s.size(); i++) {
+            for (int j = 1; j <= t.size(); j++) {
+                if (s[i - 1] == t[j - 1]) {
+                    dp[i][j] = (dp[i - 1][j - 1] + dp[i - 1][j])%INT_MAX;
+                } else {
+                    dp[i][j] = (dp[i - 1][j])%INT_MAX;
+                }
+            }
+        }
+        return dp.back().back();
+    }
+};
+//方式二：dp为int类型，但是需要在s[i-1]==t[j-1]的时候将数据变为long long类型
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        vector<vector<int>> dp(s.size() + 1, vector<int>(t.size() + 1,0));
+        for (int i = 0; i < s.size(); i++) dp[i][0] = 1;
+        for (int j = 1; j < t.size(); j++) dp[0][j] = 0;
+        for (int i = 1; i <= s.size(); i++) {
+            for (int j = 1; j <= t.size(); j++) {
+                if (s[i - 1] == t[j - 1]) {
+                    dp[i][j] = (0LL+dp[i - 1][j - 1] + dp[i - 1][j])%INT_MAX;
+                } else {
+                    dp[i][j] = (dp[i - 1][j])%INT_MAX;
+                }
+            }
+        }
+        return dp.back().back();
+    }
+};
+```
+### [583.两个字符串的删除操作](https://leetcode-cn.com/problems/delete-operation-for-two-strings/)
+```c++
+
+```
