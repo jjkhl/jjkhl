@@ -3782,7 +3782,7 @@ public:
 };
 ```
 ## 栈和队列
-### [232.用栈实现队列]
+### [232.用栈实现队列](https://leetcode-cn.com/problems/implement-queue-using-stacks/)
 ```c++
 class MyQueue {
 public:
@@ -5916,6 +5916,61 @@ public:
     }
 };
 ```
+### [980.不同路径III](https://leetcode-cn.com/problems/unique-paths-iii/)
+```c++
+//回溯法：深度优先
+class Solution {
+public:
+    int uniquePathsIII(vector<vector<int>> &grid) {
+        int path_count = 0;//记录满足的路径的数量
+        int zero_count = 0;//记录0的个数，由于最开始从1开始，而我们也会在深搜时将其赋值为-1，所以可以看做它和0的地位几乎一样
+        int x, y;
+        for (int i = 0; i < grid.size(); ++i) {
+            for (int j = 0; j < grid[i].size(); ++j) {
+                if (grid[i][j] == 1) {
+                    x = i;
+                    y = j;
+                    zero_count++;//由于上面的解释，所以我们在这里也应该把zero_count++
+                }
+                if (grid[i][j] == 0) {
+                    zero_count++;
+                }
+            }
+        }
+        dfs_move(x, y, zero_count, path_count, grid);//深度优先搜索
+        return path_count;
+
+    }
+
+private:
+    void dfs_move(int i, int j, int zero_count, int &path_count, vector<vector<int>> &grid) {
+        if (i >= grid.size() || i < 0 || j >= grid[i].size() || j < 0) {//如果下标越界了，则返回
+            return;
+        }
+        if (grid[i][j] == -1) {//如果是-1,则不能走，返回
+            return;
+        }
+        //每次深度优先搜索会将zero_count-1,当其为0时且到达终点时，才表明找到一条路，path++
+        if (grid[i][j] == 2 && zero_count != 0) {
+            return;
+        }
+        if (grid[i][j] == 2 && zero_count == 0) {
+            path_count++;
+            return;
+        }
+        int temp = grid[i][j];//记录回溯前的当前结点的镜像
+        grid[i][j] = -1;//将当前结点置为不可通行
+        //向四个方向深度优先搜索
+        dfs_move(i, j - 1, zero_count - 1, path_count, grid);
+        dfs_move(i, j + 1, zero_count - 1, path_count, grid);
+        dfs_move(i - 1, j, zero_count - 1, path_count, grid);
+        dfs_move(i + 1, j, zero_count - 1, path_count, grid);
+        grid[i][j] = temp;//还原当前结点，以便回溯
+    }
+};
+// 作者：re-qing-de-zhou-xiao-ang
+// 链接：https://leetcode-cn.com/problems/unique-paths-iii/solution/shen-du-you-xian-sou-suo-si-xiang-hui-su-by-re-qin/
+```
 ### [343.整数拆分](https://leetcode-cn.com/problems/integer-break/)
 ```c++
 class Solution {
@@ -6191,7 +6246,7 @@ public:
     }
 };
 ```
-### [零钱兑换](https://leetcode-cn.com/problems/coin-change/)
+### [322.零钱兑换](https://leetcode-cn.com/problems/coin-change/)
 ```c++
 // 先遍历物品，再遍历背包
 class Solution {
@@ -6758,6 +6813,58 @@ public:
 };
 ```
 ### [583.两个字符串的删除操作](https://leetcode-cn.com/problems/delete-operation-for-two-strings/)
+```c++
+//相当于求最大公共序列
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int len1=word1.size();
+        int len2=word2.size();
+        vector<vector<int>> dp(len1+1,vector<int>(len2+1,0));
+        for(int i=1;i<=len1;i++)
+        {
+            for(int j=1;j<=len2;j++)
+            {
+                if(word1[i-1]==word2[j-1])
+                {
+                    dp[i][j]=dp[i-1][j-1]+1;
+                }
+                else
+                {
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);
+                }
+            }
+        }
+        return len1+len2-(dp.back().back()<<1);
+    }
+};
+```
+### [72.编辑距离](https://leetcode-cn.com/problems/edit-distance/)
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        vector<vector<int>> dp(word1.size()+1,vector<int>(word2.size()+1,0));
+        for(int i=0;i<dp.size();i++) dp[i][0]=i;
+        for(int j=0;j<dp[0].size();j++) dp[0][j]=j;
+        for(int i=1;i<dp.size();i++)
+        {
+            for(int j=1;j<dp[0].size();j++)
+            {
+                if(word1[i-1]==word2[j-1])
+                {
+                    dp[i][j]=dp[i-1][j-1];
+                }
+                else
+                    //替换 word1删除(word2插入) word2删除(word1插入)
+                    dp[i][j]=min({dp[i-1][j-1],dp[i-1][j],dp[i][j-1]})+1;
+            }
+        }
+        return dp.back().back();
+    }
+};
+```
+### [647.回文子串](https://leetcode-cn.com/problems/palindromic-substrings/)
 ```c++
 
 ```
