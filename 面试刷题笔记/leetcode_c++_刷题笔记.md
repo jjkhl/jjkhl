@@ -6888,5 +6888,113 @@ public:
         return result;
     }
 };
-
+//双指针
+class Solution {
+public:
+    int countSubstrings(string s) {
+        int res=0;
+        for(int i=0;i<s.size();i++)
+        {
+            res+=extend(s,i,i);//1个中心点
+            res+=extend(s,i,i+1);//两个中心点
+        }
+        return res;
+    }
+    int extend(const string& s,int i,int j)
+    {
+        int count=0;
+        while(i>=0&&j<s.size()&&s[i]==s[j])
+        {
+            --i,++j;
+            ++count;
+        }
+        return count;
+    }
+};
+```
+### [5.最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+```c++
+//动态规划
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        vector<vector<int>> dp(s.size(),vector<int>(s.size(),0));
+        int left=0,right=0;
+        int maxLen=0;
+        for(int i=s.size()-1;i>=0;i--)
+        {
+            for(int j=i;j<s.size();j++)
+            {
+                if(s[i]==s[j])
+                {
+                   if(j-i<=1)
+                   {
+                       dp[i][j]=j-i+1;
+                   }
+                   else if(dp[i+1][j-1])
+                   {
+                       dp[i][j]=dp[i+1][j-1]+2;
+                   }
+                }
+                if(dp[i][j]&&maxLen<j-i+1)
+                {
+                    left=i,right=j;
+                    maxLen=j-i+1;
+                }
+            }
+        }
+        return s.substr(left,right-left+1);
+    }
+};
+//双指针
+class Solution {
+public:
+    int left = 0;
+    int right = 0;
+    int maxLength = 0;
+    string longestPalindrome(string s) {
+        int result = 0;
+        for (int i = 0; i < s.size(); i++) {
+            extend(s, i, i, s.size()); // 以i为中心
+            extend(s, i, i + 1, s.size()); // 以i和i+1为中心
+        }
+        return s.substr(left, maxLength);
+    }
+    void extend(const string& s, int i, int j, int n) {
+        while (i >= 0 && j < n && s[i] == s[j]) {
+            if (j - i + 1 > maxLength) {
+                left = i;
+                right = j;
+                maxLength = j - i + 1;
+            }
+            i--;
+            j++;
+        }
+    }
+};
+```
+### [516.最长回文子序列](https://leetcode-cn.com/problems/longest-palindromic-subsequence/)
+```c++
+class Solution {
+public:
+    int longestPalindromeSubseq(string s) {
+        vector<vector<int>> dp(s.size(),vector<int>(s.size(),0));
+        for(int i=0;i<s.size();i++) dp[i][i]=1;
+        for(int i=s.size()-1;i>=0;i--)
+        {
+            for(int j=i+1;j<s.size();j++)
+            {
+                if(s[i]==s[j])
+                {
+                    dp[i][j]=dp[i+1][j-1]+2;;
+                }
+                else
+                {
+                    dp[i][j]=max(dp[i+1][j],dp[i][j-1]);
+                }
+            }
+        }
+        return dp[0].back();
+    }
+};
 ```
