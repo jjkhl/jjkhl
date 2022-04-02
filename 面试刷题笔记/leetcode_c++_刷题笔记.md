@@ -7026,3 +7026,91 @@ public:
     }
 };
 ```
+### [下一个更大的元素I](https://leetcode-cn.com/problems/next-greater-element-i/)
+```c++
+class Solution {
+public:
+    vector<int> nextGreaterElement(vector<int>& nums1, vector<int>& nums2) {
+        unordered_map<int,int> umap;//key:数值；value：下标
+        vector<int> res(nums1.size(),-1);
+        stack<int> st;
+        for(int i=0;i<nums1.size();i++)
+            umap[nums1[i]]=i;
+        for(int i=0;i<nums2.size();i++)
+        {
+            if(st.empty())
+            {
+                st.push(i);
+                continue;
+            }
+            if(nums2[i]>nums2[st.top()])
+            {
+                while(!st.empty()&&nums2[i]>nums2[st.top()])
+                {
+                    int value=nums2[st.top()];
+                    if(umap.count(value)>0)
+                        res[umap[value]]=nums2[i];
+                    st.pop();
+                }
+            }
+            st.push(i);
+        }
+        return res;
+    }
+};
+```
+### [下一个更大元素II](https://leetcode-cn.com/problems/next-greater-element-ii/)
+```c++
+class Solution {
+public:
+    vector<int> nextGreaterElements(vector<int> nums){
+    vector<int> res(2*nums.size(),-1);
+    stack<int> st;
+    int len=nums.size();
+    for(int i=0;i<len;i++)
+    {
+        nums.emplace_back(nums[i]);
+    }
+    for(int i=0;i<nums.size();i++)
+    {
+        while(!st.empty()&&nums[i]>nums[st.top()])
+        {
+            res[st.top()]=nums[i];
+            st.pop();
+        }
+        st.push(i);
+    }
+    return vector<int>(res.begin(),res.begin()+len);
+    }
+};
+```
+### [42.接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
+```c++
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        if (height.size() <= 2) return 0;
+        vector<int> maxLeft(height.size(), 0);
+        vector<int> maxRight(height.size(), 0);
+        int size = maxRight.size();
+
+        // 记录每个柱子左边柱子最大高度
+        maxLeft[0] = height[0];
+        for (int i = 1; i < size; i++) {
+            maxLeft[i] = max(height[i], maxLeft[i - 1]);
+        }
+        // 记录每个柱子右边柱子最大高度
+        maxRight[size - 1] = height[size - 1];
+        for (int i = size - 2; i >= 0; i--) {
+            maxRight[i] = max(height[i], maxRight[i + 1]);
+        }
+        // 求和
+        int sum = 0;
+        for (int i = 0; i < size; i++) {
+            int count = min(maxLeft[i], maxRight[i]) - height[i];
+            if (count > 0) sum += count;
+        }
+        return sum;
+    }
+};
+```
