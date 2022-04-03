@@ -49,7 +49,6 @@ CMyString& CMyString::operator=(const CMyString& str)
     return *this;
 }
 ```
-[测试代码](CodingInterviewChinese2/01_AssignmentOperator/AssignmentOperator.cpp)
 ## 面试题2：实现[Singleton模式](https://www.cnblogs.com/sunchaothu/p/10389842.html#%E4%B8%80%E4%BB%80%E4%B9%88%E6%98%AF%E5%8D%95%E4%BE%8B)
 方案1:有缺陷的懒汉式
 内容：只有使用时才实例化对象，如果不被调用就不会占用内存
@@ -3409,6 +3408,112 @@ public:
     }
 };
 ```
+### [21.合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
+```c++
+//递归法
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        if(!list1) return list2;
+        if(!list2) return list1;
+        if(list1->val<=list2->val)
+        {
+            list1->next=mergeTwoLists(list1->next,list2);
+            return list1;
+        }
+        else
+        {
+            list2->next=mergeTwoLists(list1,list2->next);
+            return list2;
+        }
+    }
+};
+//迭代法
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        ListNode *preHead=new ListNode(-1);
+        ListNode *prev=preHead;
+        while(list1&&list2)
+        {
+            if(list1->val<list2->val)
+            {
+                prev->next=list1;
+                list1=list1->next;
+            }
+            else
+            {
+                prev->next=list2;
+                list2=list2->next;
+            }
+            prev=prev->next;
+        }
+        prev->next=list1==NULL?list2:list1;
+        return preHead->next;
+    }
+};
+//优先队列
+class Solution {
+public:
+    struct cmp
+    {
+        bool operator()(ListNode *a, ListNode *b)
+        {
+            return a->val>b->val;
+        }
+    };
+    priority_queue<ListNode*,vector<ListNode*>,cmp> q;
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        if(!list1) return list2;
+        if(!list2) return list1;
+        q.push(list1);
+        q.push(list2);
+        ListNode *head=new ListNode();
+        ListNode *saveHead=head;
+        while(!q.empty())
+        {
+            ListNode *node=q.top();
+            q.pop();
+            head->next=node;
+            head=head->next;
+            if(node->next) q.push(node->next);
+        }
+        return saveHead->next;
+    }
+};
+```
+### [23.合并K个升序链表](https://leetcode-cn.com/problems/merge-k-sorted-lists/)
+```c++
+//优先队列
+class Solution {
+public:
+    struct cmp{
+        bool operator()(ListNode *a,ListNode *b)
+        {
+            return a->val>b->val;
+        }
+    };
+    priority_queue<ListNode*,vector<ListNode*>,cmp> que;
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        for(const auto node:lists)
+        {
+            if(node) que.push(node);
+        }
+        ListNode *head=new ListNode();
+        ListNode *saveHead=head;
+        while(!que.empty())
+        {
+            ListNode *node=que.top();
+            que.pop();
+            head->next=node;
+            head=head->next;
+            if(node->next) que.push(node->next);
+        }
+        return saveHead->next;
+    }
+};
+```
+
 ## 哈希表
 ### [242.有效的字母异位词](https://leetcode-cn.com/problems/valid-anagram/)
 ```c++
