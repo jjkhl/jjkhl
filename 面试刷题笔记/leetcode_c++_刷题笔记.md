@@ -5143,6 +5143,34 @@ vector<vector<int>> pathSum(TreeNode *root, int targetSum)
 }
 };
 ```
+### [124.二叉树中的最大路径和](https://leetcode-cn.com/problems/binary-tree-maximum-path-sum/)
+```c++
+class Solution {
+public:
+    int res=INT_MIN;
+    int maxThree(int a,int b,int c)
+    {
+        if(a<b) a=b;
+        if(a<c) a=c;
+        return a;
+    }
+    int dfs(TreeNode *root)
+    {
+        if(!root) return 0;
+        int left=dfs(root->left);
+        int right=dfs(root->right);
+        int inSum=root->val+left+right;
+        res=max(res,inSum);
+        //对外子树只能使用一边的子树或只使用当前节点
+        int outSum=root->val+maxThree(0,left,right);
+        return max(0,outSum);
+    }
+    int maxPathSum(TreeNode* root) {
+        dfs(root);
+        return res;
+    }
+};
+```
 ### [106.从中序与后序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
 ```c++
 class Solution {
