@@ -661,6 +661,19 @@ int hammingWeight(uint32_t n)
     return res;
 }
 };
+//微软解法
+class Solution {
+public:
+    int hammingWeight(uint32_t n) {
+        int count=0;
+        while(n)
+        {
+            n=n&(n-1);
+            count++;
+        }
+        return count;
+    }
+};
 ```
 ## 面试题16：[数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
 ```c++
@@ -2482,6 +2495,40 @@ public:
 # [代码随想录](https://programmercarl.com/)
 ## [数组](https://programmercarl.com/0704.%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE.html#%E6%80%9D%E8%B7%AF)
 数组是存放在连续空间上的相同类型数据的集合，可以方便的通过下标索引的方式获取到下标下对应的数据。c++中二维数组在地址空间上也是连续的。
+###[33.搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+```c++
+//二分法
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int len=nums.size();
+        int left=0,right=len-1;
+        //[left,right]
+        while(left<=right)
+        {
+            int mid=left+((right-left)>>1);
+            if(nums[mid]==target) return mid;
+            else if(nums[left]<=nums[mid])//[left,mid]为升序区间
+            {
+                //在[left,mid]区间
+                if(target>=nums[left]&&target<nums[mid])
+                    right=mid-1;
+                //在[mid+1,right]区间
+                else left=mid+1;
+            }
+            else//[left,mid]不是升序区间，即旋转点在改区间，说明[mid+1,right]一定为升序区间
+            {
+                //在[mid,right]区间
+                if(target>nums[mid]&&target<=nums[right])
+                    left=mid+1;
+                //在[left,mid]区间
+                else right=mid-1;
+            }
+        }
+        return -1;
+    }
+};
+```
 ### [704.二分法查找](https://leetcode-cn.com/problems/binary-search/submissions/)
 二分法第一种写法，条件`[left,right]`，注意点：
 * while(left<=right)要用<=，因为left==right有意义
@@ -2929,6 +2976,46 @@ public:
         right++;
     }
     return size == INT_MAX ? "" : s.substr(start, size);
+    }
+};
+```
+### [48.旋转图像](https://leetcode-cn.com/problems/rotate-image/)
+```c++
+//规律法
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n=matrix.size();
+        for(int i=0;i<n/2;i++)
+        {
+            for(int j=0;j<(n+1)/2;j++)
+            {
+                int temp=matrix[i][j];
+                matrix[i][j]=matrix[n-j-1][i];
+                matrix[n-j-1][i]=matrix[n-i-1][n-j-1];
+                matrix[n-i-1][n-j-1]=matrix[j][n-i-1];
+                matrix[j][n-i-1]=temp;
+            }
+        }
+    }   
+};
+//先水平方向翻转，再对角线翻转
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n = matrix.size();
+        // 水平翻转
+        for (int i = 0; i < n / 2; ++i) {
+            for (int j = 0; j < n; ++j) {
+                swap(matrix[i][j], matrix[n - i - 1][j]);
+            }
+        }
+        // 主对角线翻转
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < i; ++j) {
+                swap(matrix[i][j], matrix[j][i]);
+            }
+        }
     }
 };
 ```
@@ -3995,6 +4082,150 @@ public:
     }
 };
 ```
+### [32.最长有效括号](https://leetcode-cn.com/problems/longest-valid-parentheses/)
+```c++
+//动态规划
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int size = s.length();
+        vector<int> dp(size, 0);
+
+        int maxVal = 0;
+        for(int i = 1; i < size; i++) {
+            if (s[i] == ')') {
+                if (s[i - 1] == '(') {
+                    dp[i] = 2;
+                    if (i - 2 >= 0) {
+                        dp[i] = dp[i] + dp[i - 2];
+                    }
+                } 
+                else if (dp[i - 1] > 0) {
+                    //dp[i-1]表示i-1位置的最长有效括号，用i-1-dp[i-1]表示i位置对应的位置
+                    if ((i - 1 - dp[i - 1]) >= 0 
+                        && s[i - 1 - dp[i - 1]] == '(') 
+                        {
+                        dp[i] = dp[i - 1] + 2;
+                        //需要考虑i对应位置的上一位是否存在最长有效括号
+                        if ((i - dp[i - 1] - 2) >= 0) {
+                            dp[i] = dp[i] + dp[i - dp[i - 1] - 2];
+                        }
+                    }
+                }
+            }
+            maxVal = max(maxVal, dp[i]);
+        }
+        return maxVal;
+    }
+};
+// 作者：zhanganan0425
+// 链接：https://leetcode-cn.com/problems/longest-valid-parentheses/solution/dong-tai-gui-hua-si-lu-xiang-jie-c-by-zhanganan042/
+
+//栈辅助
+class Solution
+{
+public:
+    int longestValidParentheses(string s)
+    {
+        int count = 0;
+        stack<int> st;
+        st.push(-1);
+        for (int i = 0; i < s.length(); i++)
+        {
+            if (s[i] == '(')
+            {
+                st.push(i);
+            }
+            else
+            {
+                st.pop();
+                if (st.empty())
+                {
+                    st.push(i);
+                }
+                else
+                {
+                    count = max(count, i - st.top());
+                }
+            }
+        }
+        return count;
+    }
+};
+
+//双指针
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int left = 0, right = 0, maxlength = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (s[i] == '(') {
+                left++;
+            } else {
+                right++;
+            }
+            if (left == right) {
+                maxlength = max(maxlength, 2 * right);
+            } else if (right > left) {
+                left = right = 0;
+            }
+        }
+        left = right = 0;
+        for (int i = (int)s.length() - 1; i >= 0; i--) {
+            if (s[i] == '(') {
+                left++;
+            } else {
+                right++;
+            }
+            if (left == right) {
+                maxlength = max(maxlength, 2 * left);
+            } else if (left > right) {
+                left = right = 0;
+            }
+        }
+        return maxlength;
+    }
+};
+//链接：https://leetcode-cn.com/problems/longest-valid-parentheses/solution/zui-chang-you-xiao-gua-hao-by-leetcode-solution/
+//贪心算法
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int left=0,right=0;
+        int maxRes=0;
+        int len=s.size();
+        for(int i=0;i<len;i++)
+        {
+            if(s[i]=='(') left++;
+            else right++;
+            if(left==right)
+            {
+                maxRes=max(maxRes,2*right);
+            }
+            else if(right>left)
+            {
+                left=right=0;
+            }
+        }
+        //逆序，解决left正序左括号数量始终大于右括号的数量
+        left=right=0;
+        for(int i=len-1;i>=0;i--)
+        {
+            if(s[i]=='(') left++;
+            else right++;
+            if(left==right)
+            {
+                maxRes=max(maxRes,2*left);
+            }
+            else if(left>right)
+            {
+                left=right=0;
+            }
+        }
+        return maxRes;
+    }
+};
+```
 ### [1047. 删除字符串中的所有相邻重复项](https://leetcode-cn.com/problems/remove-all-adjacent-duplicates-in-string/)
 ```c++
 class Solution {
@@ -4304,6 +4535,81 @@ public:
            res.push_back(vec);
        }
        return res;
+    }
+};
+```
+
+### [114.二叉树展开为链表](https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/)
+```c++
+//前序遍历
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+        vector<TreeNode*> vec;
+        preOrder(root,vec);
+        int len=vec.size();
+        for(int i=1;i<len;i++)
+        {
+            TreeNode *prev=vec[i-1];//根节点
+            TreeNode *cur=vec[i];//子节点
+            prev->left=NULL;
+            prev->right=cur;
+        }
+    }
+    void preOrder(TreeNode *root,vector<TreeNode*> &vec)
+    {
+        if(root)
+        {
+            vec.push_back(root);
+            preOrder(root->left,vec);
+            preOrder(root->right,vec);
+        }
+    }
+};
+
+//极简代码
+//思想：后序遍历。先从右子树最右侧排列，遵循右中左的原则进行递归
+//使用last保留节点的下一位，所以需要使用后序遍历
+class Solution {
+public:
+    TreeNode *last=NULL;
+    void flatten(TreeNode* root) {
+        if(!root) return;
+        flatten(root->right);
+        flatten(root->left);
+        root->right=last;
+        root->left=NULL;
+        last=root;
+    }
+};
+
+//递归法
+//参考网址：https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/solution/lao-nian-ren-di-gui-si-lu-by-unicornss//
+/思路：先将每一颗子树变成只有右子树的形式，再将右子树插入左子树的末尾节点，将左子树插入root的右子树部分；将root的左子树置空，再返回root
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+        root=build(root);
+    }
+    TreeNode *build(TreeNode *root)
+    {
+        if(!root||(!root->left&&!root->right)) return root;
+        //先序遍历建立链表
+        root->left=build(root->left);
+        root->right=build(root->right);
+        //找到左子树的最右端，与右子树相接
+        TreeNode *node=root->left;
+        if(node)
+        {
+            while(node->right)
+            {
+                node=node->right;
+            }
+            node->right=root->right;
+            root->right=root->left;
+        }
+        root->left=NULL;
+        return root;
     }
 };
 ```
@@ -5643,6 +5949,43 @@ public:
     }
 };
 ```
+### [79.单词搜索](https://leetcode-cn.com/problems/word-search/)
+```c++
+class Solution {
+public:
+    int dx[4]={-1,0,1,0},dy[4]={0,1,0,-1};
+    bool dfs(vector<vector<char>>& board,string& word,int index,int x,int y)
+    {
+        if(board[x][y]!=word[index]) return false;
+        if(index==word.size()-1) return true;
+        char t=board[x][y];
+        board[x][y]='.';
+        for(int i=0;i<4;i++)//检查左，下，右，上
+        {
+            int a=x+dx[i],b=y+dy[i];
+            if(a<0||a>=board.size()||b<0||b>board[0].size()||board[a][b]=='.') continue;
+            if(dfs(board,word,index+1,a,b)) return true;
+        }
+        board[x][y]=t;
+        return false;
+    }
+    bool exist(vector<vector<char>>& board, string word) {
+        for(int i=0;i<board.size();i++)
+        {
+            for(int j=0;j<board[0].size();j++)
+            {
+                if(board[i][j]==word[0])
+                {
+                    if(dfs(board,word,0,i,j)) 
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+```
+
 ## 贪心算法
 ### [455.分发饼干](https://leetcode-cn.com/problems/assign-cookies/)
 ```c++
@@ -6113,6 +6456,29 @@ public:
             for(int j=0;j<i;j++)
             {
                 dp[i]+=dp[j]*dp[i-j-1];
+            }
+        }
+        return dp.back();
+    }
+};
+```
+### [64.最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
+```c++
+class Solution
+{
+public:
+    int minPathSum(vector<vector<int>> &grid)
+    {
+        int row = grid.size(), col = grid[0].size();
+        vector<int> dp(col, 0);
+        dp[0]=grid[0][0];
+        for(int j=1;j<col;j++) dp[j]=dp[j-1]+grid[0][j];
+        for(int i=1;i<row;i++)
+        {
+            dp[0]=dp[0]+grid[i][0];
+            for(int j=1;j<col;j++)
+            {
+                dp[j]=min(dp[j],dp[j-1])+grid[i][j];
             }
         }
         return dp.back();
@@ -6664,6 +7030,37 @@ public:
             dp[i][1]=max(dp[i-1][1],dp[i-1][0]-prices[i]-fee);
         }
         return dp.back()[0];
+    }
+};
+```
+### [128.最长连续序列](https://leetcode-cn.com/problems/longest-consecutive-sequence/)
+```c++
+//只看当前数后面连续的部分
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> uset;
+        for(auto i:nums)
+        {
+            uset.insert(i);
+        }
+        int res=0;
+        for(int x:nums)
+        {
+            if(uset.count(x-1)==0)//前面不连续，往后找
+            {
+                int y=x;
+                while(uset.count(y+1)) y++;
+                res=max(res,y-x+1);
+            }
+            // else//往前找
+            // {
+            //     int y=x;
+            //     while(uset.count(y-1)) y--;
+            //     res=max(res,x-y+1);
+            // }
+        }
+        return res;
     }
 };
 ```
@@ -7219,3 +7616,193 @@ public:
     }
 };
 ```
+### [84.柱状图中最大的矩形面积](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
+```c++
+//动态规划
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        vector<int> minLeftIndex(heights.size());
+        vector<int> minRightIndex(heights.size());
+        int size = heights.size();
+
+        // 记录每个柱子 左边第一个小于该柱子的下标
+        //-1表示全部不选
+        minLeftIndex[0] = -1; 
+        for (int i = 1; i < size; i++) {
+            int t = i - 1;
+            // 这里不是用if，而是不断向左寻找的过程
+            //如果左边的柱子高于当前柱子，则往前继续
+            //因为minLeftIndex表示左边第一个小于该柱子的下标
+            //所以可以使用t=minLeftIndex[t]表示当前柱子左边第一个柱子的左边第一个小于该柱子的下标
+            while (t >= 0 && heights[t] >= heights[i]) t = minLeftIndex[t];
+            minLeftIndex[i] = t;
+        }
+        // 记录每个柱子 右边第一个小于该柱子的下标
+        //初始化一定为size，表示全选
+        minRightIndex[size - 1] = size;
+        for (int i = size - 2; i >= 0; i--) {
+            int t = i + 1;
+            // 这里不是用if，而是不断向右寻找的过程
+            while (t < size && heights[t] >= heights[i]) t = minRightIndex[t];
+            minRightIndex[i] = t;
+        }
+        // 求和
+        int result = 0;
+        for (int i = 0; i < size; i++) {
+            //sum=h(高)*w(宽)
+            //最大面积原则：固定高度，求最长宽度
+            //区间为(minLeftIndex[i],minRightIndex[i])
+            int sum = heights[i] * (minRightIndex[i] - minLeftIndex[i] - 1);
+            result = max(sum, result);
+        }
+        return result;
+    }
+};
+//单调栈
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        stack<int> st;
+        heights.emplace(heights.begin(),0);
+        heights.emplace_back(0);
+        st.push(0);
+        int res=0;
+        for(int i=1;i<heights.size();i++)
+        {
+            //找到右边界：第一个小于当前柱高的位置
+            while(heights[i]<heights[st.top()])
+            {
+                //当前柱高
+                int index=st.top();
+                st.pop();
+                //区间(st.top(),i)求矩形面积
+                //此时st.top()为当前柱的左边的第一个小于当前柱高的位置
+                int w=i-st.top()-1;
+                //以height[index]为高
+                int h=heights[index];
+                res=max(res,w*h);
+            }
+            //找不到右边界就放入单调栈
+            st.push(i);
+        }
+        return res;
+    }
+};
+```
+### [85.最大矩形](https://leetcode-cn.com/problems/maximal-rectangle/)
+```c++
+class Solution {
+public:
+    //求柱状图中最大矩形
+    int largestRectangleArea(vector<int>& heights)
+    {
+        int len=heights.size();
+        vector<int> minLeftIndex(len);
+        vector<int> minRightIndex(len);
+        minLeftIndex[0]=-1;
+        for(int i=1;i<len;i++)
+        {
+            int t=i-1;
+            //找到左边第一个小于当前柱高
+            while(t>=0&&heights[t]>=heights[i]) t=minLeftIndex[t];
+            minLeftIndex[i]=t;
+        }
+        minRightIndex.back()=len;
+        for(int i=len-1;i>=0;i--)
+        {
+            int t=i+1;
+            while(t<len&&heights[t]>=heights[i]) t=minRightIndex[t];
+            minRightIndex[i]=t;
+        }
+        int res=0;
+        for(int i=0;i<len;i++)
+        {
+            res=max(res,heights[i]*(minRightIndex[i]-minLeftIndex[i]-1));
+        }
+        return res;
+    }
+    int maximalRectangle(vector<vector<char>>& matrix) {
+        if(matrix.empty()) return 0;
+        int ans=0;
+        vector<int> line(matrix[0].size(),0);
+        for(int i=0;i<matrix.size();i++)
+        {
+            for(int j=0;j<matrix[0].size();j++)
+            {
+                line[j]=(matrix[i][j]=='0')?0:line[j]+1;
+            }
+            //对每一行进行求解
+            ans=max(ans,largestRectangleArea(line));
+        }
+        return ans;
+    }
+};
+```
+## [Leetcode热题HOT 100](https://leetcode-cn.com/problem-list/2cktkvj/)
+### [75.颜色分类](https://leetcode-cn.com/problems/sort-colors/)
+```c++
+//两次遍历
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int n=nums.size();
+        int p=0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==0)
+                swap(nums[i],nums[p++]);
+        }
+        for(int i=p;i<n;i++)
+            if(nums[i]==1)
+                swap(nums[i],nums[p++]);
+    }
+};
+//自定义快排
+class Solution {
+public:
+    void mySort(int left,int right,vector<int>& nums)
+    {
+        if(left>=right)
+            return;
+        int i=left,j=right;
+        int base=nums[left];
+        while(i<j)
+        {
+            while(nums[j]>=base&&i<j) --j;//找到右边第一个小于base的数
+            while(nums[i]<=base&&i<j) ++i;//找到左边第一个大于base的数
+            if(i<j) swap(nums[i],nums[j]);
+        }
+        //i=j
+        swap(nums[left],nums[i]);
+        mySort(left,i-1,nums);
+        mySort(i+1,right,nums);
+    }
+    void sortColors(vector<int>& nums) {
+        mySort(0,nums.size()-1,nums);
+    }
+};
+//双指针
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int zero = -1;            // 保证下标 0 到 zero 对应的元素都为 0 
+        int two = nums.size();    // 保证下标 two 到 numsSize - 1 对应的元素都为 2
+        // 由于当遍历到的元素为 2 时，只需要交换下标 two - 1 对应的元素与遍历到的元素，所以 for 语句里面不写 i++
+        for (int i = 0; i < two;) {  
+            // 直接将遍历到的元素 1 纳入到属于 1 的部分，i 右移继续遍历
+            if (nums[i] == 1) {          
+                i++;
+            } else if (nums[i] == 2) {
+                //  交换下标为 two 前面一个下标对应的元素与遍历到的元素 2 并将遍历到的元素 2 纳入到属于 2 的部分，two 左移
+                swap(nums[i], nums[--two]);
+            } else {                 
+                //  交换下标为 zero 后面一个下标对应的元素与遍历到的元素 0 并将遍历到的元素 0 纳入到属于 0 的部分，zero 和 i 右移
+                swap(nums[++zero], nums[i++]);
+            }
+        }
+    }
+};
+//链接：https://leetcode-cn.com/problems/sort-colors/solution/75-yan-se-fen-lei-san-lu-kuai-pai-by-din-84w8/
+```
+
