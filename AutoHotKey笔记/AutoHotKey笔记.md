@@ -142,7 +142,106 @@ return
 InputBox,输入文本的变量名[,标题,输入框文本，HIDE(屏蔽用户输入，用于输入密码),Width,Height,X,Y,,Timeout]
 ```
 
-## 鼠标操作
+## 示例
+```ahk
+::/pyt::python
+::/ipy::ipython
+!n::
+MouseClick, right
+Sleep 500
+send,{up}
+send,{up}
+send,{enter}
+Sleep 1000
+SendInput New-Item
+return
 
+;输入system("pause");
+^!s::SendInput system("pause");
+return
 
+;markdown实现框选文字变红
+!b::
+send ^x
+SendInput <strong style='color:red'>
+send ^v
+return
 
+;pandoc markdown转换头文件
+!m::
+Send,
+(
+---
+title: "test"
+output:
+word_document:
+    path: test.docx
+
+toc: true
+toc_depth: 6
+number_selection: true
+)
+Send {enter}
+Send {enter}
+Send +{tab}
+SendInput ---
+Send {enter}
+;Send {enter}
+return
+
+::h1::<h1 align="center">
+return
+
+;vscode版本实现c++基础模板
+!x::
+SendInput, {#}
+Send, include<iostream>
+Sleep 50
+Send,{enter}
+Send, using namespace std;
+Send,{enter}
+Send, int main(int argc,char **argv)
+Send, {enter}
+Send,{{}
+Send,{}}
+Sleep 50
+Send,{left}
+Sleep 50
+Send,{enter}
+Send, system("pause");
+Send,{enter}
+Send, return 0;
+Send,{up}
+Send,^+{enter}
+return
+
+;markdown格式输入c++类型代码段
+!c::
+send , ``````
+Sleep 50
+Send, c
+Send,{+}
+SendInput,{+}
+Sleep 50
+Send,{enter}
+Sleep 50
+Send,{enter}
+send , ``````
+Sleep 50
+send, {esc}
+Sleep 50
+Send,{up}
+return
+
+;markdown字体变红
+!q::
+Sleep 50
+Send,^x
+Sleep 50
+SendInput, <strong style="color:red">
+Sleep 50
+Send,^v
+Sleep 50
+SendInput, </strong>
+return
+```
