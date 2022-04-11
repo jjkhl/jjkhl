@@ -4356,6 +4356,60 @@ public:
     }
 };
 ```
+### [301.删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
+```c++
+class Solution {
+public:
+    vector<string> removeInvalidParentheses(string s) {
+        vector<string> res;
+        int leftNum=0,rightNum=0;
+        //得到需要进行删减的左右括号数量
+        for(const char i:s)
+        {
+            if('('==i) ++leftNum;
+            else if(')'==i)
+            {
+                if(0==leftNum) ++rightNum;
+                else --leftNum;
+            }            
+        }
+        string t="";
+        dfs(s,t,0,leftNum,rightNum,0,0);
+        for(const string& i:uset)
+            res.push_back(i);
+        return res;
+    }
+    //存储字符串，并防止重复
+    unordered_set<string> uset;
+    //源字符串，搜索后的字符串，当前位置，需要删减的左右括号数量，str中的左右括号数量
+    void dfs(const string&s,string& str,int pos,int leftNum,int rightNum,int lcnt,int rcnt)
+    {
+        if(s.size()==pos)
+        {
+            if(0==leftNum&&0==rightNum)
+            {
+                uset.insert(str);
+            }
+            return;     
+        }
+        //如果存在待删减的左括号，则删除并进入下一层
+        if('('==s[pos]&&leftNum>0) dfs(s,str,pos+1,leftNum-1,rightNum,lcnt,rcnt);
+        //如果存在待删减的右括号，则删除并进入下一层
+        if(')'==s[pos]&&rightNum>0) dfs(s,str,pos+1,leftNum,rightNum-1,lcnt,rcnt);
+        //保存当前字符
+        str+=s[pos];
+
+        //此时表示不需要删除任何符号，只需要更新lcnt和rcnt
+        if(s[pos]!='('&&s[pos]!=')') dfs(s,str,pos+1,leftNum,rightNum,lcnt,rcnt);
+        //需要注意左括号数量一定需要大于右括号，所以可以在此进行减枝
+        else if(s[pos]=='(') dfs(s,str,pos+1,leftNum,rightNum,lcnt+1,rcnt);
+        else if(rcnt<lcnt) dfs(s,str,pos+1,leftNum,rightNum,lcnt,rcnt+1);
+        //回溯
+        str.pop_back();
+    }
+};
+//参考网址：https://leetcode-cn.com/problems/remove-invalid-parentheses/solution/wei-rao-li-lun-bao-li-sou-suo-dfs-setqu-6vsqb/
+```
 ### [1047. 删除字符串中的所有相邻重复项](https://leetcode-cn.com/problems/remove-all-adjacent-duplicates-in-string/)
 ```c++
 class Solution {
@@ -5880,6 +5934,63 @@ public:
     }
 };
 
+```
+### [437.路径总和III]()
+```c++
+//全遍历
+class Solution
+{
+public:
+    int target = 0;
+    int ans = 0;
+    void dfs1(TreeNode *root)
+    {
+        if (root == NULL)
+            return;
+        dfs2(root,root->val);
+        dfs1(root->left);
+        dfs1(root->right);
+    }
+    void dfs2(TreeNode *root, long long val)
+    {
+        if(target==val) ans++;
+        if(root->left) dfs2(root->left,val+root->left->val);
+        if(root->right) dfs2(root->right,val+root->right->val);
+    }
+    int pathSum(TreeNode *root, int targetSum)
+    {
+        target = targetSum;
+        dfs1(root);
+        return ans;
+    }
+};
+//前缀法
+class Solution {
+private:
+    unordered_map<int, int> prefix;         // <前缀和，其出现次数>
+    void dfs(TreeNode* root, int sum, long cur_sum, int& res)
+    {
+        if (!root) return;
+        cur_sum += root->val;               // 更新前缀和
+        // 当前路径中存在以当前节点为终点的和为sum的子路径
+        //如果cur_sum=sum，表示满足条件res+1
+        if (prefix.find(cur_sum - sum) != prefix.end())
+            res += prefix[cur_sum - sum];
+        prefix[cur_sum]++;                  // 将当前节点加入路径
+        dfs(root->left, sum, cur_sum, res); // 在其左子树中递归寻找
+        dfs(root->right, sum, cur_sum, res);// 在其右子树中递归寻找
+        prefix[cur_sum]--;                  // 回溯
+    }
+public:
+    int pathSum(TreeNode* root, int sum) 
+    {
+        int res = 0;    // 满足条件的路径数量
+        prefix[0] = 1;  // 前缀和为0的路径只有一条：哪个节点都不选
+        dfs(root, sum, 0, res);
+        return res;
+    }
+};
+//链接：https://leetcode-cn.com/problems/path-sum-iii/solution/rang-ni-miao-dong-de-hui-su-qian-zhui-he-ou6t/
 ```
 ## 回溯算法
 模板
@@ -7849,6 +7960,32 @@ public:
     }
 };
 ```
+### [312.戳气球](https://leetcode-cn.com/problems/burst-balloons/)
+```c++
+class Solution {
+public:
+    int maxCoins(vector<int>& nums) {
+        int sum=0;
+        nums.insert(nums.begin(),1);
+        nums.push_back(1);
+        int len=nums.size();
+        //dp[i][j]表示开区间(i,j)之间编号的最高分数
+        //k表示只剩下i和j两个气球时的最后戳破的气球
+        vector<vector<int>> dp(len,vector<int>(len,0));
+        //从左下向右上遍历
+        for(int i=len-2;i>=0;i--)
+        {
+            for(int j=i+1;j<len;j++)
+            {
+                for(int k=i+1;k<j;k++)
+                    dp[i][j]=max(dp[i][j],dp[i][k]+dp[k][j]+nums[i]*nums[j]*nums[k]);
+            }
+        }
+        return dp[0].back();
+    }
+};
+//参考思路：https://leetcode-cn.com/problems/burst-balloons/solution/tu-jie-dong-tai-gui-hua-jie-jue-chuo-qi-cx18h/
+```
 ## 单调栈
 ### [739.每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
 ```c++
@@ -8427,7 +8564,7 @@ public:
 }
 };
 ```
-### [课程表II](https://leetcode-cn.com/problems/course-schedule-ii/)
+### [210.课程表II](https://leetcode-cn.com/problems/course-schedule-ii/)
 ```c++
 class Solution {
 public:
@@ -8475,7 +8612,7 @@ public:
     }
 };
 ```
-### [208.实现前缀树][(](https://leetcode-cn.com/problems/implement-trie-prefix-tree/))
+### [208.实现前缀树](https://leetcode-cn.com/problems/implement-trie-prefix-tree/)
 ```c++
 class Trie
 {
@@ -8673,6 +8810,345 @@ public:
             else return true;
         }
         return false;
+    }
+};
+```
+### [338.比特位计数](https://leetcode-cn.com/problems/counting-bits/)
+```c++
+//低位有效法
+class Solution {
+public:
+    vector<int> countBits(int n) {
+        vector<int> dp(n+1,0);
+        for(int i=1;i<=n;i++)
+        {
+            //dp[i]为i/2位置的1个数+余数
+            //余数是指奇数需要+1，偶数不需要+1
+            dp[i]=dp[i>>1]+(i&1);
+        }
+        return dp;
+    }
+};
+//高位有效法
+class Solution {
+public:
+    vector<int> countBits(int n) {
+        vector<int> dp(n+1,0);
+        int highBits=0;
+        for(int i=1;i<=n;i++)
+        {
+            //当i&(i-1)=0，此时为2的正数次幂
+            if((i&(i-1))==0)
+                highBits=i;
+            dp[i]=dp[i-highBits]+1;
+        }
+        return dp;
+    }
+};
+//Brian Kernighan 算法
+class Solution {
+public:
+    int countOnes(int x)
+    {
+        int ones=0;
+        while(x>0)
+        {
+            x&=x-1;
+            ones++;
+        }
+        return ones;
+    }
+    vector<int> countBits(int n) {
+        vector<int> dp(n+1,0);
+        for(int i=0;i<=n;i++)
+        {
+            dp[i]=countOnes(i);
+        }
+        return dp;
+    }
+};
+```
+### [394.字符串解码](https://leetcode-cn.com/problems/decode-string/)
+```c++
+//辅助栈
+class Solution
+{
+public:
+    string decodeString(string s)
+    {
+        string res = "";
+        stack<int> nums;
+        stack<string> strs;
+        int num = 0;
+        int len = s.size();
+        for (int i = 0; i < len; i++)
+        {
+            if (s[i] >= '0' && s[i] <= '9')
+            {
+                num = num * 10 + s[i] - '0';
+            }
+            else if (s[i] == '[')
+            {
+                nums.push(num);
+                num = 0;
+                strs.push(res);
+                res="";
+            }
+            else if (s[i] == ']')
+            {
+                int times = nums.top();
+                nums.pop();
+                for (int j = 0; j < times; j++)
+                {
+                    strs.top() += res;
+                }
+                res = strs.top();
+                strs.pop();
+            }
+            else
+            {
+                res += s[i];
+            }
+        }
+        return res;
+    }
+};
+//回溯法
+class Solution
+{
+public:
+    string analysis(string s,int& index)
+    {
+        string res;
+        int num=0;
+        string tmp;
+        while(index<s.size())
+        {
+            if(isdigit(s[index]))
+            {
+                num=10*num+s[index]-'0';
+            }
+            else if('['==s[index])
+            {
+                tmp=analysis(s,++index);
+                for(int i=0;i<num;i++)
+                {
+                    res+=tmp;
+                }
+                num=0;
+            }
+            else if(']'==s[index]) break;
+            else res+=s[index];
+            index++;
+        }
+        return res;
+    }
+    string decodeString(string s)
+    {
+       int index=0;
+       return analysis(s,index);
+    }
+};
+```
+### [399.除法求值](https://leetcode-cn.com/problems/evaluate-division/)
+```c++
+//回溯算法
+class Solution {
+public:
+    unordered_map<string, string> father; // father[x] 记录节点 x 的祖先节点，祖先顺序指从大到小的排序
+    unordered_map<string, double> distance; // distance[x] 记录节点 x 到祖先节点的距离（即 x / root）
+    string find(string x) {
+        if(father[x] != x) {
+            string t = find(father[x]);
+            distance[x] *= distance[father[x]];
+            father[x] = t;
+        }
+        return father[x];
+    }
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        // 初始化所有节点
+        for(int i = 0; i < equations.size(); i++) {
+            string dividend = equations[i][0], divisor = equations[i][1];
+            father[dividend] = dividend, father[divisor] = divisor;
+            distance[dividend] = 1, distance[divisor] = 1;
+        }
+        // 集合合并
+        for(int i = 0; i < equations.size(); i++) {
+            string dividend = equations[i][0], divisor = equations[i][1];
+            string t1 = find(dividend); // 找到被除数的祖先节点
+            //如果节点组成环，需要打破
+            string t2=find(divisor);
+            if(t1==t2) continue;
+            // 更新 t1 节点
+            father[t1] = divisor; 
+            distance[t1] = values[i] / distance[dividend];
+        }
+        vector<double> res;
+        for(auto q : queries) {
+            string dividend = q[0], divisor = q[1];
+            // 如果divisor或dividend处于同一集合会自动算出 distance[divisor]和distance[dividend]
+            //如果divisor或dividend不存在，或者divisor和dividend的祖先节点不一致(说明二者之间无任何联系)
+            //因为集合合并后不一定能准确反应各节点之间关系，但是经过溯源就能准确表达出来
+            if(!father.count(dividend) || !father.count(divisor)||find(dividend)!=find(divisor)) res.push_back(-1.0);
+            else {
+                res.push_back(distance[dividend] / distance[divisor]);
+            }
+        }
+        return res;
+    }
+};
+//floyd算法
+class Solution
+{
+public:
+    //graph[i][j]表示：i/j的值
+    vector<vector<double>> graph;
+    unordered_map<string,int> h;
+    int n=0;
+    void floyd()
+    {
+        //对每个节点进行循环
+        for(int k=0;k<n;k++)
+        {
+            for(int i=0;i<n;i++)
+            {
+                for(int j=0;j<n;j++)
+                {
+                    //只有当graph[i][k],graph[k][j]能走的时候才能进行更新g[i][j]
+                    //下式表示i/j=(i/k)*(k/j)
+                    if(graph[i][k]>=0&&graph[k][j]>=0)
+                        graph[i][j]=graph[i][k]*graph[k][j];
+                }
+            }
+        }
+    }
+    vector<double> calcEquation(vector<vector<string>> &equations, vector<double> &values, vector<vector<string>> &queries)
+    {
+        //将字符串映射到数组下标
+        for(int i=0;i<equations.size();i++)
+        {
+            string a=equations[i][0],b=equations[i][1];
+            if(!h.count(a)) h[a]=n++;
+            if(!h.count(b)) h[b]=n++;
+        }
+        //表示不能到达
+        graph=vector<vector<double>>(n,vector<double>(n,-1));
+        //对角处初始化为1
+        for(int i=0;i<n;i++)
+        {
+            graph[i][i]=1;
+        }
+        for(int i=0;i<equations.size();i++)
+        {
+            string a=equations[i][0],b=equations[i][1];
+            graph[h[a]][h[b]]=values[i];
+            graph[h[b]][h[a]]=1/values[i];
+        }
+        vector<double> res;
+        floyd();
+        for(auto q:queries)
+        {
+            string a=q[0],b=q[1];
+            if(!h.count(a)||!h.count(b)||graph[h[a]][h[b]]==-1)
+            {
+                res.push_back(-1.0);
+            }        
+            else
+            {
+                res.push_back(graph[h[a]][h[b]]);
+            }
+        }
+        return res;
+    }
+};
+```
+### [990.等式方程的可满足性](https://leetcode-cn.com/problems/satisfiability-of-equality-equations/)
+```c++
+class Solution
+{
+public:
+    bool equationsPossible(vector<string> &equations)
+    {
+        int len = equations.size();
+        //只有一个等式的时候不会建图
+        if (1 == len)
+        {
+            if (equations[0][0] == equations[0][3] && equations[0][1] == '=')
+                return true;
+            else if (equations[0][0] != equations[0][3] && equations[0][1] == '!')
+                return true;
+            else return false;
+        }
+        int n=0;
+        unordered_map<char,int> umap;//记录字符编号
+        for(int i=0;i<len;i++)
+        {
+            char c1=equations[i][0],c2=equations[i][3];
+            if(umap.count(c1)==0) umap[c1]=n++;
+            if(umap.count(c2)==0) umap[c2]=n++;
+        }
+        vector<vector<bool>> graph(n,vector<bool>(n,false));
+        vector<int> notEqual;
+        for(int i=0;i<len;i++)
+        {
+            int m=umap[equations[i][0]];
+            int n=umap[equations[i][3]];
+            char flag=equations[i][1];
+            if('='==flag)
+            {
+                graph[m][n]=true;
+                graph[n][m]=true;
+            }
+            else
+            {
+                notEqual.push_back(i);
+            }
+        }
+        for(int k=0;k<n;k++)
+        {
+            for(int i=0;i<n;i++)
+            {
+                for(int j=0;j<n;j++)
+                {
+                    if(graph[i][k]&&graph[k][j])
+                        graph[i][j]=true;
+                }
+            }
+        }
+        for(int i=0;i<notEqual.size();i++)
+        {
+            int id=notEqual[i];
+            int m=umap[equations[id][0]];
+            int n=umap[equations[id][3]];
+            if(n==m||graph[m][n])
+                return false;
+        }
+        return true;
+    }
+};
+```
+### [448.找到所有数组中消失的数字](https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/)
+```c++
+class Solution {
+public:
+    vector<int> findDisappearedNumbers(vector<int>& nums) {
+        vector<int> res;
+        if(nums.empty()) return nums;
+        int len=nums.size();
+        for(int i=0;i<len;i++)
+        {
+            //index为应该出现的位置
+            //nums[index]表示该位置出现了，+n方便后续判断>len表示该位置出现过
+            //%len是为了防止当前位置已经+n
+            int index=(nums[i]-1)%len;
+            nums[index]+=len;
+        }
+        for(int i=0;i<len;i++)
+        {
+            if(nums[i]<=len)
+                res.push_back(i+1);
+        }
+        return res;
     }
 };
 ```
