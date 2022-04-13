@@ -5935,7 +5935,7 @@ public:
 };
 
 ```
-### [437.路径总和III]()
+### [437.路径总和III](https://leetcode-cn.com/problems/path-sum-iii/)
 ```c++
 //全遍历
 class Solution
@@ -5991,6 +5991,26 @@ public:
     }
 };
 //链接：https://leetcode-cn.com/problems/path-sum-iii/solution/rang-ni-miao-dong-de-hui-su-qian-zhui-he-ou6t/
+```
+### [二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree/)
+```c++
+class Solution {
+public:
+    int ans;
+    int depth(TreeNode* root)
+    {
+        if(!root) return 0;
+        int left=depth(root->left);
+        int right=depth(root->right);
+        ans=max(ans,right+left+1);
+        return max(left,right)+1;
+    }
+    int diameterOfBinaryTree(TreeNode* root) {
+        ans=1;
+        depth(root);
+        return ans-1;
+    }
+};
 ```
 ## 回溯算法
 模板
@@ -9147,6 +9167,92 @@ public:
         {
             if(nums[i]<=len)
                 res.push_back(i+1);
+        }
+        return res;
+    }
+};
+```
+### [581.最短无序连续子数组](https://leetcode-cn.com/problems/shortest-unsorted-continuous-subarray/)
+```c++
+class Solution {
+public:
+    int findUnsortedSubarray(vector<int>& nums) {
+        int len = nums.size();
+        int min = nums[len-1];
+        int max = nums[0];
+        int begin = 0, end = -1;
+        //遍历
+        for(int i = 0; i < len; i++){
+            //从左到右应该是升序，找到不是升序的最后位置
+            if(nums[i] < max){
+                end = i;
+            }else{
+                max = nums[i];
+            }
+            //从右到左应该是降序，找到不是降序的最后一个位置
+            if(nums[len-i-1] > min){
+                begin = len-i-1;
+            }else{
+                min = nums[len-i-1];
+            }            
+        }
+        return end-begin+1;
+    }
+};
+```
+### [621.任务调度器](https://leetcode-cn.com/problems/task-scheduler/)
+```c++
+//思路链接：https://leetcode-cn.com/problems/task-scheduler/solution/tong-zi-by-popopop/
+//思路介绍：以最大数量的桶数作为基础，最后一个桶如果没有相同数量的其它桶，则时间t一定为1(不存在等待时间)；
+//最大等待时间一种是都不需要等待时间，总计时间tasks.size()，另外一种是需要等待时间(最大桶数-1)*(n+1)+最后剩余的时间t，其中(n+1)表示加上自身后的一行时间
+class Solution
+{
+public:
+    int leastInterval(vector<char> &tasks, int n)
+    {
+        unordered_map<char, int> umap;
+        for (char &ch : tasks)
+        {
+            umap[ch]++;
+        }
+        //桶数量，最后剩余的数量
+        int nums = 0, remain = 0;
+        for (auto pair : umap)
+        {
+            //找到最大桶数
+            if (nums < pair.second)
+            {
+                nums = pair.second;
+                //最后一个桶一定是1，如果有相同的最大数量，再++
+                remain = 1;
+            }
+            else if (pair.second == nums)
+            {
+                remain++;
+            }
+        }
+        int nums1 = tasks.size();
+        int nums2 = (nums - 1) * (n + 1) + remain;
+        return max(nums1,nums2);
+    }
+};
+```
+### [和为K的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
+```c++
+class Solution {
+public:
+    int subarraySum(vector<int>& nums, int k) {
+        unordered_map<int,int> umap;
+        umap[0]=1;
+        int res=0,pre=0;
+        for(const int& num:nums)
+        {
+            pre+=num;
+            if(umap.count(pre-k)>0)
+            {
+                res+=umap[pre-k];
+            }
+            umap[pre]++;
         }
         return res;
     }
