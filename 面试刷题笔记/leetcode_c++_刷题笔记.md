@@ -9237,7 +9237,7 @@ public:
     }
 };
 ```
-### [和为K的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
+### [560.和为K的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
 ```c++
 class Solution {
 public:
@@ -9255,6 +9255,568 @@ public:
             umap[pre]++;
         }
         return res;
+    }
+};
+```
+## [LeetCode 精选 TOP 面试题](https://leetcode-cn.com/problem-list/2ckc81c/)
+### [1.两数之和](https://leetcode-cn.com/problems/two-sum/)
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int> &nums, int target)
+{
+    unordered_map<int,int> umap;
+    for(int i=0;i<nums.size();i++)
+    {
+        unordered_map<int,int>::iterator iter=umap.find(target-nums[i]);
+        if(iter!=umap.end())
+            return {iter->second,i};
+        umap[nums[i]]=i;
+    }
+    return {};
+}
+};
+```
+### [2.两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
+```c++
+//新链表
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode* dummyHead=new ListNode(0);
+        ListNode *cur=dummyHead;
+        int sum=0;
+        while(l1||l2||sum)
+        {
+            if(l1) sum+=l1->val;
+            if(l2) sum+=l2->val;
+            ListNode* tmp=new ListNode(sum%10);
+            cur->next=tmp;
+            cur=cur->next;
+            if(l1) l1=l1->next;
+            if(l2) l2=l2->next;
+            sum/=10;
+        }
+        return dummyHead->next;
+    }
+};
+```
+### [3.无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+```c++
+//滑动窗口
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        int left=0,right=0;
+        int res=0,curLen=0;
+        int len=s.size();
+        while(right<len)
+        {
+            char tmp=s[right];
+            for(int i=left;i<right;i++)
+            {
+                if(tmp==s[i])
+                {
+                    left=i+1;
+                    curLen=right-left;
+                    break;
+                }
+            }
+            right++;
+            res=res>++curLen?res:curLen;
+        }
+        return res;
+    }
+};
+//哈希表
+class Solution
+{
+public:
+    int lengthOfLongestSubstring(string s)
+    {
+        int left = 0, right = 0;
+        int len = 0, res = 0;
+        int sSize = s.size();
+        unordered_map<char, int> umap;
+        while (right < sSize)
+        {
+            char tmp = s[right];
+            if (umap.count(tmp)!=0&&umap[tmp]>=left)
+            {
+                left=umap[tmp]+1;
+                len=right-left;
+            }
+            umap[tmp]=right++;
+            res=max(res,++len);
+        }
+        return res;
+    }
+};
+```
+### [4.寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+```c++
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int m=nums1.size(),n=nums2.size();
+        int i=0,j=0;
+        //奇数只会有left返回，偶数则会返回left和right的一半
+        int left=0,right=0;
+        int xSize=(m+n)>>1;
+        for(int x=0;x<=xSize;x++)
+        {
+            left=right;
+            if(i<m&&j>=n)//表示数组2遍历完成
+            {
+                right=nums1[i++];
+            }
+            else if(i>=m&&j<n)//表示数组1遍历完成
+            {
+                right=nums2[j++];
+            }
+            else
+            {
+                right=nums1[i]<nums2[j]?nums1[i++]:nums2[j++];
+            }
+        }
+        return (m+n)&1?right:(left+right)/2.0;
+    }
+};
+```
+### [5.最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+```c++
+class Solution {
+public:
+    int left=0;
+    int right=0;
+    int maxLen=0;
+    string longestPalindrome(string s) {
+        for(int i=0;i<s.size();i++)
+        {
+            extend(s,i,i,s.size());
+            extend(s,i,i+1,s.size());
+        }
+        return s.substr(left,maxLen);
+    }
+    void extend(const string& s,int i,int j,int n)
+    {
+        while(i>=0&&j<n&&s[i]==s[j])
+        {
+            if(j-i+1>maxLen)
+            {
+                left=i;
+                right=j;
+                maxLen=j-i+1;
+            }
+            --i,++j;
+        }
+    }
+};
+```
+### [7.整数反转](https://leetcode-cn.com/problems/reverse-integer/)
+```c++
+class Solution {
+public:
+    int reverse(int x) {
+        int res=0;
+        while(x)
+        {
+            if(res<INT_MIN/10||res>INT_MAX/10) return 0;
+            res=res*10+x%10;
+            x/=10;
+        }
+        return res;
+    }
+};
+```
+### [8.字符串转换整数(stoi)](https://leetcode-cn.com/problems/string-to-integer-atoi/)
+```c++
+class Solution {
+public:
+    int myAtoi(string s) {
+        int i=0;
+        int flag=1;
+        int len=s.size();
+        while(i<len&&s[i]==' ') i++;
+        if(len==i||(!isdigit(s[i])&&s[i]!='+'&&s[i]!='-'))
+            return 0;
+        if(s[i]=='-'||s[i]=='+')
+        {
+            flag=s[i++]=='-'?-1:1;
+        }
+        long num=0;
+        while(i<len&&isdigit(s[i]))
+        {
+            char curChar=s[i++];
+            if(num>INT_MAX/10||(num==INT_MAX/10&&(curChar-'0')>INT_MAX%10)) return INT_MAX;
+            else if(num<INT_MIN/10||(num==INT_MIN/10&&(curChar-'0')>-(INT_MIN%10))) return INT_MIN;
+            else
+            {
+                num=num*10+flag*(curChar-'0');
+            }
+        }
+        return num;
+    }
+};
+```
+### [11.盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water/)
+```c++
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int len=height.size();
+        int maxV=0;
+        int left=0,right=len-1;
+        while(left<right)
+        {
+            maxV=max(min(height[left],height[right])*(right-left),maxV);
+            if(height[left]<height[right])
+            {
+                left++;
+            }
+            else right--;
+        }
+        return maxV;
+    }
+};
+```
+### [12.整数转罗马数字](https://leetcode-cn.com/problems/integer-to-roman/)
+```c++
+//13是因为减法规则只规定了6种情况，加上原本的7种情况
+class Solution {
+public:
+    const pair<int,string> valueSymbols[13]={
+        {1000,"M"},{900,"CM"},{500,"D"},
+        {400,"CD"},{100,"C"},{90,"XC"},
+        {50,"L"},{40,"XL"},{10,"X"},
+        {9,"IX"},{5,"V"},{4,"IV"},{1,"I"}
+    };
+    string intToRoman(int num) {
+        string roman="";
+        for(const auto& [val,symbol]:valueSymbols)
+        {
+            while(num>=val)
+            {
+                num-=val;
+                roman+=symbol;
+            }
+            if(num==0) break;
+        }
+        return roman;
+    }
+};
+```
+### [13.罗马数字转整数](https://leetcode-cn.com/problems/roman-to-integer/)
+```c++
+//逆序法
+class Solution {
+public:
+    unordered_map<char, int> symbolValues = {
+        {'I', 1},
+        {'V', 5},
+        {'X', 10},
+        {'L', 50},
+        {'C', 100},
+        {'D', 500},
+        {'M', 1000},
+    };
+    int romanToInt(string s) {
+        int num=0;
+        int len=s.size();
+        for(int i=len-1;i>=0;i--)
+        {
+            char curChar=s[i];
+            if(i+1<len&&symbolValues[curChar]<symbolValues[s[i+1]])
+                num-=symbolValues[curChar];
+            else num+=symbolValues[curChar];
+        }
+        return num;
+    }
+};
+//顺序法
+class Solution {
+public:
+    unordered_map<char, int> symbolValues = {
+        {'I', 1},
+        {'V', 5},
+        {'X', 10},
+        {'L', 50},
+        {'C', 100},
+        {'D', 500},
+        {'M', 1000},
+    };
+    int romanToInt(string s) {
+        int num=0;
+        int len=s.size();
+        for(int i=0;i<len;i++)
+        {
+            int value=symbolValues[s[i]];
+            if(i+1<len&&value<symbolValues[s[i+1]])
+                num-=value;
+            else num+=value;
+        }
+        return num;
+    }
+};
+```
+### [14.最长公共前缀](https://leetcode-cn.com/problems/longest-common-prefix/)
+```c++
+//依次比较
+class Solution {
+public:
+    string longestCommonPrefix(vector<string>& strs) {
+        string res=strs[0];
+        if(strs.size()==1) return res;
+        for(int i=1;i<strs.size();i++)
+        {
+            int right=0;
+            while(right<res.size()&&right<strs[i].size()&&res[right]==strs[i][right]) right++;
+            res=res.substr(0,right);
+        }
+        return res;
+    }
+};
+//排序
+class Solution {
+public:
+    string longestCommonPrefix(vector<string>& strs) {
+        if(strs.size()==1) return strs[0];
+        sort(strs.begin(),strs.end());
+        int index=0;
+        while(index<strs[0].size()&&index<strs.back().size())
+        {
+            if(strs[0][index]!=strs.back()[index])
+            {
+                break;
+            }
+            index++;
+        }
+        return strs[0].substr(0,index);
+    }
+};
+```
+### [15.三数之和](https://leetcode-cn.com/problems/3sum/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        int len=nums.size();
+        sort(nums.begin(),nums.end());
+        vector<vector<int>> res;
+        for(int i=0;i<nums.size();i++)
+        {
+            if(nums[i]>0)  return res;
+            if(i-1>=0&&nums[i]==nums[i-1]) continue;
+            int left=i+1,right=len-1;
+            while(left<right)
+            {
+                int sum=nums[i]+nums[right]+nums[left];
+                if(sum>0) right--;
+                else if(sum<0) left++;
+                else 
+                {
+                    res.push_back(vector<int>{nums[i],nums[left],nums[right]});
+                    while(left<right&&nums[right]==nums[right-1]) --right;
+                    while(left<right&&nums[left]==nums[left+1]) ++left;
+                    --right,++left;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+### [17.电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
+```c++
+class Solution {
+public:
+    unordered_map<int,string> phone={
+        {0,""},{1,""},
+        {2,"abc"},{3,"def"},{4,"ghi"},{5,"jkl"},
+        {6,"mno"},{7,"pqrs"},{8,"tuv"},{9,"wxyz"}
+    };
+    vector<string> res;
+    string path;
+    void backTrack(const string&digits,int index)
+    {
+        if(index>=digits.size())
+        {
+            res.push_back(path);
+            return;
+        }
+        int digit=digits[index]-'0';
+        string word=phone[digit];
+        for(int i=0;i<word.size();i++)
+        {
+            path.push_back(word[i]);
+            backTrack(digits,index+1);
+            path.pop_back();
+        }
+    }
+    vector<string> letterCombinations(string digits) {
+        if(digits.size()==0) return res;
+        backTrack(digits,0);
+        return res;
+    }
+};
+```
+### [19.删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
+```c++
+//双指针
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        //fast先走n步
+        if(!head||!head->next) return NULL;
+        ListNode *fast=head,*slow=head;
+        while(n--)
+        {
+           fast=fast->next;
+        }
+        if(!fast) return head->next;//如果fast为空，表示删除第一个元素
+        while(fast->next&&slow->next)
+        {
+            fast=fast->next;
+            slow=slow->next;
+        }
+        ListNode* node=slow->next;
+        slow->next=slow->next->next;
+        delete node;
+        return head;
+    }
+};
+//递归
+class Solution {
+public:
+    int cur=0;
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        if(!head) return NULL;
+        head->next=removeNthFromEnd(head->next,n);
+        if(n==++cur) return head->next;
+        return head;
+    }
+};
+```
+### [20.有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> st;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='(')  st.push(')');
+            else if(s[i]=='[') st.push(']');
+            else if(s[i]=='{') st.push('}');
+            else if(st.empty()||st.top()!=s[i]) return false;
+            else st.pop();
+        }
+        return st.empty();
+    }
+};
+```
+### [22.括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
+```c++
+class Solution {
+public:
+    vector<string> res;
+    void dfs(string path,int n,int left,int right)
+    {
+        if(right>left) return;
+        if(right==n&&right==left)
+        {
+            res.push_back(path);
+            return;
+        }
+        if(left<n) dfs(path+'(',n,left+1,right);
+        if(right<n) dfs(path+')',n,left,right+1);
+    }
+    vector<string> generateParenthesis(int n) {
+        dfs("",n,0,0);
+        return res;
+    }
+};
+```
+### [29.两数相除](https://leetcode-cn.com/problems/divide-two-integers/)
+```c++
+class Solution
+{
+public:
+    int divide(int dividend, int divisor)
+    {
+        if (dividend == INT_MIN && divisor == -1)
+            return INT_MAX;
+        if(divisor==1) return dividend;
+        int res = 0;
+        long m = abs(dividend), n = abs(divisor);
+        bool sign = (dividend > 0 && divisor > 0) || (dividend < 0 && divisor < 0) ? true : false;
+        while (m >= n)
+        {
+            long d = n, c = 1; //除数n的倍数d，计数c（表示c个倍数d）
+            while (m-d>= d)
+            {
+                d <<= 1;
+                c <<= 1;
+            }
+            res += c;//表示有c*d个数，所以商+c
+            m -= d;
+        }
+        return sign ? res : -res;
+    }
+};
+```
+### [36.有效的数独](https://leetcode-cn.com/problems/valid-sudoku/)
+```c++
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        int row[9][10] = {0};// 哈希表存储每一行的每个数是否出现过，默认初始情况下，每一行每一个数都没有出现过
+        // 整个board有9行，第二维的维数10是为了让下标有9，和数独中的数字9对应。
+        int col[9][10] = {0};// 存储每一列的每个数是否出现过，默认初始情况下，每一列的每一个数都没有出现过
+        int box[9][10] = {0};// 存储每一个box的每个数是否出现过，默认初始情况下，在每个box中，每个数都没有出现过。整个board有9个box。
+        for(int i=0; i<9; i++){
+            for(int j = 0; j<9; j++){
+                // 遍历到第i行第j列的那个数,我们要判断这个数在其所在的行有没有出现过，
+                // 同时判断这个数在其所在的列有没有出现过
+                // 同时判断这个数在其所在的box中有没有出现过
+                if(board[i][j] == '.') continue;
+                int curNumber = board[i][j]-'0';
+                if(row[i][curNumber]) return false; 
+                if(col[j][curNumber]) return false;
+                if(box[j/3 + (i/3)*3][curNumber]) return false;
+
+                row[i][curNumber] = 1;// 之前都没出现过，现在出现了，就给它置为1，下次再遇见就能够直接返回false了。
+                col[j][curNumber] = 1;
+                box[j/3 + (i/3)*3][curNumber] = 1;
+            }
+        }
+        return true;
+    }
+};
+//https://leetcode-cn.com/problems/valid-sudoku/solution/36-jiu-an-zhao-cong-zuo-wang-you-cong-shang-wang-x/
+```
+
+
+## 其它题目
+
+### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
+```c++
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int len=height.size();
+        int maxV=0;
+        int left=0,right=len-1;
+        while(left<right)
+        {
+            maxV=max(min(height[left],height[right])*(right-left),maxV);
+            if(height[left]<height[right])
+            {
+                left++;
+            }
+            else right--;
+        }
+        return maxV;
     }
 };
 ```
