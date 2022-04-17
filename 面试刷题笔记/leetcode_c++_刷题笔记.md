@@ -9795,7 +9795,43 @@ public:
 };
 //https://leetcode-cn.com/problems/valid-sudoku/solution/36-jiu-an-zhao-cong-zuo-wang-you-cong-shang-wang-x/
 ```
-
+### [88.合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+```c++
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int i=nums1.size()-1;
+        m--,n--;
+        while(n>=0)
+        {
+            while(m>=0&&nums1[m]>nums2[n])
+                swap(nums1[i--],nums2[m--]);
+            swap(nums1[i--],nums2[n--]);
+        }
+    }
+};
+```
+### [91.解码方法](https://leetcode-cn.com/problems/decode-ways/)
+```c++
+//类似于跳台阶的动态规划
+class Solution {
+public:
+    int numDecodings(string s) {
+        int n=s.size();
+        if(s[0]=='0') return 0;
+        vector<int> dp(n+1,0);
+        dp[0]=1;
+        dp[1]=1;
+        for(int i=2;i<dp.size();i++)
+        {
+            if(s[i-1]!='0') dp[i]=dp[i-1];
+            int t=(s[i-2]-'0')*10+s[i-1]-'0';
+            if(t>=10&&t<=26) dp[i]+=dp[i-2];
+        }
+        return dp.back();
+    }
+};
+```
 
 ## 其它题目
 
