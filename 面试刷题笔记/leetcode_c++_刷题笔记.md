@@ -9832,7 +9832,26 @@ public:
     }
 };
 ```
-
+### [38.外观数列](https://leetcode-cn.com/problems/count-and-say/)
+```c++
+class Solution {
+public:
+    string countAndSay(int n) {
+        if(1==n) return "1";
+        string s=countAndSay(n-1);
+        string res="";
+        for(int i=0,j=0;i<s.size();)
+        {
+            char c=s[i];
+            while(i<s.size()&&s[i]==c) ++i;
+            string cnt=to_string(i-j);
+            res+=cnt+c;
+            j=i;
+        }
+        return res;
+    }
+};
+```
 ## 其它题目
 
 ### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
