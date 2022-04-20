@@ -9880,6 +9880,18 @@ public:
     }
 };
 ```
+### [66.加一](https://leetcode-cn.com/problems/plus-one/)
+```c++
+class Solution {
+public:
+    vector<int> plusOne(vector<int>& digits) {
+        int n = digits.size();
+        while(n && ++digits[--n] == 10) digits[n] = 0;
+        if(digits[0] == 0) digits.insert(begin(digits), 1);
+        return digits;
+    }
+};
+```
 ## 其它题目
 
 ### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
