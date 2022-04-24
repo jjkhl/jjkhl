@@ -5992,7 +5992,7 @@ public:
 };
 //链接：https://leetcode-cn.com/problems/path-sum-iii/solution/rang-ni-miao-dong-de-hui-su-qian-zhui-he-ou6t/
 ```
-### [二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree/)
+### [543.二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree/)
 ```c++
 class Solution {
 public:
@@ -6012,6 +6012,42 @@ public:
     }
 };
 ```
+### [103.二叉树的锯齿形层序遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        queue<TreeNode*> que;
+        vector<vector<int>> res;
+        if(!root) return res;
+        que.push(root);
+        int index=1;
+        while(!que.empty())
+        {
+            int n=que.size();
+            vector<int> vec;
+            for(int i=0;i<n;i++)
+            {
+                TreeNode *node=que.front();
+                que.pop();
+                vec.push_back(node->val);
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right);
+            }
+            if(index&1)
+                res.push_back(vec);
+            else
+            {
+                reverse(vec.begin(),vec.end());
+                res.push_back(vec);
+            }
+            index++;
+        }
+        return res;
+    }
+}
+```
+
 ## 回溯算法
 模板
 ```c++
@@ -9978,6 +10014,74 @@ public:
         return res;
     }
 };
+```
+### [44.通配符匹配](https://leetcode-cn.com/problems/wildcard-matching/)
+```c++
+//贪心算法
+class Solution
+{
+public:
+    bool isMatch(string s, string p)
+    {
+        int si=0,pi=0,sStar=-1,pStar=-1,m=s.size(),n=p.size();
+        while(si<m)
+        {
+            if(pi<n&&(s[si]==p[pi]||p[pi]=='?'))
+            {
+                ++si,++pi;
+            }
+            else if(pi<n&&p[pi]=='*')
+            {
+                sStar=si;//记录s中对应位置
+                pStar=pi++;//记录p中*的位置
+            }
+            else if(sStar>=0)
+            {
+                si=++sStar;//表明前面对*的匹配不成功，*匹配的字符数量+1
+                pi=pStar+1;
+            }
+            else return false;
+        }
+        while(pi<n&&p[pi]=='*') ++pi;
+        return pi==n;
+        }
+};
+//思路链接：https://leetcode-cn.com/problems/wildcard-matching/solution/44-tong-pei-fu-pi-pei-shuang-zhi-zhen-by-guohaodin/
+
+//动态规划
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        int m = s.length(), n = p.length();
+
+        // 状态定义：dp[i][j] 表示 s 的前 i 个字符和 p 的前 j 个字符是否匹配
+        vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+
+        // 状态初始化
+        // 1. 空字符串和空字符串是匹配的
+        dp[0][0] = true;
+        for (int i = 1; i <= n; i++) {
+            // 3. 空字符串和 * 是匹配的
+            if (dp[0][i - 1] && p[i - 1] == '*') {
+                dp[0][i] = true;
+            }
+        }
+
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (s[i - 1] == p[j - 1] || p[j - 1] == '?') {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else if(p[j - 1] == '*') {
+                    //不使用*和使用*
+                    dp[i][j] = dp[i - 1][j] || dp[i][j - 1];
+                }
+            }
+        }
+
+        return dp[m][n];
+    }
+};
+//https://leetcode-cn.com/problems/wildcard-matching/solution/tong-pei-fu-pi-pei-by-leetcode-solution/
 ```
 ## 其它题目
 
