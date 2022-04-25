@@ -10083,6 +10083,78 @@ public:
 };
 //https://leetcode-cn.com/problems/wildcard-matching/solution/tong-pei-fu-pi-pei-by-leetcode-solution/
 ```
+### [125.验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
+```c++
+//双指针
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int n=s.size();
+        int left=0,right=n-1;
+        while(left<right)
+        {
+            while(left<right&&!isalnum(s[left])) left++;
+            while(left<right&&!isalnum(s[right])) right--;
+            if(left<right)
+            {
+                if(tolower(s[left])!=tolower(s[right]))
+                {
+                    return false;
+                }
+                ++left,--right;
+            }
+        }
+        return true;
+    }
+};
+```
+### [127.单词接龙](https://leetcode-cn.com/problems/word-ladder/)
+```c++
+//广度优先
+class Solution {
+public:
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        unordered_set<string> words(wordList.begin(), wordList.end());
+        if ( words.empty() || words.find(endWord) == words.end() ) return 0;
+        words.erase(beginWord);
+        queue<string> que;
+        que.push(beginWord);
+        //depth相当于树的层数
+        int depth = 1;
+        while ( !que.empty() ) {
+            // 找到没有被访问过, 而且能够由当前单词转换而成的单词
+            int n = que.size();
+            //下一层的while结束表示树的深度+1
+            while ( n-- ) {
+                string curWord = que.front();
+                que.pop();
+                // 当前单词的每个字符都替换成其他的25个字符, 然后在单词表中查询
+                for ( int i = 0; i < curWord.size(); ++i ) {
+                    char originalChar = curWord[i];
+                    for ( int j = 0; j < 26; ++j ) {
+                        if ( char('a' + j) == originalChar ) continue;
+                        curWord[i] = 'a' + j;
+                        //如果单词表中存在且未被访问过
+                        if ( words.find(curWord) != words.end()) {
+                            if ( curWord == endWord ) return depth + 1;
+                            else {
+                                que.push(curWord);
+                                //如果找到，则直接在字符表中删除
+                                words.erase(curWord);
+                            }
+                        }
+                    }
+                    curWord[i] = originalChar;
+                }
+            }
+            ++depth;
+        }
+        return 0;
+    }
+};
+//链接：https://leetcode-cn.com/problems/word-ladder/solution/by-jjkhl-s9kq/
+
+```
 ## 其它题目
 
 ### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
