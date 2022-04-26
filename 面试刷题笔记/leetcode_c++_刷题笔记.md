@@ -6,7 +6,7 @@
 为CMyString的声明添加赋值运算符函数
 ```c++
 class CMyString
-{system("pause");system("pause");system("pause");
+{
 public:
     CMyString(char* pData=nullptr);
     CMyString(const CMYString& str);
