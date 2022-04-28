@@ -10155,6 +10155,106 @@ public:
 //链接：https://leetcode-cn.com/problems/word-ladder/solution/by-jjkhl-s9kq/
 
 ```
+
+### [130.被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
+```c++
+//深度优先
+class Solution {
+public:
+    int rows, cols;
+
+    void dfs(vector<vector<char>>& board, int x, int y) {
+        if (x < 0 || x >= rows || y < 0 || y >= cols || board[x][y] != 'O') {
+            return;
+        }
+        board[x][y] = 'A';
+        dfs(board, x + 1, y);
+        dfs(board, x - 1, y);
+        dfs(board, x, y + 1);
+        dfs(board, x, y - 1);
+    }
+
+    void solve(vector<vector<char>>& board) {
+        rows = board.size();
+        if (rows == 0) {
+            return;
+        }
+        cols = board[0].size();
+        //对边上的'O'进行标记以及联通区域
+        for (int i = 0; i < rows; i++) {
+            dfs(board, i, 0);
+            dfs(board, i, cols - 1);
+        }
+        for (int i = 1; i < cols - 1; i++) {
+            dfs(board, 0, i);
+            dfs(board, rows - 1, i);
+        }
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (board[i][j] == 'A') {
+                    board[i][j] = 'O';
+                } else if (board[i][j] == 'O') {
+                    board[i][j] = 'X';
+                }
+            }
+        }
+    }
+};
+```
+
+### [138.复制带随机指针的链表](https://leetcode-cn.com/problems/copy-list-with-random-pointer/)
+```c++
+//哈希表
+class Solution {
+public:
+    unordered_map<Node*,Node*> umap;
+    Node* dfs(Node *head)
+    {
+        if(!head) return NULL;
+        if(umap.count(head)) return umap[head];
+        Node *node=new Node(head->val);
+        umap[head]=node;//源节点到现节点的映射
+        node->next=dfs(head->next);
+        node->random=dfs(head->random);
+        return node;
+    }
+    Node* copyRandomList(Node* head) {
+        if(head==NULL) return NULL;
+        return dfs(head);
+    }
+};
+//原地复制
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        for(auto cur = head; cur; cur = cur->next->next)  //复制每个节点，并将原链表和复制链表连在一起。
+        {
+            auto node = new Node(cur->val);
+            node->next = cur->next;
+            cur->next = node;
+        }
+
+        for(auto cur = head; cur; cur = cur->next->next)   //复制random指针
+        {
+            if(cur->random)
+              cur->next->random = cur->random->next;
+        }
+
+        //拆分两个链表，并复原原链表
+        auto dummy = new Node(-1), copy = dummy; 
+        for(auto cur = head; cur; cur = cur->next)
+        {
+            auto copy_node = cur->next;
+            // copy = copy->next = copy_node;
+            copy->next=copy_node;
+            copy=copy->next;
+            cur->next = copy_node->next;
+        }
+
+        return dummy->next;
+    }
+};
+```
 ## 其它题目
 
 ### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
