@@ -60,7 +60,7 @@
 |datetime|8|1000-01-01 00:00:00至9999-12-31 23:59:59|YYYY-MM-DD HH:MM:SS|
 |timestamp|4|1970-01-01 00:00:01至2038-01-19 03:14:07|YYYY-MM-DD HH:MM:SS|
 
-### DDL
+### DDL(数据定义语言)
 #### 数据库操作
 查询所有数据库：
 `SHOW DATABASES;`
@@ -130,3 +130,57 @@ gender varchar(1) comment '性别'
 `DROP TABLE [IF EXISTS] 表名;`
 删除表，并重新创建该表：
 `TRUNCATE TABLE 表名;`
+
+### DML(数据操作语言)
+#### 添加数据
+`INSERT INTO 表名 (字段名1, 字段名2, ...) VALUES (值1, 值2, ...);`
+全部字段：
+`INSERT INTO 表名 VALUES (值1, 值2, ...);`
+
+批量添加数据：
+`INSERT INTO 表名 (字段名1, 字段名2, ...) VALUES (值1, 值2, ...), (值1, 值2, ...), (值1, 值2, ...);`
+`INSERT INTO 表名 VALUES (值1, 值2, ...), (值1, 值2, ...), (值1, 值2, ...);`
+
+> 字符串和日期类型数据应该包含在引号中；
+> 插入的数据大小应该在字段的规定范围内；
+
+#### 更新和删除数据
+
+修改数据：
+`UPDATE 表名 SET 字段名1 = 值1, 字段名2 = 值2, ... [ WHERE 条件 ];`
+例：修改所有人的时间
+`update employee set entrydate = '2018-01-01';`
+
+
+删除数据：
+`DELETE FROM 表名 [ WHERE 条件 ];`
+
+### DQL(数据查询语言)
+语法：
+```mysql
+SELECT
+	字段列表
+FROM
+	表名字段
+WHERE
+	条件列表
+GROUP BY
+	分组字段列表
+HAVING
+	分组后的条件列表
+ORDER BY
+	排序字段列表
+LIMIT
+	分页参数
+```
+#### 基础查询
+* 查询多个字段
+`SELECT 字段1,字段2... FROM 表名;`
+`SELECT * FROM 表名;`
+
+* 设置别名
+`SELECT 字段1 [AS 别名1],字段2 [AS 别名2]... FROM 表名;`
+`SELECT 字段1 [别名1],字段2 [别名2]... FROM 表名;`
+
+* 去除重复记录
+`SELECT DISTINCT 字段列表 FROM 表名;`
