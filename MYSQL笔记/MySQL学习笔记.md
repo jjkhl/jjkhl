@@ -318,3 +318,165 @@ SELECT * FROM employee LIMIT 0, 10;
 -- 查询第二页
 SELECT * FROM employee LIMIT 10, 10;
 ```
+
+### DCL(数据控制语言)
+
+#### 管理用户
+
+查询用户：
+
+```mysql
+USE mysql;
+SELECT * FROM user;
+```
+
+创建用户:
+`CREATE USER '用户名'@'主机名' IDENTIFIED BY '密码';`
+
+修改用户密码：
+`ALTER USER '用户名'@'主机名' IDENTIFIED WITH mysql_native_password BY '新密码';`
+
+删除用户：
+`DROP USER '用户名'@'主机名';`
+
+例子：
+
+```mysql
+-- 创建用户test，只能在当前主机localhost访问
+create user 'test'@'localhost' identified by '123456';
+-- 创建用户test，能在任意主机访问
+create user 'test'@'%' identified by '123456';
+create user 'test' identified by '123456';
+-- 修改密码
+alter user 'test'@'localhost' identified with mysql_native_password by '1234';
+-- 删除用户
+drop user 'test'@'localhost';
+```
+
+##### 注意事项
+
+- 主机名可以使用 % 通配
+
+#### 权限控制
+
+常用权限：
+
+| 权限                | 说明               |
+| ------------------- | ------------------ |
+| ALL, ALL PRIVILEGES | 所有权限           |
+| SELECT              | 查询数据           |
+| INSERT              | 插入数据           |
+| UPDATE              | 修改数据           |
+| DELETE              | 删除数据           |
+| ALTER               | 修改表             |
+| DROP                | 删除数据库/表/视图 |
+| CREATE              | 创建数据库/表      |
+
+查询权限：
+`SHOW GRANTS FOR '用户名'@'主机名';`
+
+授予权限：
+`GRANT 权限列表 ON 数据库名.表名 TO '用户名'@'主机名';`
+
+撤销权限：
+`REVOKE 权限列表 ON 数据库名.表名 FROM '用户名'@'主机名';`
+
+##### 注意事项
+
+- 多个权限用逗号分隔
+- 授权时，数据库名和表名可以用 * 进行通配，代表所有
+
+## 函数
+函数是指一段可以直接被另一段程序调用的程序或代码
+### 字符串函数
+| 函数  | 功能  |
+| ------------ | ------------ |
+| CONCAT(s1, s2, ..., sn)  | 字符串拼接，将s1, s2, ..., sn拼接成一个字符串  |
+| LOWER(str)  | 将字符串全部转为小写  |
+| UPPER(str)  | 将字符串全部转为大写  |
+| LPAD(str, n, pad)  | 左填充，用字符串pad对str的左边进行填充，达到n个字符串长度  |
+| RPAD(str, n, pad)  | 右填充，用字符串pad对str的右边进行填充，达到n个字符串长度  |
+| TRIM(str)  | 去掉字符串头部和尾部的空格  |
+| SUBSTRING(str, start, len)  | 返回从字符串str从start位置起的len个长度的字符串  |
+
+使用示例：
+
+```mysql
+-- 拼接
+SELECT CONCAT('Hello', 'World');
+-- 小写
+SELECT LOWER('Hello');
+-- 大写
+SELECT UPPER('Hello');
+-- 左填充
+SELECT LPAD('01', 5, '-');
+-- 右填充
+SELECT RPAD('01', 5, '-');
+-- 去除空格
+SELECT TRIM(' Hello World ');
+-- 切片（起始索引为1）
+SELECT SUBSTRING('Hello World', 1, 5);
+```
+
+### 数值函数
+
+常见函数：
+
+| 函数  | 功能  |
+| ------------ | ------------ |
+| CEIL(x)  | 向上取整  |
+| FLOOR(x)  | 向下取整  |
+| MOD(x, y)  | 返回x/y的模  |
+| RAND() | 返回0~1内的随机数 |
+| ROUND(x, y) | 求参数x的四舍五入值，保留y位小数 |
+```sql
+#生成一个六位数的随机验证码
+select lpad(round(rand()*1e6,0),6,'0');
+```
+
+### 日期函数
+
+常用函数：
+
+| 函数  | 功能  |
+| ------------ | ------------ |
+| CURDATE()  | 返回当前日期  |
+| CURTIME()  | 返回当前时间  |
+| NOW()  | 返回当前日期和时间  |
+| YEAR(date)  | 获取指定date的年份  |
+| MONTH(date)  | 获取指定date的月份  |
+| DAY(date)  | 获取指定date的日期  |
+| DATE_ADD(date, INTERVAL expr type)  | 返回一个日期/时间值加上一个时间间隔expr后的时间值  |
+| DATEDIFF(date1, date2)  | 返回起始时间date1和结束时间date2之间的天数  |
+
+例子：
+
+```mysql
+-- DATE_ADD
+SELECT DATE_ADD(NOW(), INTERVAL 70 YEAR);
+```
+
+### 流程函数
+
+常用函数：
+
+| 函数  | 功能  |
+| ------------ | ------------ |
+| IF(value, t, f)  | 如果value为true，则返回t，否则返回f  |
+| IFNULL(value1, value2)  | 如果value1不为空，返回value1，否则返回value2  |
+| CASE WHEN [ val1 ] THEN [ res1 ] ... ELSE [ default ] END  | 如果val1为true，返回res1，... 否则返回default默认值  |
+| CASE [ expr ] WHEN [ val1 ] THEN [ res1 ] ... ELSE [ default ] END  | 如果expr的值等于val1，返回res1，... 否则返回default默认值  |
+
+例子：
+
+```mysql
+select
+	name,
+	(case when age > 30 then '中年' else '青年' end)
+from employee;
+select
+	name,
+	(case workaddress when '北京市' then '一线城市' when '上海市' then '一线城市' else '二线城市' end) as '工作地址'
+from employee;
+```
+
