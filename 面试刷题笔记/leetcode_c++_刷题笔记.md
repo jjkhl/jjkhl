@@ -3732,6 +3732,40 @@ public:
     }
 };
 ```
+### [25.K个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+```c++
+class Solution {
+public:
+    ListNode* reverseKList(ListNode *head)
+    {
+        ListNode *preHead=head;
+        ListNode *newHead=NULL;
+        while(preHead)
+        {
+            ListNode *tmp=preHead->next;
+            preHead->next=newHead;
+            newHead=preHead;
+            preHead=tmp;
+        }
+        return newHead;
+    }
+    ListNode* reverseKGroup(ListNode* head, int k) {
+        if(k==1||!head) return head;
+        ListNode *cur=head;
+        for(int i=0;i<k-1;i++)
+        {
+            cur=cur->next;
+            if(!cur) return head;
+        }
+        ListNode *nextHead=cur->next;
+        cur->next=NULL;
+        ListNode *res=reverseKList(head);
+        head->next=reverseKGroup(nextHead,k);
+        return res;
+    }
+};
+//参考链接:https://leetcode-cn.com/problems/reverse-nodes-in-k-group/solution/fan-zhuan-kzu-lian-biao-di-gui-jie-fa-by-t79c/
+```
 ## 哈希表
 ### [242.有效的字母异位词](https://leetcode-cn.com/problems/valid-anagram/)
 ```c++
