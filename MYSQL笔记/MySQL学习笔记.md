@@ -494,3 +494,59 @@ from employee;
 | 外键约束  | 用来让两张图的数据之间建立连接，保证数据的一致性和完整性  | FOREIGN KEY  |
 
 约束是作用于表中字段上的，可以再创建表/修改表的时候添加约束。
+
+### 常用约束
+
+| 约束条件  | 关键字  |
+| ------------ | ------------ |
+| 主键  | PRIMARY KEY  |
+| 自动增长  | AUTO_INCREMENT  |
+| 不为空  | NOT NULL  |
+| 唯一  | UNIQUE  |
+| 逻辑条件  | CHECK  |
+| 默认值  | DEFAULT  |
+
+例子：
+
+```mysql
+create table user(
+	id int primary key auto_increment,
+	name varchar(10) not null unique,
+	age int check(age > 0 and age < 120),
+	status char(1) default '1',
+	gender char(1)
+);
+```
+
+### 外键约束
+概念：外键用来让两张表的数据之间建立连接,从而保证数据的一致性和完整性。
+
+添加外键：
+
+```mysql
+CREATE TABLE 表名(
+	字段名 字段类型,
+	...
+	[CONSTRAINT] [外键名称] FOREIGN KEY(外键字段名) REFERENCES 主表(主表列名)
+);
+ALTER TABLE 表名 ADD CONSTRAINT 外键名称 FOREIGN KEY (外键字段名) REFERENCES 主表(主表列名);
+
+-- 例子
+alter table emp add constraint fk_emp_dept_id foreign key(dept_id) references dept(id);
+```
+
+删除外键：
+`ALTER TABLE 表名 DROP FOREIGN KEY 外键名;`
+
+#### 删除/更新行为
+
+| 行为  | 说明  |
+| ------------ | ------------ |
+| NO ACTION  | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则不允许删除/更新（与RESTRICT一致）  |
+| RESTRICT  | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则不允许删除/更新（与NO ACTION一致）  |
+| CASCADE  | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则也删除/更新外键在子表中的记录  |
+| SET NULL  | 当在父表中删除/更新对应记录时，首先检查该记录是否有对应外键，如果有则设置子表中该外键值为null（要求该外键允许为null）  |
+| SET DEFAULT  | 父表有变更时，子表将外键设为一个默认值（Innodb不支持）  |
+
+更改删除/更新行为：
+`ALTER TABLE 表名 ADD CONSTRAINT 外键名称 FOREIGN KEY (外键字段) REFERENCES 主表名(主表字段名) ON UPDATE 行为 ON DELETE 行为;`
