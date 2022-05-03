@@ -7362,6 +7362,67 @@ public:
         return dp.back();
     }
 };
+//优化版本的动态规划
+class Solution {
+public:
+    bool wordBreak(string& s, vector<string>& wordDict) {
+        const int len = s.length();
+        vector<bool> flag(len + 1, false);
+        set<string> buf(wordDict.begin(), wordDict.end());
+        
+        int minlen = 0, maxlen = 0;
+        for (auto& str : wordDict) {
+            const int tl = str.length();
+            maxlen = max(maxlen, tl);
+            if (minlen == 0 || tl < minlen)
+                minlen = tl;
+        }
+     
+        flag[0] = true;
+        //i不用从1开始，只要从wordDict字符串的最小长度开始
+        //j也不用从0开始，只要从i-maxWordLength开始搜索
+        for (int i = minlen; i <= len; ++i) {
+            for (int j = max(0, i - maxlen); j < i; ++j) {
+                if (flag[j] && buf.count(s.substr(j, i-j))) {
+                    flag[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        return flag[len];
+    }
+};
+```
+### [140.单词拆分II](https://leetcode-cn.com/problems/word-break-ii/)
+```c++
+//回溯+剪枝优化
+//使用umap来记录字符串的分解方式，从而达到剪枝优化的效果
+class Solution {
+public:
+    vector<string> helper(unordered_map<string,vector<string>> &umap,vector<string>& wordDict,string s)
+    {
+        if(umap.count(s)) return umap[s];
+        if(s.empty()) return {""};
+        vector<string> res;
+        for(auto word:wordDict)
+        {
+            if(s.substr(0,word.size())!=word) continue;
+            vector<string> tmp=helper(umap,wordDict,s.substr(word.size()));
+            for(auto itm:tmp)
+            {
+                res.push_back(word+(itm.empty()?"":" "+itm));
+            }
+        }
+        umap[s]=res;
+        return res;
+    }
+    vector<string> wordBreak(string s, vector<string>& wordDict) {
+        unordered_map<string,vector<string>> umap;
+        return helper(umap,wordDict,s);
+    }   
+};
+//参考链接：https://leetcode-cn.com/problems/word-break-ii/solution/dan-ci-fen-ge-ii-by-tangzixia/
 ```
 ### [198.打家劫舍](https://leetcode-cn.com/problems/house-robber/)
 ```c++
@@ -10290,8 +10351,6 @@ public:
     }
 };
 ```
-## 其它题目
-
 ### [821.字符的最短距离](https://leetcode-cn.com/problems/shortest-distance-to-a-character/)
 ```c++
 class Solution {
@@ -10310,6 +10369,51 @@ public:
             else right--;
         }
         return maxV;
+    }
+};
+```
+### [166.分数到小数](https://leetcode-cn.com/problems/fraction-to-recurring-decimal/)
+```c++
+class Solution
+{
+    using ll=long long;
+public:
+    string fractionToDecimal(int numerator, int denominator)
+    {
+        ll n = abs(numerator), d = abs(denominator);
+        string res;
+        //符号判断
+        if ((numerator > 0 && denominator < 0) || (numerator < 0 && denominator > 0))
+            res += '-';
+
+        ll a = n / d;
+        res += to_string(a);
+
+        //计算小数部分
+        n %= d;
+        if(n==0) return res;
+        res+='.';
+        unordered_map<int,int> umap;
+        string path;
+        int index=0;
+        while(n&&!umap.count(n))
+        {
+            //表示目前小数所处位数
+            umap[n]=index++;
+            n*=10;
+            path.push_back('0'+n/d);
+            n%=d;
+        }
+        //出现循环
+        if(n!=0)
+        {
+            res+=path.substr(0,umap[n])+"("+path.substr(umap[n])+")";
+        }
+        else
+        {
+            res+=path;
+        }
+        return res;
     }
 };
 ```
