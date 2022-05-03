@@ -550,3 +550,210 @@ alter table emp add constraint fk_emp_dept_id foreign key(dept_id) references de
 
 更改删除/更新行为：
 `ALTER TABLE 表名 ADD CONSTRAINT 外键名称 FOREIGN KEY (外键字段) REFERENCES 主表名(主表字段名) ON UPDATE 行为 ON DELETE 行为;`
+
+## 多表查询
+### 多表关系
+
+- 一对多（多对一）
+- 多对多
+- 一对一
+
+#### 一对多
+
+案例：部门与员工
+关系：一个部门对应多个员工，一个员工对应一个部门
+实现：在多的一方建立外键，指向一的一方的主键
+
+#### 多对多
+
+案例：学生与课程
+关系：一个学生可以选多门课程，一门课程也可以供多个学生选修
+实现：建立第三张中间表，中间表至少包含两个外键，分别关联两方主键
+
+#### 一对一
+
+案例：用户与用户详情
+关系：一对一关系，多用于单表拆分，将一张表的基础字段放在一张表中，其他详情字段放在另一张表中，以提升操作效率
+实现：在任意一方加入外键，关联另外一方的主键，并且设置外键为唯一的（UNIQUE）
+
+### 查询
+
+合并查询（笛卡尔积，会展示所有组合结果）：
+`select * from employee, dept;`
+
+> 笛卡尔积：两个集合A集合和B集合的所有组合情况（在多表查询时，需要消除无效的笛卡尔积）
+
+消除无效笛卡尔积：
+`select * from employee, dept where employee.dept = dept.id;`
+
+### 内连接查询
+
+内连接查询的是两张表交集的部分
+
+隐式内连接：
+`SELECT 字段列表 FROM 表1, 表2 WHERE 条件 ...;`
+
+显式内连接：
+`SELECT 字段列表 FROM 表1 [ INNER ] JOIN 表2 ON 连接条件 ...;`
+
+显式性能比隐式高
+
+例子：
+
+```mysql
+-- 查询员工姓名，及关联的部门的名称
+-- 隐式
+select e.name, d.name from employee (as) e, dept (as) d where e.dept = d.id;
+-- 显式
+select e.name, d.name from employee (as) e (inner) join dept (as) d on e.dept = d.id;
+```
+
+### 外连接查询
+
+左外连接：
+查询左表所有数据，以及两张表交集部分数据
+`SELECT 字段列表 FROM 表1 LEFT [ OUTER ] JOIN 表2 ON 条件 ...;`
+相当于查询表1的所有数据，包含表1和表2交集部分数据
+
+右外连接：
+查询右表所有数据，以及两张表交集部分数据
+`SELECT 字段列表 FROM 表1 RIGHT [ OUTER ] JOIN 表2 ON 条件 ...;`
+
+例子：
+
+```mysql
+-- 左
+select e.*, d.name from employee as e left (outer) join dept as d on e.dept = d.id;
+
+select d.name, e.* from dept d left (outer) join emp e on e.dept = d.id;  -- 这条语句与下面的语句效果一样
+-- 右
+select d.name, e.* from employee as e right outer join dept as d on e.dept = d.id;
+```
+
+
+### 自连接查询
+
+当前表与自身的连接查询，自连接必须使用表别名
+
+语法：
+`SELECT 字段列表 FROM 表A 别名A JOIN 表A 别名B ON 条件 ...;`
+
+自连接查询，可以是内连接查询，也可以是外连接查询
+
+例子：
+
+```mysql
+-- 查询员工及其所属领导的名字
+select a.name '下属名字',b.name '领导名字' from emp a,emp b where a.managerid=b.id;
+-- 没有领导的也查询出来
+select a.name, b.name from employee a left join employee b on a.manager = b.id;
+```
+
+### 联合查询 union, union all
+
+把多次查询的结果合并，形成一个新的查询集
+
+语法：
+
+```mysql
+SELECT 字段列表 FROM 表A ...
+UNION [ALL]
+SELECT 字段列表 FROM 表B ...
+```
+
+#### 注意事项
+
+- 多张表的列数和字段类型需要保持一致
+- UNION ALL 会有重复结果，UNION 不会
+- 联合查询比使用or效率高，不会使索引失效
+
+### 子查询
+
+SQL语句中嵌套SELECT语句，称谓嵌套查询，又称子查询。
+`SELECT * FROM t1 WHERE column1 = ( SELECT column1 FROM t2);`
+**子查询外部的语句可以是 INSERT / UPDATE / DELETE / SELECT 的任何一个**
+
+根据子查询结果可以分为：
+
+- 标量子查询（子查询结果为单个值）
+- 列子查询（子查询结果为一列）
+- 行子查询（子查询结果为一行）
+- 表子查询（子查询结果为多行多列）
+
+根据子查询位置可分为：
+
+- WHERE 之后
+- FROM 之后
+- SELECT 之后
+
+#### 标量子查询
+
+子查询返回的结果是单个值（数字、字符串、日期等）。
+常用操作符：- < > > >= < <=
+
+例子：
+
+```mysql
+-- 查询销售部所有员工
+select id from dept where name = '销售部';
+-- 根据销售部部门ID，查询员工信息
+select * from employee where dept = 4;
+-- 合并（子查询）
+select * from employee where dept = (select id from dept where name = '销售部');
+
+-- 查询xxx入职之后的员工信息
+select * from employee where entrydate > (select entrydate from employee where name = 'xxx');
+```
+
+#### 列子查询
+
+返回的结果是一列（可以是多行）。
+
+常用操作符：
+
+| 操作符  | 描述  |
+| ------------ | ------------ |
+| IN  | 在指定的集合范围内，多选一  |
+| NOT IN  | 不在指定的集合范围内  |
+| ANY  | 子查询返回列表中，有任意一个满足即可  |
+| SOME  | 与ANY等同，使用SOME的地方都可以使用ANY  |
+| ALL  | 子查询返回列表的所有值都必须满足  |
+
+例子：
+
+```mysql
+-- 查询销售部和市场部的所有员工信息
+select * from employee where dept in (select id from dept where name = '销售部' or name = '市场部');
+-- 查询比财务部所有人工资都高的员工信息
+select * from employee where salary > all(select salary from employee where dept = (select id from dept where name = '财务部'));
+-- 查询比研发部任意一人工资高的员工信息
+select * from employee where salary > any (select salary from employee where dept = (select id from dept where name = '研发部'));
+```
+
+#### 行子查询
+
+返回的结果是一行（可以是多列）。
+常用操作符：=, <, >, IN, NOT IN
+
+例子：
+
+```mysql
+-- 查询与xxx的薪资及直属领导相同的员工信息
+select * from employee where (salary, manager) = (12500, 1);
+select * from employee where (salary, manager) = (select salary, manager from employee where name = 'xxx');
+```
+
+#### 表子查询
+
+返回的结果是多行多列
+常用操作符：IN
+
+例子：
+
+```mysql
+-- 查询与xxx1，xxx2的职位和薪资相同的员工
+select * from employee where (job, salary) in (select job, salary from employee where name = 'xxx1' or name = 'xxx2');
+-- 查询入职日期是2006-01-01之后的员工，及其部门信息
+select e.*, d.* from (select * from employee where entrydate > '2006-01-01') as e left join dept as d on e.dept = d.id;
+```
+
