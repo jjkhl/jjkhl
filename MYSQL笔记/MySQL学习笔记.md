@@ -757,3 +757,86 @@ select * from employee where (job, salary) in (select job, salary from employee 
 select e.*, d.* from (select * from employee where entrydate > '2006-01-01') as e left join dept as d on e.dept = d.id;
 ```
 
+## 事务
+定义：是一组操作的集合，是一个不可分割的工作单位，事务会把所有操作作为一个整体一起向系统提交或撤销操作请求，即这些操作要么同时成功，要么同时失败。
+
+基本操作：
+
+```mysql
+-- 1. 查询张三账户余额
+select * from account where name = '张三';
+-- 2. 将张三账户余额-1000
+update account set money = money - 1000 where name = '张三';
+-- 此语句出错后张三钱减少但是李四钱没有增加
+模拟sql语句错误
+-- 3. 将李四账户余额+1000
+update account set money = money + 1000 where name = '李四';
+
+-- 查看事务提交方式
+SELECT @@AUTOCOMMIT;
+-- 设置事务提交方式，1为自动提交，0为手动提交，该设置只对当前会话有效
+SET @@AUTOCOMMIT = 0;
+-- 提交事务
+COMMIT;
+-- 回滚事务
+ROLLBACK;
+
+-- 设置手动提交后上面代码改为：
+select * from account where name = '张三';
+update account set money = money - 1000 where name = '张三';
+update account set money = money + 1000 where name = '李四';
+commit;
+```
+
+操作方式二：
+
+开启事务：
+`START TRANSACTION 或 BEGIN;`
+提交事务：
+`COMMIT;`
+回滚事务：
+`ROLLBACK;`
+
+操作实例：
+
+```mysql
+start transaction;
+select * from account where name = '张三';
+update account set money = money - 1000 where name = '张三';
+update account set money = money + 1000 where name = '李四';
+commit;
+```
+
+### 四大特性ACID
+
+- 原子性(Atomicity)：事务是不可分割的最小操作但愿，要么全部成功，要么全部失败
+- 一致性(Consistency)：事务完成时，必须使所有数据都保持一致状态
+- 隔离性(Isolation)：数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环境下运行
+- 持久性(Durability)：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的
+
+### 并发事务
+
+| 问题  | 描述  |
+| ------------ | ------------ |
+| 脏读  | 一个事务读到另一个事务还没提交的数据  |
+| 不可重复读  | 一个事务先后读取同一条记录，但两次读取的数据不同  |
+| 幻读  | 一个事务按照条件查询数据时，没有对应的数据行，但是再插入数据时，又发现这行数据已经存在  |
+
+
+并发事务隔离级别：
+
+| 隔离级别  | 脏读  | 不可重复读  | 幻读  |
+| ------------ | ------------ | ------------ | ------------ |
+| Read uncommitted  | √  | √  | √  |
+| Read committed  | ×  | √  | √  |
+| Repeatable Read(默认)  | ×  | ×  | √  |
+| Serializable  | ×  | ×  | ×  |
+
+- √表示在当前隔离级别下该问题会出现
+- Serializable 性能最低；Read uncommitted 性能最高，数据安全性最差
+
+查看事务隔离级别：
+`SELECT @@TRANSACTION_ISOLATION;`
+设置事务隔离级别：
+`SET [ SESSION | GLOBAL ] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE };`
+SESSION 是会话级别，表示只针对当前会话有效，GLOBAL 表示对所有会话有效
