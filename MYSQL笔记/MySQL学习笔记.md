@@ -1,17 +1,40 @@
 # MySQL安装
 [Window端安装](https://www.php.cn/mysql-tutorials-454993.html)
-[Linux端安装](https://www.runoob.com/mysql/mysql-install.html)
+Linux端安装：
+1. `sudo apt install mysql-server`
+> 查看MySQL服务器是否正在运行：`sudo systemctl status mysql`
+
+2. 查看默认密码：`sudo cat /etc/mysql/debian.cnf`
+
+3. 以root用户进入mysql：`mysql -u root -p`，输入默认密码
+4. 更改默认密码：`ALTER  USER  'root'@'localhost'  IDENTIFIED BY '1234';`
+
+
+* 修改默认密码如果报错，是因为密码太简单，需要更改密码复杂度为简单，密码长度为4：
+`set global validate_password.policy = 0;` 
+`set global validate_password.length = 4;`
+
+5. 创建远程访问用户：`create user 'root'@'%' IDENTIFIED WITH mysql_native_password BY '1234';`
+6. 分配root用户权限：`grant all on *.* to 'root'@'%';`
+7. 重新连接MySQL：`mysql -u root -p`
+8. [使用DataGrip远程连接MySQL](https://blog.csdn.net/weixin_42521211/article/details/86546966)
+* 查看IP地址和端口号:`sudo netstat -tap|grep mysql`
+* 注释掉配置文件：` sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf`，注释掉`bind-address=127.0.0.1`
+* 授权：`grant all privileges on *.* to 'root'@'%'identified by ‘你的密码’ with grant option;`
+* 刷新配置信息:`flush privileges;`
+* **重启SQL**：`service mysql restart`
 # 参考资料
 * 《MySQL必知必会》
-* [黑马程序员_MySQL数据库入门](https://b23.tv/BV1Kr4y1i7ru)
+* [黑马程序员_MySQL数据库入门](https://www.bilibili.com/video/BV1Kr4y1i7ru?p=65)
 # 基本语法
 ## SQL通用语法
 * SQL语句可以单行或多行书写，以分号结尾
 * SQL语句可以使用空格或缩进来增强语句的可读性
 * MySQL数据库不区分大小写，关键字建议大写
 * 注释
-```mysql
 
+
+```mysql
 --注释内容或#注释内容
 
 /*注释内容*/
@@ -809,7 +832,7 @@ commit;
 
 ### 四大特性ACID
 
-- 原子性(Atomicity)：事务是不可分割的最小操作但愿，要么全部成功，要么全部失败
+- 原子性(Atomicity)：事务是不可分割的最小操作单位，要么全部成功，要么全部失败
 - 一致性(Consistency)：事务完成时，必须使所有数据都保持一致状态
 - 隔离性(Isolation)：数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环境下运行
 - 持久性(Durability)：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的
@@ -840,3 +863,132 @@ commit;
 设置事务隔离级别：
 `SET [ SESSION | GLOBAL ] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE };`
 SESSION 是会话级别，表示只针对当前会话有效，GLOBAL 表示对所有会话有效
+
+# 进阶篇
+## 存储引擎
+### MySQL体系结构
+
+![](picture/MySQL体系结构.png)
+* 连接层
+最上层是一些客户端和链接服务，主要是完成一些类似于连接处理、授权认证及相关的安全方案。服务器也会为安全接入的每个客户端验证它所具有的操作权限。
+
+* 服务层
+第二层架构主要完成大多数的核心服务功能，如SQL接口，并完成缓存的查询，SQL的分析和优化，部分内置函数的执行。所有跨存储引擎的功能也在这一层实现，如 过程、函数等。
+
+* 引擎层
+存储引擎真正的负责了MySQL中数据的存储和提取，服务器通过API和存储引擎进行通信。不同存储引擎有不同的功能，这样就可以根据自己的需求，来选取合适的存储引擎。
+
+* 存储层
+主要是将数据存储在文件系统之上，并完成与存储引擎的交互
+
+### 存储引擎介绍
+存储引擎就是存储数据、建立索引、更新/查询数据等技术的实现方式。存储引擎是基于表而不是基于库的，所以存储引擎也可以被称为表引擎。默认存储引擎是InnoDB。
+
+```mysql
+-- 查询建表语句
+show create table account;
+-- 建表时指定存储引擎
+CREATE TABLE 表名(
+	...
+) ENGINE=INNODB;
+-- 查看当前数据库支持的存储引擎
+show engines;
+```
+
+### InnoDB
+
+InnoDB 是一种兼顾高可靠性和高性能的通用存储引擎，在 MySQL 5.5 之后，InnoDB 是默认的 MySQL 引擎。
+
+特点：
+
+- DML 操作遵循 ACID 模型，支持**事务**
+- **行级锁**，提高并发访问性能
+- 支持**外键**约束，保证数据的完整性和正确性
+
+文件：
+
+- xxx.ibd: xxx代表表名，InnoDB 引擎的每张表都会对应这样一个表空间文件，存储该表的表结构（frm、sdi）、数据和索引。
+
+参数：innodb_file_per_table，决定多张表共享一个表空间还是每张表对应一个表空间
+
+知识点：
+
+查看 Mysql 变量：
+`show variables like 'innodb_file_per_table';`
+
+Windows的MySQL数据存放目录：`C:\ProgramData\MySQL\MySQL Server 8.0\Data`
+从idb文件提取表结构数据：
+（在cmd运行）
+`ibd2sdi xxx.ibd`
+
+InnoDB 逻辑存储结构：
+![InnoDB逻辑存储结构](picture/InnoDB逻辑存储结构.png)
+
+* 表空间：InnoDB存储引擎逻辑结构的最高层，ibd文件其实就是表空间文件，在表空间中可以包含多个Segment段。
+* 段：表空间是由各个段组成的，常见的段有数据段、索引段、回滚段等。InnoDB中对于段的管理，都是引擎自身完成，不需要人为对其控制，一个段中包含多个区。
+* 区：区是表空间的单元结构，每个区的大小为1M。默认情况下，存储引擎页大小为16K，即一个区中一共有64个连续的页。
+* 页：页是组成区的最小单元，页也是InnoDB存储引擎磁盘管理的最小单元，每个页的大小默认为16KB。为了保证页的连续性，InnoDB存储引擎每次从磁盘申请4一5个区。
+* 行：InnoDB存储引擎是面向行的，也就是说数据是按行进行存放的，在每一行中除了定义表时所指定的字段以外，还包含两个隐藏字段。
+
+
+### MyISAM
+
+MyISAM 是 MySQL 早期的默认存储引擎。
+
+特点：
+
+- 不支持事务，不支持外键
+- 支持表锁，不支持行锁
+- 访问速度快
+
+文件：
+
+- xxx.sdi: 存储表结构信息
+- xxx.MYD: 存储数据
+- xxx.MYI: 存储索引
+
+### Memory
+
+Memory 引擎的表数据是存储在内存中的，受硬件问题、断电问题的影响，只能将这些表作为临时表或缓存使用。
+
+特点：
+
+- 存放在内存中，速度快
+- hash索引（默认）
+
+文件：
+
+- xxx.sdi: 存储表结构信息
+
+### 存储引擎特点
+
+| 特点  | InnoDB  | MyISAM  | Memory  |
+| ------------ | ------------ | ------------ | ------------ |
+| 存储限制  | 64TB  | 有  | 有  |
+| 事务安全  | 支持  | -  | -  |
+| 锁机制  | 行锁  | 表锁  | 表锁  |
+| B+tree索引  | 支持  | 支持  | 支持  |
+| Hash索引  | -  | -  | 支持  |
+| 全文索引  | 支持（5.6版本之后）  | 支持  | -  |
+| 空间使用  | 高  | 低  | N/A  |
+| 内存使用  | 高  | 低  | 中等  |
+| 批量插入速度  | 低  | 高  | 高  |
+| 支持外键  | 支持  | -  | -  |
+
+面试题：InnoDB引擎与MyISAM引擎的区别
+* InnoDB支持事务，MyISAM不支持事务
+* InnoDB支持行锁和表锁，MyISAM只支持表锁
+* InnoDB支持外键，MyISAM不支持外键
+### 存储引擎的选择
+
+在选择存储引擎时，应该根据应用系统的特点选择合适的存储引擎。对于复杂的应用系统，还可以根据实际情况选择多种存储引擎进行组合。
+
+- InnoDB: 如果应用对事物的完整性有比较高的要求，在并发条件下要求数据的一致性，数据操作除了插入和查询之外，还包含很多的更新、删除操作，则 InnoDB 是比较合适的选择
+- MyISAM: 如果应用是以读操作和插入操作为主，只有很少的更新和删除操作，并且对事务的完整性、并发性要求不高，那这个存储引擎是非常合适的。
+- Memory: 将所有数据保存在内存中，访问速度快，通常用于临时表及缓存。Memory 的缺陷是对表的大小有限制，太大的表无法缓存在内存中，而且无法保障数据的安全性
+
+电商中的足迹和评论适合使用 MyISAM 引擎，缓存适合使用 Memory 引擎。
+
+## 索引
+### 介绍
+
