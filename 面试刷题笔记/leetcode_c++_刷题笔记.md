@@ -10417,3 +10417,57 @@ public:
     }
 };
 ```
+### [162.寻找峰值](https://leetcode-cn.com/problems/find-peak-element/)
+```c++
+//因为nums[-1]=nums[n]=-∞，所以只要沿着递增方向找峰值一定能找到。
+class Solution {
+public:
+    int findPeakElement(vector<int>& nums) {
+        int left=0,right=nums.size()-1;
+        while(left<right)
+        {
+            int mid=left+((right-left)>>1);
+            if(nums[mid]>nums[mid+1])
+                right=mid;//nums[mid]可能为峰值
+            else
+                left=mid+1;//nums[mid]一定不为峰值
+        }
+        return left;
+    }
+};
+```
+### [171.Excel表列需序](https://leetcode-cn.com/problems/excel-sheet-column-number/)
+```c++
+class Solution {
+public:
+    int titleToNumber(string columnTitle) {
+        int sum=0;
+        for(const char& ch:columnTitle)
+        {
+            sum=sum*26+(ch-'A'+1);
+        }
+        return sum;
+    }
+};
+```
+### [172.阶乘后的零](https://leetcode-cn.com/problems/factorial-trailing-zeroes/)
+```c++
+//10=2*5，100=2*5*2*5，1000=2*5*2*5*2*5
+//2出现次数一定大于5，所以只需要求5出现次数即可
+// 以130为例出现的数：
+// 第一次：5，10，15，…，130，至少包含1个5的数为26个
+// 第二次：25，50，75，100，125，至少包含2个5的数有这5个
+// 第三次：125，它至少包含3个5（其实也只包含3个5）
+class Solution {
+public:
+    int trailingZeroes(int n) {
+        int count=0;
+        while(n)
+        {
+            n/=5;
+            count+=n;
+        }
+        return count;
+    }
+};
+```
