@@ -1,5 +1,9 @@
 <h1 align="center">Linux高性能服务器编程</h1>
 
+**本文笔记需要与TCP/IP网络编程(尹圣雨)笔记一起使用**
+参考笔记地址：
+* https://blog.csdn.net/jojozym/article/details/106034037
+* https://github.com/HiganFish/Notes-HighPerformanceLinuxServerProgramming
 # TCP/IP协议详解
 ## 第1章 TCP/IPV4协议族
 
@@ -188,19 +192,97 @@ TCP拥塞标准文档：RFC 5681；
 
 # 深入解析高性能服务器编程
 ## 第五章Linux网络编程基础API
-socket基础api位于 `sys/socket.h` 头文件中
-socket最开始的含义是 一个IP地址和端口对. 唯一的表示了TCP通信的一段
-网络信息api `netdb.h`头文件中
 
-### 主机字节序和网络字节序
-字节序分为 `大端字节序`和`小端字节序`
-由于大多数PC采用小端字节序(高位存在高地址处), 所以小端字节序又称为主机字节序
+[详细介绍见《网络编程.md》文件](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md)
 
-为了防止不同机器字节序不同导致的错乱问题. 规定传输的时候统一为 大端字节序(网络字节序).
-这样主机会根据自己的情况决定 - 是否转换接收到的数据的字节序
+## 第六章 高级I/O函数
+用于创建文件描述符的函数：pipe、dup/dup2函数
+用于读写数据的函数：readv/writev、sendfile、mmap/munmap、splice和tee函数
+用于控制I/O行为和属性的函数：fcntl函数
 
-> 保存4字节int类型数0x12345678，从0x20号开始的地址。
->
-> 大端序字节：0x12(0x20)	0x34(0x21)	0x56(0x22)	0x78(0x23)
->
-> 小端序字节：0x78(0x20)	0x56(0x21)	0x34(0x22)	0x12(0x23)
+### [pipe函数](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md#multiprocess)
+作用：用于创建夜歌管道，以实现进程间通信
+```c++
+// 函数定义
+// 参数文件描述符数组 fd[0] 读出 fd[1]写入 单向管道
+// 成功返回0, 并将一对打开的文件描述符填入其参数指向的数组
+// 失败返回-1 errno
+#include <unistd.h>
+int pipe(int fd[2]);
+```
+
+```c++
+//双向管道
+// 第一个参数为 协议PF_UNIX(书上是AF_UNIX)感觉这里指明协议使用PF更好一些
+//成功返回0，失败返回-1并设置errno
+#include <sys/types.h>
+#include <sys/socket.h>
+int socketpair(int domain, int type, int protocol, int fd[2]);
+
+示例代码：
+#include<stdio.h>
+#include<string.h>//strlen头文件
+#include<unistd.h>//fork头文件
+#include<sys/types.h>
+#include<sys/socket.h>
+int main()
+{
+    int fd[2];
+    socketpair(AF_UNIX,SOCK_STREAM,0,fd);
+    int pid=fork();
+    if(0==pid)//子进程
+    {
+        close(fd[0]);
+        char a[]="123";
+        send(fd[1],a,strlen(a),0);
+    } 
+    else if(pid>0)
+    {
+        close(fd[1]);
+        char b[20]={};
+        recv(fd[0],b,20,0);
+        printf("%s\n",b);
+    }
+    return 0;
+}
+```
+### [dup和dup2函数](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md#dup&dup2)
+复制一个现有的文件描述符
+```c
+#include <unistd.h>
+// 返回的文件描述符总是取系统当前可用的最小整数值
+int dup(int oldfd);
+// 可以用newfd来制定新的文件描述符, 如果newfd已经被打开则先关闭
+// 如果newfd==oldfd 则不关闭newfd直接返回
+int dup2(int oldfd, int newfd);
+```
+
+dup函数创建一个新的文件描述符, 新的文件描述符和原有的文件描述符共同指向相同的目标.
+
+由于关掉了`STDOUT_FILENO`dup最小的即为`STDOUT_FILENO`所以标准输出都到了这个文件之中
+```c
+int main()
+{
+    int filefd = open("/home/lsmg/1.txt", O_WRONLY);
+    close(STDOUT_FILENO);
+    dup(filefd);
+    printf("123\n");
+    exit(0);
+}
+```
+
+### readv和writev函数
+readv函数将数据从文件描述符读到分散的内存块中，writev函数则将多块分散的内存数据一并写入文件描述符中。
+```c
+#include <sys/uio.h>
+// count 为 vector的长度, 即为有多少块内存
+// 成功时返回写入\读取的长度 失败返回-1
+ssize_t readv(int fd, const struct iovec* vector, int count);
+ssize_t writev(int fd, const struct iovec* vector, int count);
+
+struct iovec {
+	void* iov_base /* 内存起始地址*/
+	size_t iov_len /* 这块内存长度*/
+}
+```
+
