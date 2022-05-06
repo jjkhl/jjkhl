@@ -10471,3 +10471,66 @@ public:
     }
 };
 ```
+### [179.最大数](https://leetcode-cn.com/problems/largest-number/)
+```c++
+//string数组排序法
+class Solution {
+public:
+    string largestNumber(vector<int>& nums) {
+        string res="";
+        int n=nums.size();
+        vector<string> num_str(n);
+        for(int i=0;i<n;i++)
+        {
+            num_str[i]=to_string(nums[i]);
+        }
+        //只能是a+b>b+a，防止{0,0,0,0,0}的出现
+        sort(num_str.begin(),num_str.end(),[](const string&a,const string&b){return a+b>b+a;});
+        if(num_str[0]=="0") return "0";
+        for(const auto& str:num_str) res+=str;
+        return res;
+    }
+};
+//STL标准库函数
+class Solution {
+public:
+    string largestNumber(vector<int>& nums) 
+    {
+        if (all_of(nums.begin(), nums.end(), [](int x) { return x == 0; })) {
+            return string("0");
+        }
+        vector<string> strNums(nums.size());
+        std::transform(nums.begin(), nums.end(), strNums.begin(), [](int x) {
+            return std::to_string(x);
+        });
+
+        std::sort(strNums.begin(), strNums.end(), [](const string& x, const string& y) {
+            /* x为后面元素，y为前面元素，return true则将x移动到前面 */
+            return x + y >= y + x;//此处也可以为x+y>y+x
+        });
+
+        return std::accumulate(strNums.begin(), strNums.end(), string());
+    }
+};
+
+
+// 链接：https://leetcode-cn.com/problems/largest-number/solution/c-4ms-by-harold-15/
+
+```
+### [190.颠倒二进制位](https://leetcode-cn.com/problems/reverse-bits/)
+```c++
+class Solution {
+public:
+    uint32_t reverseBits(uint32_t n) {
+        uint32_t res = 0;
+        //32是为了防止前面有0
+        //|运算相当于位运算的加法
+        for (int i = 0; i < 32; ++i) {
+            res = (res << 1) | (n & 1);
+            n >>= 1;
+        }
+        return res;
+    }
+};
+```
+
