@@ -10534,3 +10534,39 @@ public:
 };
 ```
 
+### [189.轮转数组](https://leetcode-cn.com/problems/rotate-array/)
+```c++
+//反转法
+class Solution
+{
+public:
+    void reverseNums(vector<int>& nums,int start,int end)
+    {
+        while(start<end)
+        {
+            swap(nums[start++],nums[end--]);
+        }
+    }
+    void rotate(vector<int> &nums, int k)
+    {
+        int n = nums.size();
+        k%=n;
+        reverseNums(nums,0,n-1);
+        reverseNums(nums,0,k-1);
+        reverseNums(nums,k,n-1);
+    }
+};
+//额外数组法
+class Solution {
+public:
+    void rotate(vector<int>& nums, int k) {
+        int n=nums.size();
+        vector<int> copy(n);
+        for(int i=0;i<n;i++)
+        {
+            copy[(i+k)%n]=nums[i];
+        }
+        nums=copy;
+    }
+};
+```
