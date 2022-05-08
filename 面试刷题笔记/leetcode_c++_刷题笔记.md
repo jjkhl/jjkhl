@@ -10570,3 +10570,28 @@ public:
     }
 };
 ```
+
+### [204.计数质数](https://leetcode-cn.com/problems/count-primes/)
+```c++
+//参考地址：https://leetcode-cn.com/problems/count-primes/solution/ji-shu-zhi-shu-bao-li-fa-ji-you-hua-shai-fa-ji-you/
+//厄拉多塞筛法
+class Solution {
+public:
+    int countPrimes(int n) {
+        int count=0;
+        vector<bool> signs(n,true);
+        for(int i=2;i<n;i++)
+        {
+            if(signs[i])
+            {
+                ++count;
+                for(int j=i+i;j<n;j+=i)
+                {
+                    signs[j]=false;
+                }
+            }
+        }
+        return count;
+    }
+};
+```
