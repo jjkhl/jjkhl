@@ -1170,4 +1170,101 @@ long_query_time=2
 
 查看指定query_id的SQL语句CPU使用情况：`show profiles cpu for query query_id;`
 
+#### explain
 
+EXPLAIN 或者 DESC命令获取 MySQL 如何执行 SELECT 语句的信息，包括在 SELECT 语句执行过程中表如何连接和连接的顺序。
+
+语法：
+```mysql
+# 直接在select语句之前加上关键字 explain/DESC
+explain select 字段列表 from 表名 where 条件;
+```
+
+explain执行计划各个字段含义：
+![explain](picture/explain执行计划各个字段含义.png)
+
+### 索引使用
+
+#### 最左前缀法则
+
+如果索引关联了多列（联合索引），要遵守最左前缀法则，最左前缀法则指的是查询从索引的最左列开始，并且不跳过索引中的列。
+如果跳跃某一列，索引将部分失效（后面的字段索引失效）。
+
+联合索引中，出现范围查询（<, >），范围查询右侧的列索引失效。可以用>=或者<=来规避索引失效问题。
+
+#### 索引失效情况
+
+1. 在索引列上进行运算操作，索引将失效。如：`explain select * from tb_user where substring(phone, 10, 2) = '15';`
+2. 字符串类型字段使用时，不加引号，索引将失效。如：`explain select * from tb_user where phone = 17799990015;`，此处phone的值没有加引号
+3. 模糊查询中，如果仅仅是尾部模糊匹配，索引不会是失效；如果是头部模糊匹配，索引失效。如：`explain select * from tb_user where profession like '%工程';`，前后都有 % 也会失效。
+4. 用 or 分割开的条件，如果 or 其中一个条件的列没有索引，那么涉及的索引都不会被用到。
+5. 如果 MySQL 评估使用索引比全表更慢，则不使用索引。
+
+#### SQL 提示
+
+是优化数据库的一个重要手段，简单来说，就是在SQL语句中加入一些人为的提示来达到优化操作的目的。
+
+例如，使用索引：
+`explain select * from tb_user use index(idx_user_pro) where profession="软件工程";`
+不使用哪个索引：
+`explain select * from tb_user ignore index(idx_user_pro) where profession="软件工程";`
+必须使用哪个索引：
+`explain select * from tb_user force index(idx_user_pro) where profession="软件工程";`
+
+use 是建议，实际使用哪个索引 MySQL 还会自己权衡运行速度去更改，force就是无论如何都强制使用该索引。
+
+#### 覆盖索引&回表查询
+
+尽量使用覆盖索引（查询使用了索引，并且需要返回的列，在该索引中已经全部能找到），减少 select *。
+
+explain 中 extra 字段含义：
+`using index condition`：查找使用了索引，但是需要回表查询数据
+`using where; using index;`：查找使用了索引，但是需要的数据都在索引列中能找到，所以不需要回表查询
+
+如果在聚集索引中直接能找到对应的行，则直接返回行数据，只需要一次查询，哪怕是select \*；如果在辅助索引中找聚集索引，如`select id, name from xxx where name='xxx';`，也只需要通过辅助索引(name)查找到对应的id，返回name和name索引对应的id即可，只需要一次查询；如果是通过辅助索引查找其他字段，则需要回表查询，如`select id, name, gender from xxx where name='xxx';`
+
+所以尽量不要用`select *`，容易出现回表查询，降低效率，除非有联合索引包含了所有字段
+
+面试题：一张表，有四个字段（id, username, password, status），由于数据量大，需要对以下SQL语句进行优化，该如何进行才是最优方案：
+`select id, username, password from tb_user where username='itcast';`
+
+解：给username和password字段建立联合索引，则不需要回表查询，直接覆盖索引
+
+#### 前缀索引
+
+当字段类型为字符串（varchar, text等）时，有时候需要索引很长的字符串，这会让索引变得很大，查询时，浪费大量的磁盘IO，影响查询效率，此时可以只降字符串的一部分前缀，建立索引，这样可以大大节约索引空间，从而提高索引效率。
+
+语法：`create index idx_xxxx on table_name(columnn(n));`
+前缀长度：可以根据索引的选择性来决定，而选择性是指不重复的索引值（基数）和数据表的记录总数的比值，索引选择性越高则查询效率越高，唯一索引的选择性是1，这是最好的索引选择性，性能也是最好的。
+求选择性公式：
+```mysql
+select count(distinct email) / count(*) from tb_user;
+select count(distinct substring(email, 1, 5)) / count(*) from tb_user;
+```
+
+show index 里面的sub_part可以看到接取的长度
+
+
+#### 单列索引&联合索引
+
+单列索引：即一个索引只包含单个列
+联合索引：即一个索引包含了多个列
+在业务场景中，如果存在多个查询条件，考虑针对于查询字段建立索引时，建议建立联合索引，而非单列索引。
+
+单列索引情况：
+`explain select id, phone, name from tb_user where phone = '17799990010' and name = '韩信';`
+这句只会用到phone索引字段
+
+**注意事项**
+
+- 多条件联合查询时，MySQL优化器会评估哪个字段的索引效率更高，会选择该索引完成本次查询
+
+### 设计原则
+
+1. 针对于数据量较大，且查询比较频繁的表建立索引
+2. 针对于常作为查询条件（where）、排序（order by）、分组（group by）操作的字段建立索引
+3. 尽量选择区分度高的列作为索引，尽量建立唯一索引，区分度越高，使用索引的效率越高
+4. 如果是字符串类型的字段，字段长度较长，可以针对于字段的特点，建立前缀索引
+5. 尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率
+6. 要控制索引的数量，索引并不是多多益善，索引越多，维护索引结构的代价就越大，会影响增删改的效率
+7. 如果索引列不能存储NULL值，请在创建表时使用NOT NULL约束它。当优化器知道每列是否包含NULL值时，它可以更好地确定哪个索引最有效地用于查询
