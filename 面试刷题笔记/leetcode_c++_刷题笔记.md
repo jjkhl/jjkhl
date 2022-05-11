@@ -10595,3 +10595,84 @@ public:
     }
 };
 ```
+
+#### [212.单词搜索II](https://leetcode.cn/problems/word-search-ii/)
+```c++
+//字典树
+struct TrieNode {
+    vector<TrieNode*> children;
+    bool isWord;
+
+    TrieNode() {
+        children = vector<TrieNode*>(26, NULL);
+        isWord = false;
+    }
+};
+
+class Solution {
+public:
+    vector<int> dx = {1, -1, 0, 0};
+    vector<int> dy = {0, 0, 1, -1};
+    int rows = 0;
+    int cols = 0;
+    vector<string> ans;
+    unordered_set<string> unique;
+
+    vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {
+        // build trie tree
+        TrieNode* root = new TrieNode();
+        for (auto word: words) {
+            TrieNode* p = root;
+            for (auto c: word) {
+                int index = c - 'a';
+                if (p->children[index] == NULL) {
+                    p->children[index] = new TrieNode();
+                }
+                p = p->children[index];
+            }
+            p->isWord = true;
+        }
+
+        rows = board.size();
+        cols = board[0].size();
+        string word = "";
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                dfs(i, j, board, root, word);
+            }
+        }
+
+        for (auto s: unique) {
+            ans.push_back(s);
+        }
+
+        return ans;
+    }
+
+    void dfs(int i, int j, vector<vector<char>>& board, TrieNode* root, string& word) {
+        char c = board[i][j];
+        int index = c - 'a';
+        //字典树中没有则跳过
+        if (root->children[index] == NULL) return;
+        //'0'表示已访问过，跳过
+        if (c == '0') return;
+
+        board[i][j] = '0';
+        word += c;
+        if (root->children[index]->isWord) 
+            unique.insert(word);
+        for (int d = 0; d < 4; d++) {
+            int y = i + dy[d];
+            int x = j + dx[d];
+            if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+            if (board[y][x] == '0') continue;
+            dfs(y, x, board, root->children[index], word);
+        }
+        word.pop_back();
+        board[i][j] = c;
+    }
+};
+
+//链接：https://leetcode.cn/problems/word-search-ii/solution/wei-rao-li-lun-dfsbao-sou-triejian-zhi-b-pqwr/
+
+```
