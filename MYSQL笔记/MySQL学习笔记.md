@@ -1268,3 +1268,551 @@ show index 里面的sub_part可以看到接取的长度
 5. 尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率
 6. 要控制索引的数量，索引并不是多多益善，索引越多，维护索引结构的代价就越大，会影响增删改的效率
 7. 如果索引列不能存储NULL值，请在创建表时使用NOT NULL约束它。当优化器知道每列是否包含NULL值时，它可以更好地确定哪个索引最有效地用于查询
+
+## SQL优化
+### 插入数据
+#### insert
+1. 采用批量插入（一次插入的数据不建议超过1000条）
+2. 手动提交事务
+3. 主键顺序插入
+
+#### 大批量插入数据
+指令：`load`
+
+执行步骤：
+```mysql
+#客户端连接服务端时，加上参数 --local-infile
+mysql --local-infile -u  root -p
+
+# 设置全局参数local_infile为1，开启从本地加载文件导入数据的开关
+set global local_infile=1
+
+#执行load指令
+load data local infile '/rot/sqll.log' into table tb_user fields terminated by ',' lines terminated by '\n';
+```
+> 主键顺序插入性能高于乱序插入
+
+### 主键优化
+数据组织方式：在InnoDB存储引擎中，表数据都是根据主键顺序组织存放的，这种存储方式的表称为索引组织表（Index organized table, IOT）
+
+页分裂：页可以为空，也可以填充一般，也可以填充100%，每个页包含了2-N行数据（如果一行数据过大，会行溢出），根据主键排列。
+
+页合并：当删除一行记录时，实际上记录并没有被物理删除，只是记录被标记（flaged）为删除并且它的空间变得允许被其他记录声明使用。当页中删除的记录到达 MERGE_THRESHOLD（默认为页的50%），InnoDB会开始寻找最靠近的页（前后）看看是否可以将这两个页合并以优化空间使用。
+
+主键设计原则：
+
+- 满足业务需求的情况下，尽量降低主键的长度
+- 插入数据时，尽量选择顺序插入，选择使用 AUTO_INCREMENT 自增主键
+- 尽量不要使用 UUID 做主键或者是其他的自然主键，如身份证号
+- 业务操作时，避免对主键的修改
+
+### order by优化
+1. Using filesort：通过表的索引或全表扫描，读取满足条件的数据行，然后在排序缓冲区 sort buffer 中完成排序操作，所有不是通过索引直接返回排序结果的排序都叫 FileSort 排序
+2. Using index：通过有序索引顺序扫描直接返回有序数据，这种情况即为 using index，不需要额外排序，操作效率高
+
+如果order by字段全部使用升序排序或者降序排序，则都会走索引，但是如果一个字段升序排序，另一个字段降序排序，则不会走索引，explain的extra信息显示的是`Using index, Using filesort`，如果要优化掉Using filesort，则需要另外再创建一个索引，如：`create index idx_user_age_phone_ad on tb_user(age asc, phone desc);`，此时使用`select id, age, phone from tb_user order by age asc, phone desc;`会全部走索引
+
+总结：
+
+- 根据排序字段建立合适的索引，多字段排序时，也遵循最左前缀法则
+- 尽量使用覆盖索引
+- 多字段排序，一个升序一个降序，此时需要注意联合索引在创建时的规则（ASC/DESC）
+- 如果不可避免出现filesort，大数据量排序时，可以适当增大排序缓冲区大小 sort_buffer_size（默认256k）
+
+> 查看默认缓冲区大小：`show variables like 'sort_buffer_size';`
+
+### group by优化
+
+- 在分组操作时，可以通过索引来提高效率
+- 分组操作时，索引的使用也是满足最左前缀法则的
+
+如索引为`idx_user_pro_age_stat`，则句式可以是`select ... where profession order by age`，这样也符合最左前缀法则
+
+### limit优化
+常见的问题如`limit 2000000, 10`，此时需要 MySQL 排序前2000000条记录，但仅仅返回2000000 - 2000010的记录，其他记录丢弃，查询排序的代价非常大。
+优化方案：一般分页查询时，通过创建覆盖索引能够比较好地提高性能，可以通过覆盖索引加子查询形式进行优化
+
+```mysql
+-- 此语句耗时很长
+select * from tb_sku limit 9000000, 10;
+-- 通过覆盖索引加快速度，直接通过主键索引进行排序及查询
+select id from tb_sku order by id limit 9000000, 10;
+-- 下面的语句是错误的，因为 MySQL 不支持 in 里面使用 limit
+-- select * from tb_sku where id in (select id from tb_sku order by id limit 9000000, 10);
+-- 通过连表查询即可实现第一句的效果，并且能达到第二句的速度
+select * from tb_sku as s, (select id from tb_sku order by id limit 9000000, 10) as a where s.id = a.id;
+```
+
+### count优化
+
+MyISAM 引擎把一个表的总行数存在了磁盘上，因此执行 count(\*) 的时候会直接返回这个数，效率很高（前提是不适用where）；
+InnoDB 在执行 count(\*) 时，需要把数据一行一行地从引擎里面读出来，然后累计计数。
+优化方案：自己计数，如创建key-value表存储在内存或硬盘，或者是用redis
+
+count的几种用法：
+
+- 如果count函数的参数（count里面写的那个字段）不是NULL（字段值不为NULL），累计值就加一，最后返回累计值
+- 用法：count(\*)、count(主键)、count(字段)、count(1)
+- count(主键)跟count(\*)一样，因为主键不能为空；count(字段)只计算字段值不为NULL的行；count(1)引擎会为每行添加一个1，然后就count这个1，返回结果也跟count(\*)一样；count(null)返回0
+
+各种用法的性能：
+
+- count(主键)：InnoDB引擎会遍历整张表，把每行的主键id值都取出来，返回给服务层，服务层拿到主键后，直接按行进行累加（主键不可能为空）
+- count(字段)：没有not null约束的话，InnoDB引擎会遍历整张表把每一行的字段值都取出来，返回给服务层，服务层判断是否为null，不为null，计数累加；有not null约束的话，InnoDB引擎会遍历整张表把每一行的字段值都取出来，返回给服务层，直接按行进行累加
+- count(1)：InnoDB 引擎遍历整张表，但不取值。服务层对于返回的每一层，放一个数字 1 进去，直接按行进行累加
+- count(\*)：InnoDB 引擎并不会把全部字段取出来，而是专门做了优化，不取值，服务层直接按行进行累加
+
+按效率排序：count(字段) < count(主键) < count(1) < count(\*)，所以尽量使用 count(\*)
+
+### update优化（避免行锁升级为表锁）
+
+InnoDB 的行锁是针对索引加的锁，不是针对记录加的锁，并且该索引不能失效，否则会从行锁升级为表锁。
+
+如以下两条语句：
+`update student set no = '123' where id = 1;`，这句由于id有主键索引，所以只会锁这一行；
+`update student set no = '123' where name = 'test';`，这句由于name没有索引，所以会把整张表都锁住进行数据更新，解决方法是给name字段添加索引 
+
+# 视图/存储过程/触发器
+## 视图
+视图是一种虚拟存在的表。视图中的数据并不在数据库中实际存在，行和列数来自定义视图的查询中使用的表，并且是在使用视图时动态生成的。
+
+### 语法
+
+
+* 创建
+`create [or replace] view 视图名称[(列名列表)] as select语句 [with[cascaded|local] check option]`
+
+* 查询
+```mysql
+查看创建视图语句：show create view 视图名称;
+查看视图数据：select * from 视图名称;
+```
+* 修改
+```mysql
+方式一：create [or replace] view 视图名称[(列名列表)] as select 语句 [with[cascaded|local] check option]
+
+方式二：alter view 视图名称[(列名列表)] as select语句 [with [cascaded | local] check option]
+```
+* 删除
+```mysql
+drop view [if exists] 视图名称 [,视图名称]...
+```
+
+### 检查
+格式：`with cascaded(local) check option`
+
+当使用`WITH CHECK OPTION`子句创建视图时，MySQL会通过视图检查正在更改的每个行，例如 插入，更新，删除，以使其符合视图的定义。 MySQL允许基于另一个视图创建视图，它还会检查依赖视图中的规则以保持一致性。为了确定检查的范围，mysql提供了两个选项： CASCADED 和 LOCAL 
+，默认值为 CASCADED 。
+
+* cascaded(级联)
+比如，v2视图是基于v1视图的，如果在v2视图创建的时候指定了检查选项为 cascaded，但是v1视图创建时未指定检查选项。 则在执行检查时，不仅会检查v2，还会级联检查v2的关联视图v1。
+* local(本地)
+v2视图是基于v1视图的，如果在v2视图创建的时候指定了检查选项为 local ，但是v1视图创建时未指定检查选项。 则在执行检查时，知会检查v2，不会检查v2的关联视图v1。
+
+### 视图的更新
+**前提条件**：视图中的行与基础表中的行之间必须存在一对一关系。
+不可更新状态：
+* 聚合函数或窗口函数(sum、min、max、count等)
+* distinct：取出重复记录
+* group by
+* having
+* union或union all
+
+错误示例：
+```
+create view stu_v_count as select count(*) from studeng;
+
+#对上述视图进行更新或插入就会报错
+```
+
+### 视图的作用
+* 简单：视图可以简化用户对数据的理解，也可以简化操作。那些被经常使用的查询可以被定义为视图，从而使得用户不必为以后的操作每次指定全部条件。
+* 安全：数据库可以授权，但不能授权到数据库特定行和列上。通过视图，用户只能查询和修改它们所能看到的数据
+* 数据独立：视图可以帮助用户屏蔽真实表结构变换带来的优先
+
+## 存储过程
+### 介绍
+存储过程是先经过编译并存储在数据库中的一段SQL语句集合，调用存储过程可以简化开发工作，减少数据在数据库和应用服务器之间的传输，能提高数据处理的效率。
+
+存储过程就是数据库SQL语言层面的代码封装和重用。
+
+特点：
+* 封装，复用：可以把某个业务SQL封装在储存过程中，需要时直接调用
+* 可以接收参数，也可以返回数据
+* 减少网络交互，提升效率：如果涉及多条SQL，每执行一次都是一次网络传输。而如果封装在存储过程中，只需要一次网络交互。
+
+### 语法
+注意：命令行中，执行创建存储过程的SQL时，需要使用关键字`delimiter`指定SQL语句的结束符。
+#### 创建
+```mysql
+create procedure 存储过程名称([参数列表])
+begin
+	# SQL语句
+end
+```
+
+#### 调用
+
+`call 名称 ([参数])`
+
+#### 查看
+```mysql
+# 查询指定数据库的存储过程及状态信息，xxx指数据库名称
+select * from information_schema where routine_schema = 'xxx';
+
+# 查询某个存储过程的定义
+show create procedure 存储过程名称;
+```
+
+#### 删除
+
+`drop procedure [if exists] 存储过程名字`
+
+
+### 变量
+在MYSQL中变量分为三种类型：系统变量、用户定义变量、局部变量。
+
+#### 系统变量
+系统变量属于MYSQL服务器层面的，分为全局变量(global)和会话变量(session)
+
+* 查看系统变量
+
+```mysql
+show [session|global] variables; #查看所有系统变量
+show [session|global] variables like '......'; #可以通过LIKE模糊匹配方式查看变量
+select @@[session|global] 系统变量名; #查看指定变量的值
+```
+* 设置系统变量
+
+```mysql
+set [session|global] 系统变量名=值;
+set @@[session|global] 系统变量名=值;
+```
+
+> 默认变量属性为`session`，会话变量
+> mysql服务重启启动之后，所设置的全局参数会失效，要想不失效，可以在`/etc/my.cnf`中配置。
+
+#### 用户自定义变量
+定义：用户根据需要自己定义的变量，用户变量不用提前声明，在用的时候直接使用`@变量名`，其作用域为当前连接。
+
+* 赋值
+可以使用`=`或`:=`
+```mysql
+# 方式一
+set @var_name=expr [,@var_name=expr] ...;
+set @var_name := expr [,@var_name:=expr] ...;
+
+#方式二
+select @var_name := expr [,@var_name :=expr]...;
+select 字段名 into @var_name from 表名;
+```
+* 使用
+
+```mysql
+select @var_name;
+```
+> 注意：用户定义的变量无需对其进行声明或初始化，默认初始值为NULL
+
+#### 局部变量
+定义：根据需要定义的在局部生效的变量，访问之前，需要`declare`声明。
+
+* 声明
+
+`declare 变量名 变量类型 [default...];`
+
+* 赋值
+
+```mysql
+set 变量名=值;
+set 变量名:=值;
+select 字段名 into 变量名 from 表名...;
+```
+
+### if
+语法结构
+```mysql
+if 条件1 then
+	...
+elseif 条件2 then
+	....
+else
+	....
+end if;
+```
+
+### 参数
+参数类型：
+* in：默认类型，输入
+* out：输出，可作为返回值
+* inout：输入+输出
+
+用法
+```mysql
+create procedure 存储过程名称([IN/OUT/INOUT 参数名 参数类型])
+begin
+	#SQL语句
+end;
+```
+
+### case
+语法结构：
+```mysql
+语法1：
+-- 含义： 当case_value的值为 when_value1时，执行statement_list1，当值为 when_value2时，
+执行statement_list2， 否则就执行 statement_list
+CASE  case_value
+    WHEN  when_value1  THEN  statement_list1
+   [ WHEN  when_value2  THEN  statement_list2] ...
+   [ ELSE  statement_list ]
+END  CASE;
+
+语法2：
+-- 含义： 当条件search_condition1成立时，执行statement_list1，当条件search_condition2成
+立时，执行statement_list2， 否则就执行 statement_list
+CASE
+  WHEN  search_condition1  THEN  statement_list1
+  [WHEN  search_condition2  THEN  statement_list2] ...
+  [ELSE  statement_list]
+END CASE;
+```
+
+### while
+语法结构：
+```
+-- 先判定条件，如果条件为true，则执行逻辑，否则，不执行逻辑
+WHILE  条件  DO
+    SQL逻辑...    
+END WHILE;
+```
+
+### repeat
+类似于c++中的do while();
+语法结构
+```mysql
+-- 先执行一次逻辑，然后判定UNTIL条件是否满足，如果满足，则退出。如果不满足，则继续下一次循环
+REPEAT
+    SQL逻辑...  
+    UNTIL  条件
+END REPEAT;
+```
+
+### loop
+LOOP 实现简单的循环，如果不在SQL逻辑中增加退出循环的条件，可以用其来实现简单的死循环。
+LOOP可以配合一下两个语句使用：
+* LEAVE ：配合循环使用，退出循环。
+* ITERATE：必须用在循环中，作用是跳过当前循环剩下的语句，直接进入下一次循环。
+
+语法结构：
+```mysql
+[begin_label:]  LOOP
+    SQL逻辑...  
+END  LOOP  [end_label];
+
+# begin_label和end_label为自定义标记
+```
+
+示例：
+```mysql
+#leave使用方式
+create procedure p9(in n int)
+begin
+    declare total int default 0;
+
+    sum:loop
+        if n<=0 then
+            leave sum;
+        end if;
+
+        set total := total + n;
+        set n := n - 1;
+    end loop sum;
+
+    select total;
+end;
+
+call p9(100);
+
+#iterate使用方式
+create procedure p10(in n int)
+begin
+    declare total int default 0;
+
+    sum:loop
+        if n<=0 then
+            leave sum;
+        end if;
+
+        if n%2 = 1 then
+            set n := n - 1;
+            iterate sum;
+        end if;
+
+        set total := total + n;
+        set n := n - 1;
+    end loop sum;
+
+    select total;
+end;
+
+call p10(100);
+```
+
+### cursor(游标)
+定义：存储查询结果集的数据结构吗，在存储过程和函数中可以使用游标对结果集进行循环的处理。
+语法结构
+* 声明游标：`declare 游标名称 cursor for 查询语句;`
+* 打开游标：`open 游标名称;`
+* 获取游标记录：`fetch 游标名称 into 变量[,变量];`
+* 关闭游标：`close 游标名称;`
+
+### Handler(条件处理程序)
+定义：定义在流程控制结构执行过程中遇到问题时相应的处理步骤
+
+语法结构：
+```mysql
+DECLARE   handler_action   HANDLER FOR    condition_value  [, condition_value] 
+...   statement ;
+
+handler_action 的取值： 
+    CONTINUE: 继续执行当前程序
+    EXIT: 终止执行当前程序
+    
+condition_value 的取值： 
+    SQLSTATE  sqlstate_value: 状态码，如 02000
+    
+    SQLWARNING: 所有以01开头的SQLSTATE代码的简写
+    NOT FOUND: 所有以02开头的SQLSTATE代码的简写
+    SQLEXCEPTION: 所有没有被SQLWARNING 或 NOT FOUND捕获的SQLSTATE代码的简写
+```
+
+## 存储函数
+有返回值的存储过程，其参数只能是`in`类型
+语法结构：
+```mysql
+CREATE  FUNCTION   存储函数名称 ([ 参数列表 ])
+RETURNS  type  [characteristic ...]
+BEGIN
+    -- SQL语句
+    RETURN ...;
+END ;
+```
+
+characteristic说明：
+* deterministic：相同的输入参数总是产生相同的结果
+* no sql：不包含SQL语句
+* reads sql data：包含读取数据的语句，但不包含写入数据语句。
+
+示例：1到n累加
+```mysql
+create function fun1(n int)
+returns int deterministic
+begin
+    declare total int default 0;
+
+    while n>0 do
+        set total := total + n;
+        set n := n - 1;
+    end while;
+
+    return total;
+end;
+
+
+select fun1(50);
+```
+
+## 触发器
+触发器是与表有关的数据库对象，指在insert/update/delete之前(BEFORE)或之后(AFTER)，触发并执行触发器中定义的SQL语句集合。触发器的这种特性可以协助应用在数据库端确保数据的完整性 , 日志记录 , 数据校验等操作。
+
+使用别名OLD和NEW来引用触发器中发生变换的记录内。目前触发器只支持行级触发，不支持语句级触发。
+
+|触发器类型|NEW和OLD|
+|---|---|
+|INSERT型触发器|NEW表示将要或已经新增的数据|
+|UPDATE型触发器|OLD表示修改之前的数据，NEW表示将要或已经修改后的数据|
+|DELETE型触发器|OLD表示将要或已经删除的数据|
+
+### 语法
+
+1. 创建
+
+```mysql
+create trigger trigger_name
+before/after insert/update/delete on tbl_name for each row #行触发器
+begin
+	trigger_stmt;
+end;
+```
+2. 查看
+`show triggers;`
+
+3. 删除
+
+```mysql
+drop trigger [schema_name.]trigger_name;
+#如果没有指定shema_name，默认为当前数据库
+```
+
+示例：
+```mysql
+-- 准备工作 : 日志表 user_logs
+create table user_logs(
+  id int(11) not null auto_increment,
+  operation varchar(20) not null comment '操作类型, insert/update/delete',
+  operate_time datetime not null comment '操作时间',
+  operate_id int(11) not null comment '操作的ID',
+  operate_params varchar(500) comment '操作参数',
+  primary key(`id`)
+)engine=innodb default charset=utf8;
+
+# 插入数据触发器
+create trigger tb_user_insert_trigger
+    after insert on tb_user for each row
+begin
+    insert into user_logs(id, operation, operate_time, operate_id, operate_params) 
+VALUES
+    (null, 'insert', now(), new.id, concat('插入的数据内容为: 
+id=',new.id,',name=',new.name, ', phone=', NEW.phone, ', email=', NEW.email, ', 
+profession=', NEW.profession));
+end;
+
+#修改数据触发器
+create trigger tb_user_update_trigger
+    after update on tb_user for each row
+begin
+    insert into user_logs(id, operation, operate_time, operate_id, operate_params) 
+VALUES
+    (null, 'update', now(), new.id,
+        concat('更新之前的数据: id=',old.id,',name=',old.name, ', phone=', 
+old.phone, ', email=', old.email, ', profession=', old.profession,
+            ' | 更新之后的数据: id=',new.id,',name=',new.name, ', phone=', 
+NEW.phone, ', email=', NEW.email, ', profession=', NEW.profession));
+end;
+
+#删除数据触发器
+create trigger tb_user_delete_trigger
+    after delete on tb_user for each row
+begin
+    insert into user_logs(id, operation, operate_time, operate_id, operate_params) 
+VALUES
+    (null, 'delete', now(), old.id,
+        concat('删除之前的数据: id=',old.id,',name=',old.name, ', phone=', 
+old.phone, ', email=', old.email, ', profession=', old.profession));
+end;
+
+#查看所有触发
+show triggers;
+--测试代码
+
+#插入
+insert into tb_user(id, name, phone, email, profession, age, gender, status, 
+createtime) VALUES (26,'三皇子','18809091212','erhuangzi@163.com','软件工
+程',23,'1','1',now());
+
+#修改
+update tb_user set profession = '会计' where id <= 5;
+
+#删除
+delete from tb_user where id = 26;
+```
+
