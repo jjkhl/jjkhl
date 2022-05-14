@@ -1372,11 +1372,11 @@ InnoDB µÄÐÐËøÊÇÕë¶ÔË÷Òý¼ÓµÄËø£¬²»ÊÇÕë¶Ô¼ÇÂ¼¼ÓµÄËø£¬²¢ÇÒ¸ÃË÷Òý²»ÄÜÊ§Ð§£¬·ñÔò»á´ÓÐ
 `update student set no = '123' where id = 1;`£¬Õâ¾äÓÉÓÚidÓÐÖ÷¼üË÷Òý£¬ËùÒÔÖ»»áËøÕâÒ»ÐÐ£»
 `update student set no = '123' where name = 'test';`£¬Õâ¾äÓÉÓÚnameÃ»ÓÐË÷Òý£¬ËùÒÔ»á°ÑÕûÕÅ±í¶¼Ëø×¡½øÐÐÊý¾Ý¸üÐÂ£¬½â¾ö·½·¨ÊÇ¸øname×Ö¶ÎÌí¼ÓË÷Òý 
 
-# ÊÓÍ¼/´æ´¢¹ý³Ì/´¥·¢Æ÷
-## ÊÓÍ¼
+## ÊÓÍ¼/´æ´¢¹ý³Ì/´¥·¢Æ÷
+### ÊÓÍ¼
 ÊÓÍ¼ÊÇÒ»ÖÖÐéÄâ´æÔÚµÄ±í¡£ÊÓÍ¼ÖÐµÄÊý¾Ý²¢²»ÔÚÊý¾Ý¿âÖÐÊµ¼Ê´æÔÚ£¬ÐÐºÍÁÐÊýÀ´×Ô¶¨ÒåÊÓÍ¼µÄ²éÑ¯ÖÐÊ¹ÓÃµÄ±í£¬²¢ÇÒÊÇÔÚÊ¹ÓÃÊÓÍ¼Ê±¶¯Ì¬Éú³ÉµÄ¡£
 
-### Óï·¨
+#### Óï·¨
 
 
 * ´´½¨
@@ -1398,7 +1398,7 @@ InnoDB µÄÐÐËøÊÇÕë¶ÔË÷Òý¼ÓµÄËø£¬²»ÊÇÕë¶Ô¼ÇÂ¼¼ÓµÄËø£¬²¢ÇÒ¸ÃË÷Òý²»ÄÜÊ§Ð§£¬·ñÔò»á´ÓÐ
 drop view [if exists] ÊÓÍ¼Ãû³Æ [,ÊÓÍ¼Ãû³Æ]...
 ```
 
-### ¼ì²é
+#### ¼ì²é
 ¸ñÊ½£º`with cascaded(local) check option`
 
 µ±Ê¹ÓÃ`WITH CHECK OPTION`×Ó¾ä´´½¨ÊÓÍ¼Ê±£¬MySQL»áÍ¨¹ýÊÓÍ¼¼ì²éÕýÔÚ¸ü¸ÄµÄÃ¿¸öÐÐ£¬ÀýÈç ²åÈë£¬¸üÐÂ£¬É¾³ý£¬ÒÔÊ¹Æä·ûºÏÊÓÍ¼µÄ¶¨Òå¡£ MySQLÔÊÐí»ùÓÚÁíÒ»¸öÊÓÍ¼´´½¨ÊÓÍ¼£¬Ëü»¹»á¼ì²éÒÀÀµÊÓÍ¼ÖÐµÄ¹æÔòÒÔ±£³ÖÒ»ÖÂÐÔ¡£ÎªÁËÈ·¶¨¼ì²éµÄ·¶Î§£¬mysqlÌá¹©ÁËÁ½¸öÑ¡Ïî£º CASCADED ºÍ LOCAL 
@@ -1409,7 +1409,7 @@ drop view [if exists] ÊÓÍ¼Ãû³Æ [,ÊÓÍ¼Ãû³Æ]...
 * local(±¾µØ)
 v2ÊÓÍ¼ÊÇ»ùÓÚv1ÊÓÍ¼µÄ£¬Èç¹ûÔÚv2ÊÓÍ¼´´½¨µÄÊ±ºòÖ¸¶¨ÁË¼ì²éÑ¡ÏîÎª local £¬µ«ÊÇv1ÊÓÍ¼´´½¨Ê±Î´Ö¸¶¨¼ì²éÑ¡Ïî¡£ ÔòÔÚÖ´ÐÐ¼ì²éÊ±£¬Öª»á¼ì²év2£¬²»»á¼ì²év2µÄ¹ØÁªÊÓÍ¼v1¡£
 
-### ÊÓÍ¼µÄ¸üÐÂ
+#### ÊÓÍ¼µÄ¸üÐÂ
 **Ç°ÌáÌõ¼þ**£ºÊÓÍ¼ÖÐµÄÐÐÓë»ù´¡±íÖÐµÄÐÐÖ®¼ä±ØÐë´æÔÚÒ»¶ÔÒ»¹ØÏµ¡£
 ²»¿É¸üÐÂ×´Ì¬£º
 * ¾ÛºÏº¯Êý»ò´°¿Úº¯Êý(sum¡¢min¡¢max¡¢countµÈ)
@@ -1425,13 +1425,13 @@ create view stu_v_count as select count(*) from studeng;
 #¶ÔÉÏÊöÊÓÍ¼½øÐÐ¸üÐÂ»ò²åÈë¾Í»á±¨´í
 ```
 
-### ÊÓÍ¼µÄ×÷ÓÃ
+#### ÊÓÍ¼µÄ×÷ÓÃ
 * ¼òµ¥£ºÊÓÍ¼¿ÉÒÔ¼ò»¯ÓÃ»§¶ÔÊý¾ÝµÄÀí½â£¬Ò²¿ÉÒÔ¼ò»¯²Ù×÷¡£ÄÇÐ©±»¾­³£Ê¹ÓÃµÄ²éÑ¯¿ÉÒÔ±»¶¨ÒåÎªÊÓÍ¼£¬´Ó¶øÊ¹µÃÓÃ»§²»±ØÎªÒÔºóµÄ²Ù×÷Ã¿´ÎÖ¸¶¨È«²¿Ìõ¼þ¡£
 * °²È«£ºÊý¾Ý¿â¿ÉÒÔÊÚÈ¨£¬µ«²»ÄÜÊÚÈ¨µ½Êý¾Ý¿âÌØ¶¨ÐÐºÍÁÐÉÏ¡£Í¨¹ýÊÓÍ¼£¬ÓÃ»§Ö»ÄÜ²éÑ¯ºÍÐÞ¸ÄËüÃÇËùÄÜ¿´µ½µÄÊý¾Ý
 * Êý¾Ý¶ÀÁ¢£ºÊÓÍ¼¿ÉÒÔ°ïÖúÓÃ»§ÆÁ±ÎÕæÊµ±í½á¹¹±ä»»´øÀ´µÄÓÅÏÈ
 
-## ´æ´¢¹ý³Ì
-### ½éÉÜ
+### ´æ´¢¹ý³Ì
+#### ½éÉÜ
 ´æ´¢¹ý³ÌÊÇÏÈ¾­¹ý±àÒë²¢´æ´¢ÔÚÊý¾Ý¿âÖÐµÄÒ»¶ÎSQLÓï¾ä¼¯ºÏ£¬µ÷ÓÃ´æ´¢¹ý³Ì¿ÉÒÔ¼ò»¯¿ª·¢¹¤×÷£¬¼õÉÙÊý¾ÝÔÚÊý¾Ý¿âºÍÓ¦ÓÃ·þÎñÆ÷Ö®¼äµÄ´«Êä£¬ÄÜÌá¸ßÊý¾Ý´¦ÀíµÄÐ§ÂÊ¡£
 
 ´æ´¢¹ý³Ì¾ÍÊÇÊý¾Ý¿âSQLÓïÑÔ²ãÃæµÄ´úÂë·â×°ºÍÖØÓÃ¡£
@@ -1441,9 +1441,9 @@ create view stu_v_count as select count(*) from studeng;
 * ¿ÉÒÔ½ÓÊÕ²ÎÊý£¬Ò²¿ÉÒÔ·µ»ØÊý¾Ý
 * ¼õÉÙÍøÂç½»»¥£¬ÌáÉýÐ§ÂÊ£ºÈç¹ûÉæ¼°¶àÌõSQL£¬Ã¿Ö´ÐÐÒ»´Î¶¼ÊÇÒ»´ÎÍøÂç´«Êä¡£¶øÈç¹û·â×°ÔÚ´æ´¢¹ý³ÌÖÐ£¬Ö»ÐèÒªÒ»´ÎÍøÂç½»»¥¡£
 
-### Óï·¨
+#### Óï·¨
 ×¢Òâ£ºÃüÁîÐÐÖÐ£¬Ö´ÐÐ´´½¨´æ´¢¹ý³ÌµÄSQLÊ±£¬ÐèÒªÊ¹ÓÃ¹Ø¼ü×Ö`delimiter`Ö¸¶¨SQLÓï¾äµÄ½áÊø·û¡£
-#### ´´½¨
+##### ´´½¨
 ```mysql
 create procedure ´æ´¢¹ý³ÌÃû³Æ([²ÎÊýÁÐ±í])
 begin
@@ -1451,11 +1451,11 @@ begin
 end
 ```
 
-#### µ÷ÓÃ
+##### µ÷ÓÃ
 
 `call Ãû³Æ ([²ÎÊý])`
 
-#### ²é¿´
+##### ²é¿´
 ```mysql
 # ²éÑ¯Ö¸¶¨Êý¾Ý¿âµÄ´æ´¢¹ý³Ì¼°×´Ì¬ÐÅÏ¢£¬xxxÖ¸Êý¾Ý¿âÃû³Æ
 select * from information_schema where routine_schema = 'xxx';
@@ -1464,15 +1464,15 @@ select * from information_schema where routine_schema = 'xxx';
 show create procedure ´æ´¢¹ý³ÌÃû³Æ;
 ```
 
-#### É¾³ý
+##### É¾³ý
 
 `drop procedure [if exists] ´æ´¢¹ý³ÌÃû×Ö`
 
 
-### ±äÁ¿
+#### ±äÁ¿
 ÔÚMYSQLÖÐ±äÁ¿·ÖÎªÈýÖÖÀàÐÍ£ºÏµÍ³±äÁ¿¡¢ÓÃ»§¶¨Òå±äÁ¿¡¢¾Ö²¿±äÁ¿¡£
 
-#### ÏµÍ³±äÁ¿
+##### ÏµÍ³±äÁ¿
 ÏµÍ³±äÁ¿ÊôÓÚMYSQL·þÎñÆ÷²ãÃæµÄ£¬·ÖÎªÈ«¾Ö±äÁ¿(global)ºÍ»á»°±äÁ¿(session)
 
 * ²é¿´ÏµÍ³±äÁ¿
@@ -1492,7 +1492,7 @@ set @@[session|global] ÏµÍ³±äÁ¿Ãû=Öµ;
 > Ä¬ÈÏ±äÁ¿ÊôÐÔÎª`session`£¬»á»°±äÁ¿
 > mysql·þÎñÖØÆôÆô¶¯Ö®ºó£¬ËùÉèÖÃµÄÈ«¾Ö²ÎÊý»áÊ§Ð§£¬ÒªÏë²»Ê§Ð§£¬¿ÉÒÔÔÚ`/etc/my.cnf`ÖÐÅäÖÃ¡£
 
-#### ÓÃ»§×Ô¶¨Òå±äÁ¿
+##### ÓÃ»§×Ô¶¨Òå±äÁ¿
 ¶¨Òå£ºÓÃ»§¸ù¾ÝÐèÒª×Ô¼º¶¨ÒåµÄ±äÁ¿£¬ÓÃ»§±äÁ¿²»ÓÃÌáÇ°ÉùÃ÷£¬ÔÚÓÃµÄÊ±ºòÖ±½ÓÊ¹ÓÃ`@±äÁ¿Ãû`£¬Æä×÷ÓÃÓòÎªµ±Ç°Á¬½Ó¡£
 
 * ¸³Öµ
@@ -1513,7 +1513,7 @@ select @var_name;
 ```
 > ×¢Òâ£ºÓÃ»§¶¨ÒåµÄ±äÁ¿ÎÞÐè¶ÔÆä½øÐÐÉùÃ÷»ò³õÊ¼»¯£¬Ä¬ÈÏ³õÊ¼ÖµÎªNULL
 
-#### ¾Ö²¿±äÁ¿
+##### ¾Ö²¿±äÁ¿
 ¶¨Òå£º¸ù¾ÝÐèÒª¶¨ÒåµÄÔÚ¾Ö²¿ÉúÐ§µÄ±äÁ¿£¬·ÃÎÊÖ®Ç°£¬ÐèÒª`declare`ÉùÃ÷¡£
 
 * ÉùÃ÷
@@ -1528,7 +1528,7 @@ set ±äÁ¿Ãû:=Öµ;
 select ×Ö¶ÎÃû into ±äÁ¿Ãû from ±íÃû...;
 ```
 
-### if
+#### if
 Óï·¨½á¹¹
 ```mysql
 if Ìõ¼þ1 then
@@ -1540,7 +1540,7 @@ else
 end if;
 ```
 
-### ²ÎÊý
+#### ²ÎÊý
 ²ÎÊýÀàÐÍ£º
 * in£ºÄ¬ÈÏÀàÐÍ£¬ÊäÈë
 * out£ºÊä³ö£¬¿É×÷Îª·µ»ØÖµ
@@ -1554,7 +1554,7 @@ begin
 end;
 ```
 
-### case
+#### case
 Óï·¨½á¹¹£º
 ```mysql
 Óï·¨1£º
@@ -1576,7 +1576,7 @@ CASE
 END CASE;
 ```
 
-### while
+#### while
 Óï·¨½á¹¹£º
 ```
 -- ÏÈÅÐ¶¨Ìõ¼þ£¬Èç¹ûÌõ¼þÎªtrue£¬ÔòÖ´ÐÐÂß¼­£¬·ñÔò£¬²»Ö´ÐÐÂß¼­
@@ -1585,7 +1585,7 @@ WHILE  Ìõ¼þ  DO
 END WHILE;
 ```
 
-### repeat
+#### repeat
 ÀàËÆÓÚc++ÖÐµÄdo while();
 Óï·¨½á¹¹
 ```mysql
@@ -1596,7 +1596,7 @@ REPEAT
 END REPEAT;
 ```
 
-### loop
+#### loop
 LOOP ÊµÏÖ¼òµ¥µÄÑ­»·£¬Èç¹û²»ÔÚSQLÂß¼­ÖÐÔö¼ÓÍË³öÑ­»·µÄÌõ¼þ£¬¿ÉÒÔÓÃÆäÀ´ÊµÏÖ¼òµ¥µÄËÀÑ­»·¡£
 LOOP¿ÉÒÔÅäºÏÒ»ÏÂÁ½¸öÓï¾äÊ¹ÓÃ£º
 * LEAVE £ºÅäºÏÑ­»·Ê¹ÓÃ£¬ÍË³öÑ­»·¡£
@@ -1657,7 +1657,7 @@ end;
 call p10(100);
 ```
 
-### cursor(ÓÎ±ê)
+#### cursor(ÓÎ±ê)
 ¶¨Òå£º´æ´¢²éÑ¯½á¹û¼¯µÄÊý¾Ý½á¹¹Âð£¬ÔÚ´æ´¢¹ý³ÌºÍº¯ÊýÖÐ¿ÉÒÔÊ¹ÓÃÓÎ±ê¶Ô½á¹û¼¯½øÐÐÑ­»·µÄ´¦Àí¡£
 Óï·¨½á¹¹
 * ÉùÃ÷ÓÎ±ê£º`declare ÓÎ±êÃû³Æ cursor for ²éÑ¯Óï¾ä;`
@@ -1665,7 +1665,7 @@ call p10(100);
 * »ñÈ¡ÓÎ±ê¼ÇÂ¼£º`fetch ÓÎ±êÃû³Æ into ±äÁ¿[,±äÁ¿];`
 * ¹Ø±ÕÓÎ±ê£º`close ÓÎ±êÃû³Æ;`
 
-### Handler(Ìõ¼þ´¦Àí³ÌÐò)
+#### Handler(Ìõ¼þ´¦Àí³ÌÐò)
 ¶¨Òå£º¶¨ÒåÔÚÁ÷³Ì¿ØÖÆ½á¹¹Ö´ÐÐ¹ý³ÌÖÐÓöµ½ÎÊÌâÊ±ÏàÓ¦µÄ´¦Àí²½Öè
 
 Óï·¨½á¹¹£º
@@ -1685,7 +1685,7 @@ condition_value µÄÈ¡Öµ£º
     SQLEXCEPTION: ËùÓÐÃ»ÓÐ±»SQLWARNING »ò NOT FOUND²¶»ñµÄSQLSTATE´úÂëµÄ¼òÐ´
 ```
 
-## ´æ´¢º¯Êý
+### ´æ´¢º¯Êý
 ÓÐ·µ»ØÖµµÄ´æ´¢¹ý³Ì£¬Æä²ÎÊýÖ»ÄÜÊÇ`in`ÀàÐÍ
 Óï·¨½á¹¹£º
 ```mysql
@@ -1721,7 +1721,7 @@ end;
 select fun1(50);
 ```
 
-## ´¥·¢Æ÷
+### ´¥·¢Æ÷
 ´¥·¢Æ÷ÊÇÓë±íÓÐ¹ØµÄÊý¾Ý¿â¶ÔÏó£¬Ö¸ÔÚinsert/update/deleteÖ®Ç°(BEFORE)»òÖ®ºó(AFTER)£¬´¥·¢²¢Ö´ÐÐ´¥·¢Æ÷ÖÐ¶¨ÒåµÄSQLÓï¾ä¼¯ºÏ¡£´¥·¢Æ÷µÄÕâÖÖÌØÐÔ¿ÉÒÔÐ­ÖúÓ¦ÓÃÔÚÊý¾Ý¿â¶ËÈ·±£Êý¾ÝµÄÍêÕûÐÔ , ÈÕÖ¾¼ÇÂ¼ , Êý¾ÝÐ£ÑéµÈ²Ù×÷¡£
 
 Ê¹ÓÃ±ðÃûOLDºÍNEWÀ´ÒýÓÃ´¥·¢Æ÷ÖÐ·¢Éú±ä»»µÄ¼ÇÂ¼ÄÚ¡£Ä¿Ç°´¥·¢Æ÷Ö»Ö§³ÖÐÐ¼¶´¥·¢£¬²»Ö§³ÖÓï¾ä¼¶´¥·¢¡£
@@ -1732,7 +1732,7 @@ select fun1(50);
 |UPDATEÐÍ´¥·¢Æ÷|OLD±íÊ¾ÐÞ¸ÄÖ®Ç°µÄÊý¾Ý£¬NEW±íÊ¾½«Òª»òÒÑ¾­ÐÞ¸ÄºóµÄÊý¾Ý|
 |DELETEÐÍ´¥·¢Æ÷|OLD±íÊ¾½«Òª»òÒÑ¾­É¾³ýµÄÊý¾Ý|
 
-### Óï·¨
+#### Óï·¨
 
 1. ´´½¨
 
@@ -1816,3 +1816,39 @@ update tb_user set profession = '»á¼Æ' where id <= 5;
 delete from tb_user where id = 26;
 ```
 
+<!-- ## Ëø
+ËøÊÇ¼ÆËã»úÐ­µ÷¶à¸ö½ø³Ì»òÏß³Ì²¢·¢·ÃÎÊÄ³Ò»×ÊÔ´µÄ»úÖÆ¡£
+°´ËøµÄÁ£¶È·ÖÎª£º
+* È«¾ÖËø£ºËø¶¨Êý¾Ý¿âÖÐËùÓÐ±í
+* ±í¼¶Ëø£ºÃ¿´Î²Ù×÷Ëø×¡ÕûÕÅ±í
+* ÐÐ¼¶Ëø£ºÃ¿´Î²Ù×÷Ëø×¡¶ÔÓ¦µÄÐÐ¼¶Ëø
+
+### È«¾ÖËø
+**½éÉÜ**
+È«¾ÖËø¾ÍÊÇ¶ÔÕû¸öÊý¾Ý¿âÊµÀý¼ÓËø£¬¼ÓËøºóÕû¸öÊµÀý¾Í´¦ÓÚÖ»¶Á×´Ì¬£¬ºóÐøµÄDMLµÄÐ´Óï¾ä£¬DDLÓï¾ä£¬ÒÑ¾­¸üÐÂ²Ù×÷µÄÊÂÎñÌá½»Óï¾ä¶¼½«±»×èÈû¡£ÆäµäÐÍµÄÊ¹ÓÃ³¡¾°ÊÇ×ö**È«¿âµÄÂß¼­±¸·Ý**£¬¶ÔËùÓÐµÄ±í½øÐÐËø¶¨£¬´Ó¶ø»ñÈ¡Ò»ÖÂÐÔÊÓÍ¼£¬±£Ö¤Êý¾ÝµÄÍêÕûÐÔ¡£
+
+**Óï·¨**
+```mysql
+# ¼ÓÈ«¾ÖËø
+flush tables with read lock;
+
+#Êý¾Ý±¸·Ý
+mysqldump -uroot -p1234 itcast>itcast.sql
+
+#ÊÍ·ÅËø
+unlock tables;
+```
+
+**ÎÊÌâ**
+* Èç¹ûÔÚÖ÷¿âÉÏ±¸·Ý£¬ÄÇÃ´±¸·ÝÆÚ¼ä¶¼²»ÄÜÖ´ÐÐ¸üÐÂ£¬ÒµÎñ»ù±¾Í£Ö¹
+* Èç¹ûÔÚ´Ó¿âÉÏ±¸·Ý£¬ÄÇÃ´±¸·ÝÆÚ¼ä´Ó¿â²»ÄÜÖ´ÐÐÖ÷¿âÍ¬²½¹ýÀ´µÄ¶þ½øÖÆÈÕÖ¾£¬»áµ¼ÖÂÖ÷´ÓÑÓ³Ù¡£
+
+ÔÚInnoDB´æ´¢ÒýÇæÖÐ,ÎÒÃÇ¿ÉÒÔÔÚ±¸·ÝÊ±¼ÓÉÏ²ÎÊý`--single-transaction`À´Íê³É²»¼ÓËøµÄÒ»ÖÂÐÔÊý¾Ý±¸·Ý
+
+ÃüÁîÐÐÊäÈë£º`mysqldump --single-transaction -uroot ¨Cp123456 itcast > itcast.sql`
+
+[ÃüÁîÐÐÊäÈë´íÎó½â¾ö²½Öè](https://blog.csdn.net/weixin_51690149/article/details/124765591)
+
+### ±í¼¶Ëø
+**½éÉÜ**
+±í¼¶ËøÃ¿´Î²Ù×÷Ëø×¡ÕûÕÅ±í£¬Ëø¶¨Á£¶È´ó£¬·¢ÉúËø³åÍ»¸ÅÂÊ×î¸ß£¬²¢·¢¶È×îµÍ£¬Ó¦ÓÃÔÚMyISAM¡¢InnoDB¡¢BDBµÈ´æ´¢ÒýÇæÖÐ¡£ -->
