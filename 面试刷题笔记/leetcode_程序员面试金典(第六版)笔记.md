@@ -41,3 +41,52 @@ public:
     }
 };
 ```
+## [03.URL化](https://leetcode.cn/problems/string-to-url-lcci/)
+**该题同**[剑指offer05](https://leetcode.cn/problems/ti-huan-kong-ge-lcof/)
+```c++
+//注意题目假定该字符串尾部有足够的空间存放新增字符，并且知道字符串的“真实”长度。
+//双指针法
+class Solution {
+public:
+    string replaceSpaces(string S, int length) {
+        int i=length-1,j=S.size()-1;
+        while(i>=0)
+        {
+            if(' '==S[i])
+            {
+                S[j--]='0';
+                S[j--]='2';
+                S[j--]='%';
+            }
+            else S[j--]=S[i];
+            i--;
+        }
+        return S.substr(j+1);
+    }
+};
+```
+## [04.回文子串](https://leetcode.cn/problems/palindrome-permutation-lcci/)
+```c++
+class Solution {
+public:
+    bool canPermutePalindrome(string s) {
+        unordered_map<char,int> umap;
+        int num=0;
+        for(char ch:s)
+        {
+            if(umap[ch]>0)
+            {
+                umap[ch]--;
+                num--;
+            }
+            else if(umap[ch]==0)
+            {
+                umap[ch]++;
+                num++;
+            }
+        }
+        if(num==0||num==1) return true;
+        return false;
+    }
+};
+```
