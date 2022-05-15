@@ -90,3 +90,43 @@ public:
     }
 };
 ```
+
+## [05.一次编辑](https://leetcode.cn/problems/one-away-lcci/)
+```c++
+//双指针法
+class Solution {
+public:
+    bool oneEditAway(string first, string second) {
+        int len1=first.size(),len2=second.size();
+        if(abs(len1-len2)>1) return false;
+        //保证len1>=len2
+        if(len2==len1+1) return oneEditAway(second,first);
+
+        int i=0,j=0;
+        int diff=0;
+        bool size_diff=(len2==len1)?false:true;
+        while(i<len1&&j<len2)
+        {
+            if(first[i]!=second[j])
+            {
+                if(++diff>=2) return false;
+                //如果first大小比second大且不相同，则first需要比second多出一个身位
+                if(size_diff) j--;
+            }
+            ++i,++j;
+        }
+        return true;
+    }
+};
+//双向遍历法
+//参考思路：https://leetcode.cn/problems/one-away-lcci/solution/c-by-zi-bu-yu-mf-052b/
+class Solution {
+public:
+    bool oneEditAway(const string& first, const string& second) {
+        auto pos1 = mismatch(first.cbegin(), first.cend(), second.cbegin(), second.cend());
+        auto pos2 = mismatch(first.crbegin(), first.crend(), second.crbegin(), second.crend());
+        ptrdiff_t dis[4]{ first.cend() - pos1.first, second.cend() - pos1.second,pos2.first - first.crbegin(),pos2.second - second.crbegin() };
+        return (int)dis[0] - dis[2] < 2 && (int)dis[1] - dis[3] < 2;
+    }
+};
+```
