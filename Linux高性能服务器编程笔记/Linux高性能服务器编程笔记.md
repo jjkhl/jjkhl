@@ -1,6 +1,6 @@
 <h1 align="center">Linux高性能服务器编程</h1>
 
-**本文笔记需要与TCP/IP网络编程(尹圣雨)笔记一起使用**
+**本文笔记需要与[TCP/IP网络编程(尹圣雨)笔记](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md)一起使用**
 参考笔记地址：
 * https://blog.csdn.net/jojozym/article/details/106034037
 * https://github.com/HiganFish/Notes-HighPerformanceLinuxServerProgramming
@@ -286,3 +286,529 @@ struct iovec {
 }
 ```
 
+### sendfile函数
+sendfile函数在两个文件描述符之间直接传输数据(完全在内核中操作)，从而避免了内核缓冲区和用户缓冲区之间的数据拷贝，效率很高，被称为**零拷贝**。
+```c
+#include <sys/sendfile.h>
+// offset为指定输入流从哪里开始读, 如果为NULL 则从开头读取
+ssize_t sendfile(int out_fd, int in_fd, off_t* offset, size_t count);
+
+//in_fd：待读出内容的文件描述符
+//out_fd：待写入内容的文件描述符
+//offset：指定读入文件流的指定位置，默认起始位置
+//count：指定传输的字节数
+O_RDONLY只读模式
+O_WRONLY只写模式
+O_RDWR读写模式
+int open(file_name, flag);
+```
+stat结构体, 可用fstat生成, **简直就是文件的身份证**
+```c
+#include <sys/stat.h>
+struct stat
+{
+    dev_t       st_dev;     /* ID of device containing file -文件所在设备的ID*/
+    ino_t       st_ino;     /* inode number -inode节点号*/
+    mode_t      st_mode;    /* protection -保护模式?*/
+    nlink_t     st_nlink;   /* number of hard links -链向此文件的连接数(硬连接)*/
+    uid_t       st_uid;     /* user ID of owner -user id*/
+    gid_t       st_gid;     /* group ID of owner - group id*/
+    dev_t       st_rdev;    /* device ID (if special file) -设备号，针对设备文件*/
+    off_t       st_size;    /* total size, in bytes -文件大小，字节为单位*/
+    blksize_t   st_blksize; /* blocksize for filesystem I/O -系统块的大小*/
+    blkcnt_t    st_blocks;  /* number of blocks allocated -文件所占块数*/
+    time_t      st_atime;   /* time of last access -最近存取时间*/
+    time_t      st_mtime;   /* time of last modification -最近修改时间*/
+    time_t      st_ctime;   /* time of last status change - */
+};
+```
+
+### mmap函数和munmap函数
+`mmap`函数用于申请一段内存空间，`munmap`释放这块内存
+
+```c
+#include <sys/mman.h>
+
+// start 内存起始位置, 如果为NULL则系统分配一个地址 length为长度
+// port参数 PROT_READ(可读) PROT_WRITE(可写) PROT_EXEC(可执行), PROT_NONE(不可访问)
+// flag参数 内存被修改后的行为
+// - MAP_SHARED 进程间共享内存, 对内存的修改反映到映射文件中
+// - MAP_PRIVATE 为调用进程私有, 对该内存段的修改不会反映到文件中
+// - MAP_ANONUMOUS 不是从文件映射而来, 内容被初始化为0, 最后两个参数被忽略
+// 成功返回区域指针, 失败返回 -1
+void* mmap(void* start, size_t length, int port, int flags, int fd, off_t offset);
+// 成功返回0 失败返回-1
+int munmap(void* start, size_t length);
+```
+
+### splice函数
+splice函数用于在两个文件描述符之间移动数据，也是零拷贝操作。
+```c++
+#include<fcntl.h>
+ssize_t splice(int fd_in, loff_t* off_in, int fd_out, loff_t* off_out, size_t len, unsigned int flags);
+// fd_in 为文件描述符, 如果为管道文件描述符则 off_in必须为NULL, 否则为读取开始偏移位置
+// len为指定移动的数据长度, flags参数控制数据如何移动.
+// - SPLICE_F_NONBLOCK 非阻塞splice操作, 但会受文件描述符自身的阻塞
+// - SPLICE_F_MORE 给内核一个提示, 后续的splice调用将读取更多的数据
+```
+
+|flags参数常用值|含义|
+|---|---|
+|SPLICE_F_MOVE|建议按整页内存移动数据。|
+|SPLICE_F_NONBLOCK|非阻塞的splice操作，但实际效果会受到文件描述符本身的阻塞状态|
+|SPLICE_F_MORE|提示内核后续还将读取更多数据|
+|SPLICE_F_GIFT|对splice没有效果|
+
+### tee函数
+tee函数在两个管道文件描述符之间赋值数据，也是零拷贝操作。
+
+```c++
+#include<fcntl.h>
+ssize_t tee(int fd_in, int fd-out, size_t len,unsigned int flags);
+//fd_in和fd_out必须为管道文件描述符
+//成功返回在两个文件描述符之间赋值的字节数，没有复制任何数据返回0，失败返回-1并设置errno
+```
+
+### fcntl函数
+fcntl函数(file control)提供了对文件描述符的各种操作控制。
+```c++
+#include<fcntl.h>
+int fcntl(int fd, int cmd, ...);
+//fd：被操作的文件描述符
+//cmd：执行各种类型操作
+```
+
+**fcntl支持的常用操作及其参数**
+
+<div style="text-align: center;">
+<table align="center">
+    <tr>
+        <td>操作分类</td>
+        <td>操作</td>
+        <td>含义</td>
+        <td>第三个参数类型</td>
+        <td>成功时返回值</td>
+    </tr>
+    <tr>
+        <td rowspan="2">复制文件描述符</td>
+        <td>F_DUPFD</td>
+        <td>创建一个新的文件描述符，其值大于或等于arg</td>
+        <td>long</long>
+        <td>新创建的文件描述符值</td>
+    </tr>
+    <tr>
+        <td>F_DUPFD_CLOEXEC</td>
+        <td>与<strong>F_DUPFD</strong>相似，不过在创建文件描述符的同时，设置其close-on-exec标志
+        <td>long</td>
+        <td>新创建的文件描述符值</td>
+    </tr>
+    <tr>
+        <td rowspan="2">获取和设置文件描述符的标志</td>
+        <td>F_GETFD</td>
+        <td>获取fd的标志，比如close_on_exec标志</td>
+        <td>无</td>
+        <td>fd的标志</td>
+    </tr>
+    <tr>
+        <td>F_SETFD</td>
+        <td>设置fd的标志</td>
+        <td>long</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td rowspan="2">获取和设置文件描述符状态</td>
+        <td>F_GETFL</td>
+        <td>获取fd的状态标志</td>
+        <td>void</td>
+        <td>fd的状态标志</td>
+    </tr>
+    <tr>
+        <td>F_SETFL</td>
+        <td>设置fd的状态标志</td>
+        <td>long</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td rowspan="4">管理信号</td>
+        <td>F_GETOWN</td>
+        <td>获得SIGIO和SIGURG信号的宿主进程的PID或进程组的组ID</td>
+        <td>无</td>
+        <td>信号的宿主进程的PID或进程组的组ID</td>
+    </tr>
+    <tr>
+        <td>F_SETOWN</td>
+        <td>设定SIGIO和SIGURG信号的宿主进程PID或进程组的组ID</td>
+        <td>long</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td>F_GETSIG</td>
+        <td>获取当应用程序被通知fd可读或可写时，是哪个信号通知该事件的</td>
+        <td>无</td>
+        <td>信号值，0表示SIGIO</td>
+    </tr>
+    <tr>
+        <td>F_SETSIG</td>
+        <td>当fd可读或可写时，系统应该触发哪个信号来通知应用程序</td>
+        <td>long</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td rowspan="2">操作管道容量</td>
+        <td>F_SETPIPE_SZ</td>
+        <td>设置由fd指定的管道的容量，/proc/sys/fs/pipe-size-max内核参数制定了fcntl能设置的管道容量上限</td>
+        <td>long</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td>F_GETPIPE_SZ</td>
+        <td>获取由fd指定的管道的容量</td>
+        <td>无</td>
+        <td>管道容量</td>
+    </tr>
+</table>
+</div>
+
+fcntl函数常用来将一个文件描述符设置为非阻塞，如下：
+```c++
+int setnonblocking(int fd)
+{
+    int old_option=fcntl(fd,F_GETFL);//获取文件描述符旧的状态标志
+    int new_option=old_option|O_NONBLOCK;//设置非阻塞标志
+    fcntl(fd,F_SETFL,new_option);
+    return old_option;//返回文件描述符旧的状态标志，以便日后恢复
+}
+```
+
+## 第七章 Linux服务器程序规范
+服务器程序规范：
+* Linux服务器程序一般以后台进程形式运行。后台进程又称守护进程(daemon)。它没有控制终端，因而也不会意外接收用户输入，守护进程的父进程通常是init进程(PID为1的进程)。
+* Linux服务器程序通常有一套日志系统，它至少能输出日志到文件，有的高级服务器还能输出日志到专门的UDP服务器。大部分后台进程都在`/var/log`目录下拥有自己的日志记录。
+* Linux服务器程序一般以某个专门的非root身份运行。比如mysqld、httpd、syslogd等后台进程，分别拥有自己的运行账户mysql、apache和syslog。
+* Linux服务器程序通常是可配置的。服务器程序通常能处理很多命令行选项，如果一次运行的选项太多，则可以用配置文件来管理。
+* Linux服务器进程通常会在启动的时候生成一个PID文件并存入`/var/run`目录中，用以记录该后台进程的PID/
+* Linux服务器程序通常需要考虑系统资源和限制，以预测自身能承受多大负荷。
+### 7.1 日志
+#### 7.1.1 Linux系统日志
+`rsyslogd`守护进程既能接收用户进程输出的日志，也能接收内核日志。
+
+`rsyslogd`守护进程在接收到用户进程或内核输入的日志后，会把它们输出至某些特定的日志文件。默认下，调试信息会保存在`/var/log/debug`文件，普通信息保存在`/var/log/messages`文件，内核消息保存在`/var/log/kern.log`文件。
+
+#### 7.1.2 syslog函数
+```shell
+sudo service rsyslog restart // 启动守护进程
+```
+应用程序使用`syslog函数`与`rsyslogd守护进程通信`
+函数定义如下：
+```c
+#include <syslog.h>
+// priority参数是所谓的设施值(记录日志信息来源, 默认为LOG_USER)与日志级别的按位或
+// - 0 LOG_EMERG  /* 系统不可用*/
+// - 1 LOG_ALERT   /* 报警需要立即采取行动*/
+// - 2 LOG_CRIT /* 非常严重的情况*/
+// - 3 LOG_ERR  /* 错误*/
+// - 4 LOG_WARNING /* 警告*/
+// - 5 LOG_NOTICE /* 通知*/
+// - 6 LOG_INFO /* 信息*/
+//  -7 LOG_DEBUG /* 调试*/
+void syslog(int priority, const char* message, .....);
+
+// ident通常设定为程序名字，会被添加在日志消息日期和时间之后
+// logopt 对后续 syslog调用的行为进行配置
+// -  0x01 LOG_PID  /* 在日志信息中包含程序PID*/
+// -  0x02 LOG_CONS /* 如果信息不能记录到日志文件, 则打印到终端*/
+// -  0x04 LOG_ODELAY /* 延迟打开日志功能直到第一次调用syslog*/
+// -  0x08 LOG_NDELAY /* 不延迟打开日志功能*/
+// facility参数可以修改syslog函数中的默认设施值
+void openlog(const char* ident, int logopt, int facility);
+
+// maskpri 一共八位 0000-0000
+// 如果将最后一个0置为1 表示 记录0级别的日志
+// 如果将最后两个0都置为1 表示记录0和1级别的日志
+// 可以通过LOG_MASK() 宏设定 比如LOG_MASK(LOG_CRIT) 表示将倒数第三个0置为1, 表示只记录LOG_CRIT
+// 如果直接设置setlogmask(3); 3的二进制最后两个数均为1 则记录 0和1级别的日志
+int setlogmask(int maskpri);
+
+// 关闭日志功能
+void closelog();
+```
+
+### 7.2 用户信息
+#### 7.2.1 UID、EUID、GID和EGID
+UID - 真实用户ID
+EUID - 有效用户ID - 方便资源访问
+GID - 真实组ID
+EGID - 有效组ID
+```c
+#include <sys/types.h>
+#include <unistd.h>
+
+uid_t getuid();
+uid_t geteuid();
+gid_t getgid();
+gid_t getegid();
+int setuid(uid_t uid);
+int seteuid(uid_t euid);
+int setgid(gid_t gid);
+int setegid(gid_t gid);
+```
+
+一个进程拥有两个用户ID：UID和EUID。EUID存在的目的是方方便资源访问：它使得运行程序的用户拥有该程序的有效用户?权限。
+
+**`root`用户uid和gid均为0**
+
+#### 切换用户
+```c++
+staitic bool switch_to_user(uid_t user_id, gid_t gp_id)
+{
+    //确保当前用户不是root
+    if((0==user_id)&&(0==gp_id)) return false;
+    //确保当前用户是合法用户：root或目标用户
+    gid_t gid=getgid();
+    uid_t uid=getuid();
+    if(((0!=gid)||(0!=uid))&&((gid!=gp_id)&&(uid!=user_id)))
+        return false;
+    //如果不是root，则已是目标用户
+    if(0!=uid)
+    {
+        return true;
+    }
+    //切换到目标用户
+    if((setgid(gp_id)<0)||(setuid(user_id)<0))
+        return false;
+    return true;
+}
+```
+
+### 7.3 进程间关系
+#### 7.3.1 进程组
+Linux下每个进程都隶属于一个进程组，因此它们除了PID信息外，还有进程组ID(PGID)。
+
+每个进程组都有一个首领进程，其PGID和PID相同。进程组将一直存在，直到其中所有进程都退出，或者加入到其它进程组。
+
+一个进程只能设置自己或其子进程的PGID，并且当子进程调用exec系列函数后，我们也不能再在父进程中对它设置PGID。
+
+#### 7.3.2 会话
+一些有关联的进程组将形成一个会话(session)，下面函数用于创建一个会话：
+```c++
+#include<unistd.h>
+pid_t setsid(void);
+
+pid_t getsid(pid_t pid);
+```
+该函数不能由进程组的首领进程调用，对于非首领进程，调用该函数不仅可以创建新会话，还可以：
+* 调用进程成为会话的首领，此时该进程是新会话的唯一成员
+* 新建一个进程组，其PGID是调用进程的PID，调用进程称为该组的首领
+* 调用进程间甩开终端。
+
+### 7.4 系统资源限制
+```c++
+#include<sys/resource.h>
+int getrlimit(int resource,struct rlimit *rlim);
+int setrlimit(int resource,const struct rlimit *rlim);
+
+struct rlimit
+{
+    rlim_t rlim_cur;
+    rlim_t rlim_max;
+};
+```
+### 7.5改变工作目录和根目录
+获取进程当前工作目录和改变进程工作目录：
+```c++
+#include<unistd.h>
+char* getcwd(char* buf,size_t size);
+int chdir(const char* path);
+int rootdir(const char* path);//切换进程根目录
+//buf指向内存用于存储进程当前工作目录的绝对路径名，其大小由size决定
+//path指定要切换到的目标目录
+```
+### 7.6 服务器程序后台化
+让进程以守护进程的方式运行
+```c++
+#include<unistd.h>
+int daemon(int nochdir, int noclose);
+//nochdir：指定是否改变工作目录，0表示设为根目录"/"
+//noclose：0表示标准输入、标准输出和标准错误输出都被定向到/dev/null文件
+//成功返回0，失败返回-1并设置errno
+```
+
+## 第八章 高性能服务器程序框架
+本章节是全书核心，按照服务器程序的一般原理，将服务器解析为以下三个主要模块：
+* I/O处理单元
+* 逻辑单元
+* 存储单元
+### 8.1 服务器模型
+#### 8.1.1 C/S模型
+C/S(客户端/服务器)模型：所有客户端都通过访问服务器来获取需要的资源，适合资源相对集中的场合。
+优点：实现简单
+缺点：服务器是通信的中心，访问过大会导致响应很忙
+
+![TCP服务器和客户端的工作流程](picture/TCP工作流程.png)
+该模型逻辑：
+* 服务器启动后，首先创建一个(或多个)监听socket，并调用bind函数将其绑定到服务器感兴趣的端口上，然后调用listen函数等待客户连接。服务器稳定运行之后，客户端就可以调用connect函数向服务器发起连接。
+
+* 由于客户连接请求是随机到达的异步事件，服务器需要某种I/O模型来监听这一事件。
+
+#### 8.1.2 P2P模型
+P2P(Peer to Peer，点对点)模型摒弃了以服务器为中心的格局，让网络上所有主机重新回归对等的地位。
+
+优点：资源充分、自由共享
+缺点：用户之间传输的请求过多，网络负载加重；主机之间很难互相发现
+
+### 8.2 服务器编程框架
+![服务器基本框架](picture/服务器基本框架.png)
+服务器基本模块功能描述
+|模块|单个服务器程序|服务器机群|
+|:--:|:--:|:--:|
+|I/O处理单元|处理客户连接，读写网络数据|作为接入服务器，实现负载均衡|
+|逻辑单元|业务进程或线程|逻辑服务器|
+|网络存储单元|本地数据库、文件或缓存|数据库服务器|
+|请求队列|各单元之间的通信方式|各服务器之间的永久TCP连接|
+
+I/O处理单元是服务器管理客户连接的模块。它通常要完成以下工作：等待并接受新的客户连接，接收客户数据，将服务器响应数据返回给客户端。对于服务器集权来说，I/O处理单元是一个专门的接入服务器。它实现负载均衡，从所有逻辑服务器中选取符合最小的一台来为新客户服务。
+
+一个逻辑单元通常是一个进程或线程。它分析并处理客户数据，然后将结果传递给I/O处理单元或者直接发送给客户端（具体使用哪种方式取决于事件处理模式）。对服务器机群而言，一个逻辑单元本身就是一台逻辑服务器。服务器通常拥有多个逻辑单元以实现对多个客户任务的并行处理。
+
+网络存储单元可以是数据库、缓存和文件，甚至是一台独立的服务器。但它不是必须的，比如ssh、telnet等登录服务就不需要这个单元。
+
+请求队列是各单元之间的通信方式的抽象。I/O处理单元接收到客户请求时，需要以某种方式通知一个逻辑单元来处理该请求。同样，多个逻辑单元同时访问一个存储元时，也需要采用某种机制来协调处理竞态条件。请求队列通常被实现为池的一部分。对于服务器机群而言，请求队列是各台服务器之间预先建立的、态的、永久的TCP连接。这种TCP连接能提高服务器之间交换数据的效率，因为它避免了动态建立TCP连接导致的额外的系统开销。
+
+### 8.3 I/O模型
+socket在创建时默认是阻塞的，可以通过socket系统调用的第二个参数传递`SOCK_NONBLOCK`标志，或者通过fcntl系统调用的`F_SETFL`命令，将其设置为非阻塞。阻塞的文件描述符为阻塞I/O，非阻塞的文件描述符为非阻塞I/O。
+
+阻塞I/O执行的系统调用可能因为无法立即完成而被操作系统挂起，直到等待的事件发生为止。
+
+非阻塞I/O执行的系统调用则总是立即返回，不管事件是否已经发生，如果事件没有立即发生，这些系统调用就返回-1，和出错的情况一样。
+
+I/O复用是最常用的I/O体制机制，它指的是，应用程序通过I/O复用函数向内核注册一组事件，内核通过I/O复用函数把其中就绪的事件通知给应用程序。
+
+Linux常用的I/O复用函数是select、poll和epoll_wait，I/O复用函数本身是阻塞的，它们能提高程序效率的原因是在于它们能同时监听多个I/O事件的能力。
+
+SIGIO信号也可以用来报告I/O事件。我们可以为一个目标文件描述符指定宿主进程，那么被指定的宿主进程将捕获到SIGIO信号。
+
+同步I/O：IO的读写操作，都是在I/O事件发生之后，由应用程序来完成。该模型要求用户代码自行执行I/O操作（将数据从内核缓冲区读入用户缓冲区，火箭数据从用户缓冲区写入内核缓冲区）。阻塞I/O、I/O复用和信号驱动I/O都是同步I/O模型。
+
+异步I/O：用户可以直接对I/O执行读写操作，这些操作告诉内核用户读写缓冲区位置，以及I/O操作完成之后内核通知应用程序的方式。
+
+总结：同步I/O向应用程序通知的是I/O就绪事件，异步I/O向应用程序停止的I/O的完成时间。
+
+|I/O模型|读写操作和阻塞阶段|
+|:--:|:--:|
+|阻塞I/O|程序阻塞于读写函数|
+|I/O复用|程序阻塞于I/O复用系统调用，但可同时监听多个I/O事件。对I/O本身的读写操作是非阻塞的|
+|SIGIO信号|信号触发读写就绪事件，用户程序执行读写操作，程序没有阻塞阶段|
+|异步I/O|内核执行读写操作并触发读写完成事件，程序没有阻塞阶段|
+
+### 8.4 两种高效的事件处理模式
+#### 8.4.1 Reactor模式
+Reactor模式要求主线程(I/O处理单元)只负责监听文件描述上是否有事件发生，有的话立即将该事件通知工作线程(逻辑单元)。
+使用同步I/O模型(以epoll_wait为例)实现的Reactor模式工作流程：
+1. 主线程往epoll内核事件表注册socket上的读就绪事件
+2. 主线程调用epoll_wait等待socket上有数据可读
+3. 但socket上有数据可读时，epoll_wait通知主线程。主线程则将socket可读事件放入请求队列。
+4. 睡眠在请求队列上的某个工作线程被唤醒，它从socket读取数据，并处理客户请求，然后往epoll内核事件表注册该socket上的写就绪时间5. 主线程调用epoll_wait等待socket可写
+6. 但socket可写时，epoll_wait通知主线程。主线程将socket可写事件放入请求队列。
+7. 睡眠在请求队列上的某个工作线程被唤醒，它往socket上写入服务器处理客户请求的结果。
+![Reactor模式](picture/Reactor模式.png)
+
+#### 8.4.2 Proactor模式
+Proactor模式将所有I/O操作交给主线程和内核来处理，工作线程仅仅负责业务逻辑。
+
+使用异步I/O模型(以aio_read和aio_write为例)实现的Proactor模式的工作流程:
+1. 主线程调用aio_read函数向内核注册socket上的读完成事件，并告诉内核用户读缓冲区的位置，以及读操作完成时如何通知应用程序
+2. 主线程继续处理其它逻辑
+3. 但socket上的数据被读入用户缓冲区后，内核将向应用程序发送一个信号，以通知应用程序数据已经可用。
+4. 应用程序预先定义好的信号处理含函数选择一个工作线程来处理客户请求。工作线程处理完客户请求之后，调用aio_write函数向内核注册socket的写完成事件，并告诉内核用户写缓冲区位置，以及写操作完成时如何通知应用程序
+5. 主线程继续处理其它逻辑
+6. 但用户缓冲区的数据被写入socket之后，内核将向应用程序发送一个信号，以通知应用程序数据已经发送完毕
+7. 应用程序预先定义好的信号处理含函数选择一个工作线程来处理客户请求，比如决定是否关闭socket。
+![Proactor模式](picture/Proactor模式.png)
+
+在上图中，连接socket的读写事件是通过aio_read/aio_write向内核注册的，因此内核将通过信号来向应用程序报告连接socket上的读写事件。所以，主线程中的epoll_wait调用仅能用来监听socket上的连接请求事件，而不能用来检测连接socket上的读写事件。
+
+#### 8.4.3 模拟Proactor模式
+原理：主线程执行数据读写操作，读写完成之后，主线程向工作线程通知这一"完成时间"。从工作线程的角度来看，它们就直接获得数据读写的结果，接下来要做的只是对读写的结果进行逻辑处理。
+使用同步I/O模型(以epoll_wait为例)模拟的Proactor模式的工作流程如下：
+1. 主线程往epoll内核事件表注册socket上的读就绪事件
+2. 主线程调用epoll_wait等待socket上有数据可读
+3. 当socket上有数据可读时，epoll_wait通知主线程。主线程从socket循环读取数据，直到无数据可读，然后将读取到的数据封装成一个请求对象并插入请求队列。
+4. 睡眠在请求队列上的某个工作线程被唤醒，它获得请求对象并处理客户请求，然后往epoll内核事件表注册该socket上的写就绪事件
+5. 主线程调用epoll_wait等待socket上有数据可写
+6. 当socket可写，epoll_wait通知主线程，主线程往socket上写入服务器处理客户请求的结果。
+![模拟Proactor模式](picture/同步IO模拟Proactor模式.png)
+
+### 8.5 两种高效的并发模式
+程序分为计算密集型(CPU使用很多, IO资源使用很少)和IO密集型(反过来).
+前者使用并发编程反而会降低效率, 后者则会提升效率
+并发编程有多进程和多线程两种方式
+
+并发模式 - IO单元和多个逻辑单元之间协调完成任务的方法.
+服务器主要有两种并发模式：半同步/半异步(half-sync/half-async)模式和领导者/追随者(Leader/Followers)模式。
+#### 8.5.1 半同步/半异步模式
+在I/O模型中，同步和异步区分的时内核向应用程序通知的是何种I/O事件(是就绪事件还是完成事件)，以及该由谁来完成I/O读写(是应用程序还是内核)。
+
+在并发模型中，同步是指程序完全按照代码序列的顺序执行；异步是指程序的执行需要由系统事件来驱动。常见的系统事件包含终端、信号等。
+![并发中的同步和异步](picture/并发模式中的同步和异步.png)
+
+异步线程执行效率高，实时性强，是嵌入式程序采用的模型，当编写以异步方式执行的程序相对复杂，难于调试和扩展，而且不适合大量的并发。
+
+同步线程逻辑简单，当效率相对较低，实时性较差。
+
+服务器(需要较好的实时性且能同时处理多个客户请求) - 一般使用同步线程和异步线程来实现,即为半同步/半异步模式
+
+同步线程 - 处理客户逻辑, 处理请求队列中的对象
+
+异步线程 - 处理IO事件, 接收到客户请求后将其封装成请求对象并插入请求队列
+
+半同步/半异步模式的变体：半同步/半反应堆(half-sync/half-reactive)模式
+![半同步/半反应堆](picture/半同步_半反应堆模式.png)
+半同步/半反应堆模式中：异步线程只有一个，由主线程来充当，它负责监听所有socket上的事件。
+
+#### 8.5.2 领导者/追随者模式
+领导者／追随者模式是多个工作线程轮流获得事件源集合，轮流监听、分发并处理事件的一种模式。在任意时间点，程序都仅有一个领导者线程，它负责监听I/O事件，而其他线程则都是追随者，它们休眠在线程池中等待成为新的领导者。当前的领导者如果检测到I/O事件，首先要从线程池中推选出新的领导者线程，然后处理I/O事件。此时，新领导者等待新的I/O事件，而原来的领导者则处理I/O事件，二者实现了并发。
+
+### 8.6 有限状态机
+```c
+// 状态独立的有限状态机
+STATE_MACHINE(Package _pack) {
+	
+	PackageType _type = _pack.GetType();
+	switch(_type) {
+		case type_A:
+			xxxx;
+			break;
+		case type_B:
+			xxxx;
+			break;
+	}
+}
+
+// 带状态转移的有限状态机
+STATE_MACHINE() {
+	State cur_State = type_A;
+	while(cur_State != type_C) {
+	
+		Package _pack = getNewPackage();
+		switch(cur_State) {
+			
+			case type_A:
+				process_package_state_A(_pack);
+				cur_State = type_B;
+				break;
+			case type_B:
+				xxxx;
+				cur_State = type_C;
+				break;
+		}
+	}
+}
+```
+
+### 8.7 提高服务器性能的其它建议
+#### 8.7.1 池
+进程池和线程池，用空间换时间
+#### 8.7.2 数据复制
+高性能服务器应该避免不必要的复制
+#### 8.7.3 上下文切换和锁
+减少`锁`的作用区域。 不应该创建太多的工作进程, 而是使用专门的业务逻辑线程。
