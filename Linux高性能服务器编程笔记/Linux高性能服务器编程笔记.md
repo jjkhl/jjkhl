@@ -812,3 +812,623 @@ STATE_MACHINE() {
 高性能服务器应该避免不必要的复制
 #### 8.7.3 上下文切换和锁
 减少`锁`的作用区域。 不应该创建太多的工作进程, 而是使用专门的业务逻辑线程。
+
+## 第九章 I/O复用
+I/O复用使得程序能同时监听多个文件描述符，能提高程序的性能，在以下情况下需要使用该技术：
+* 客户端程序需要同时处理多个socket，如非阻塞connect技术
+* 客户端程序要同时处理用户输入和网络连接，如聊天室程序
+* TCP服务器要同时处理监听socket和连接socket，这时I/O复用使用最多的场合
+* 服务器要同时处理TCP请求和UDP请求，如回射服务器
+* 服务器需要同时监听多个端口，或者处理多种服务，如xinetd服务器
+
+Linux下实现I/O复用的系统调用主要有select、poll、epoll。
+
+### 9.1 select系统调用
+select系统调用的用途：在一段指定时间内，监听用户感兴趣的文件描述符上的可读、可写和异常等事件。
+
+#### select API
+```c++
+#include<sys/select.h>
+int select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, struct timeval* timeout);
+//nfds：指定被监听的文件描述符的综述，通常被设置为select监听的所有文件描述符中最大值加1，因为文件描述符是从0开始计数的。
+//readfds、writefds、exceptfds分别指向可读、可写、异常等事件对应的文件描述符集合。
+
+//操作fd_set的宏
+FD_ZERO(fd_set* fdset);
+FD_SET(int fd, fd_set* fdset);
+FD_CLR(int fd, fd_set* fdset);
+FD_ISSET(int fd, fd_set* fdset);
+// 设置 timeval 超时时间
+struct timeval
+{
+	long tv_sec; // 秒
+	long tv_usec; // 微秒
+}
+```
+
+**socket可读条件**
+- socket内核接收缓存区中的字节数大于或等于其低水位标记SO_RCVLOWAT。此时可以无阻塞地读该socket，并且读操作返回地字节数大于0
+- socket通信的对方关闭连接, 对socket的读操作返回0
+- 监听socket上有新的连接请求
+- socket上有未处理的错误, 可以使用getsockopt来读取和清除错误
+
+**socket可写条件**
+- socket内核的发送缓冲区的可用字节数大于或等于其低水位标记
+- socket的写操作被关闭, 对被关闭的socket执行写操作将会触发一个SIGPIPE信号
+- socket使用非阻塞connect 连接成功或失败后
+
+socket异常条件：
+* socket接收带外数据
+
+#### 9.1.3 处理带外数据
+见源代码9-1
+
+### 9.2 poll系统调用
+poll系统调用和select类似，，也是在指定时间内轮询一定数量地文件描述符，以测试其中是否有就绪者
+```c++
+#include<poll.h>
+int poll(struct pollfd* fds, nfds_t nfds,int timeout);
+```
+fds：是一个pollfd结构类型的数组，指定所有我们感兴趣的文件描述符上发生的可读、可写和异常等事件。
+
+nfds：指定被监听事件集合fds的大小
+
+timeout：指定poll的超时值，单位是毫秒。当timeout=-1，poll调用将永远阻塞，直到某个事件发生；当timeout=0，poll调用将立即返回。
+
+```c++
+struct pollfd
+{
+    int fd;//文件描述符
+    short events;//注册的事件
+    short revents;//实际发生的事件，由内核填充
+};
+```
+poll支持的事件类型如下，默认都是可以作为输入和输出，除`POLLERR`、`POLLHUP`、`POLLNVAL`不能作为输入以外：
+|事件|描述|
+|:--:|:--:|
+|POLLIN|数据(包括普通数据和优先数据)可读|
+|POLLRDNORM|普通数据可读|
+|POLLRDBAND|优先级带数据可读(Linux不支持)|
+|POLLPRI|高优先级数据可读，比如TCP带外数据|
+|POLLOUT|数据(包括普通数据和优先数据)可写|
+|POLLWRNORM|普通数据可写|
+|POLLWRBAND|优先级数据可写|
+|POLLRDHUP|TCP连接被对方关闭，或者对方关闭了写操作，如果要使用这个事件，必须定义_GNU_SOURCE 宏|
+|POLLERR|错误|
+|POLLHUP|挂起。比如管道的写端被关闭后，读端描述符上将收到POLLHUP事件|
+|POLLNVAL|文件描述符没有打开|
+
+### 9.3 epoll系列系统调用
+epoll和select、poll的区别：
+* epoll使用一组函数完成任务
+* epoll把用户关心的文件描述符上的事件放在内核里的一个时间表中
+* epoll需要使用一个额外的文件描述符，来唯一标识内核中的这个事件表
+
+```c++
+#include<sys/epoll>
+//创建文件描述符
+int epoll_create(int size);
+//操作内核事件表
+int epoll_ctl(int epfd,int op,int fd, struct epoll_event *event);
+
+```
+fd：要操作的文件描述符
+op：指定操作类型
+
+操作类型：
+* EPOLL_CTL_ADD：往事件表中注册fd上的事件
+* EPOLL_CTL_MOD：修改fd上的注册事件
+* EPOLL_CTL_DEL，删除fd上的注册事件
+
+#### epoll_wait函数
+定义：在一段超时时间内等待一组文件描述符上的事件
+```c++
+#include<sys/epoll.h>
+int epoll_wait(int epfd,struct epoll_event* events,int maxevents,int timeout);
+//成功返回就绪的文件描述符个数，失败返回-1并设置errno
+```
+timeout：指定epoll的超时值，单位是毫秒。当timeout=-1，epoll调用将永远阻塞，直到某个事件发生；当timeout=0，epoll调用将立即返回。
+
+maxevents：指定最多监听事件的个数，必须大于0。
+
+epoll_wait函数如果检测到事件，就将所有就绪的事件从内核事件表(由epfd参数指定)中复制到它的第二个参数events指向的数组中。这个数组只用于输出epoll_wait检测到的就绪事件，极大提高了应用程序索引就绪文件描述符的效率。
+
+poll和epoll使用上的差别：
+```c++
+//poll
+int ret=poll(fds,MAX_EVENT_NUMBER,-1);
+//需要遍历所有已注册文件描述符并找到其中的就绪者
+for(int i=0;i<MAX_EVENT_NUMBER;++i)
+{
+    if(fds[i].events&POLLIN)
+    {
+        int sockfd=fds[i].fd;
+        //处理sockfd
+    }
+}
+
+//epoll
+int ret=epoll_wait(epollfd,events,MAX_EVENT_NUMBER;-1);
+for(int i=0;i<ret;++i)
+{
+    int sockfd=events[i].data.fd;
+    //直接处理sockfd
+}
+```
+
+#### 9.3.3 LT和ET模式
+[LT和ET模式详解](https://cloud.tencent.com/developer/article/1636224)
+
+LT(Level Trigger)：电平触发模式，默认模式
+LT模式下的epoll相当于一个效率较高的poll
+对于水平触发模式，一个事件只要有，就会一直触发；
+
+ET(Edge Trigger)：边沿触发模式, epoll的高效工作模式
+当向epoll内核事件表中注册一个文件描述符上的EPOLLET事件的时候, epoll将用ET模式来操作这个文件描述符
+
+对于边缘触发模式，只有一个事件从无到有才会触发。一定需要非阻塞模式
+
+#### 9.3.4 EPOLLONESHOT事件
+该事件用于解决多线程(多进程)同时操作一个socket的局面。
+对于注册了EPOLLONESHOT事件的文件描述符，操作系统最多触发其上注册的一个可读、可写或异常事件，且只能触发一次。
+
+### 9.4 三组I/O复用函数的比较
+![I/O复用函数比较](picture/三种IO复用比较.png)
+
+### 9.6 聊天室程序
+#### 客户端
+```c++
+/*
+客户端程序使用pooll同时监听用户输入和网络连接
+并利用了splice函数通过管道将用户输入内容直接定向到网络连接上并发送
+从而实现数据零拷贝，提高了程序的执行效率
+*/
+#include<stdio.h>
+#include<assert.h>
+#include<string.h>
+#include<poll.h>
+#include<fcntl.h>
+#include<unistd.h>
+#include<stdlib.h>
+#include<arpa/inet.h>
+// #include<sys/types.h>
+#include<sys/socket.h>
+//使用了POLLRDHUP，需要定义_GUN_SOURCE宏
+#define _GUN_SOURCE 1
+#define BUFSIZE 64
+
+int main(int argc,char **argv)
+{
+    if(argc<=2)
+    {
+        printf("usage: %s ip_address port_number\n",basename(argv[0]));
+        return 1;
+    }
+    const char* ip=argv[1];
+    int port=atoi(argv[2]);
+    sockaddr_in addr;
+    bzero(&addr,sizeof(addr));
+    addr.sin_family=AF_INET;
+    addr.sin_addr.s_addr=inet_addr(ip);
+    addr.sin_port=htons(port);
+
+    int sockfd=socket(PF_INET,SOCK_STREAM,0);
+    assert(sockfd>=0);
+
+    if(connect(sockfd,(sockaddr*)&addr,sizeof(addr))==-1)
+    {
+        printf("connection failed\n");
+        close(sockfd);
+        return 1;
+    }
+
+    pollfd fds[2];
+    //注册文件描述符0(标准输入)和文件描述符sockfd上的可读事件
+    fds[0].fd=0;
+    fds[0].events=POLLIN;
+    fds[0].revents=0;//实际发生的事件，由内核补充
+
+    fds[1].fd=sockfd;
+    //POLLRDHUP当写端关闭了连接，如果要使用这个事件，必须定义_GNU_SOURCE 宏
+    fds[1].events=POLLIN|POLLRDHUP;
+    fds[1].revents=0;
+
+    char read_buf[BUFSIZE];
+    int pipefd[2];
+    int ret=pipe(pipefd);//创建管道，0是读出管道，1是写入管道
+    assert(ret!=-1);
+
+    while(true)
+    {
+        //2指监听事件集合fds大小，-1表示poll将阻塞至某个事件发生
+        ret=poll(fds,2,-1);
+        if(ret<0)
+        {
+            printf("poll failure\n");
+            break;
+        }
+        //如果sock当前事件为POLLIN
+        if(fds[1].revents&POLLIN)
+        {
+            memset(read_buf,'\0',BUFSIZE);
+            recv(fds[1].fd,read_buf,BUFSIZE-1,0);
+            printf("%s\n",read_buf);
+        }
+        //sock被对方关闭，或对方关闭了写操作
+        else if(fds[1].revents&POLLRDHUP)
+        {
+            printf("server close the connection\n");
+            break;
+        }
+
+        //当前标准输入有输入
+        if(fds[0].revents&POLLIN)
+        {
+            //使用splice将用户输入的数据通过管道直接写到sockfd上(零拷贝)
+            //SPLICE_F_MORE提示内核后续还将读取更多数据，SPLICE_F_MOVE建议整页内存移动数据
+            ret=splice(0,NULL,pipefd[1],NULL,32768,SPLICE_F_MORE|SPLICE_F_MOVE);
+            ret=splice(pipefd[0],NULL,sockfd,NULL,32768,SPLICE_F_MORE|SPLICE_F_MOVE);
+        }
+    }
+    close(sockfd);
+    return 0;
+}
+```
+
+#### 服务器端
+```c++
+/*
+服务器程序使用poll同时管理监听socket和连接socket，并且牺牲空间换取事件的策略提高服务器性能
+*/
+#include<assert.h>
+#include<errno.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<poll.h>
+#include<fcntl.h>
+#include<arpa/inet.h>
+#include<sys/socket.h>
+//使用了POLLRDHUP，需要定义_GUN_SOURCE宏
+#define _GNU_SOURCE 1
+#define BUFSIZE 64
+#define USER_LIMIT 5//最大用户数量
+#define FD_LIMIT 65535//文件描述符最大数量
+
+//客户数据：客户端socket地址、待写到客户端的数据的位置、从客户端读入的数据
+struct client_data
+{
+    sockaddr_in address;
+    char* write_buf;
+    char buf[BUFSIZE];
+};
+
+//设置非阻塞
+int setNonBlocking(int fd)
+{
+    //获取fd的状态标志
+    int old_option=fcntl(fd,F_GETFL);
+    int new_option=old_option|O_NONBLOCK;
+    fcntl(fd,F_SETFL,new_option);
+    //返回旧状态标志
+    return old_option;
+}
+
+int main(int argc,char **argv)
+{
+    if(argc<=2)
+    {
+        printf("usage: %s ip_address port_number\n",basename(argv[0]));
+        return 1;
+    }
+    const char *ip=argv[1];
+    int port=atoi(argv[2]);
+
+    int ret=0;
+    sockaddr_in addr;
+    bzero(&addr,sizeof(addr));
+    addr.sin_family=AF_INET;
+    addr.sin_addr.s_addr=inet_addr(ip);
+    addr.sin_port=htons(port);
+
+    int listenfd=socket(PF_INET,SOCK_STREAM,0);
+    assert(listenfd>-1);
+
+    ret=bind(listenfd,(sockaddr*)&addr,sizeof(addr));
+    assert(ret!=-1);
+
+    ret=listen(listenfd,5);
+    assert(ret!=-1);
+
+    //创建users数组，分配FD_LIMIT个client_data对象。
+    //可以预期：每个可能的socket连接都可以获得一个这样的对象，并且socket的值可以直接索引socket连接对应的client_data对象
+    //这种方式是将socket和客户数据关联的简单而高效的方式。
+    client_data *users=new client_data[FD_LIMIT];
+    //虽然分配了足够多的client_data对象，但为了提高poll性能，还是有必要限制用户数量
+    pollfd fds[USER_LIMIT+1];
+    int user_counter=0;
+    //初始化
+    for(int i=1;i<=USER_LIMIT;i++)
+    {
+        fds[i].fd=-1;
+        fds[i].events=0;
+    }
+    fds[0].fd=listenfd;
+    //可读和异常
+    fds[0].events=POLLIN|POLLERR;
+    fds[0].revents=0;
+
+    while(true)
+    {
+        //user_counter+1表示被监听事件集合fds的大小
+        ret=poll(fds,user_counter+1,-1);
+        if(ret<0)
+        {
+            printf("poll failure\n");
+            break;
+        }
+        for(int i=0;i<user_counter+1;i++)
+        {
+            if((fds[i].fd==listenfd)&&(fds[i].revents&POLLIN))
+            {
+                sockaddr_in addr;
+                socklen_t addr_sz=sizeof(addr);
+                int connfd=accept(listenfd,(sockaddr*)&addr,&addr_sz);
+                if(connfd<0)
+                {
+                    printf("errno is: %d\n",errno);
+                    continue;
+                }
+                //如果请求过多，则关闭新到的连接
+                if(user_counter>=USER_LIMIT)
+                {
+                    const char *info="too many users\n";
+                    printf("%s",info);
+                    send(connfd,info,strlen(info),0);
+                    close(connfd);
+                    continue;
+                }
+                //对于新的连接，同时修改fds和users数组
+                //users[connfd]对应于新连接文件描述符connfd的客户数据
+                user_counter++;
+                users[connfd].address=addr;
+                //设置非阻塞
+                setNonBlocking(connfd);
+                fds[user_counter].fd=connfd;
+                fds[user_counter].events=POLLIN|POLLRDHUP|POLLERR;
+                fds[user_counter].revents=0;
+                printf("comes a new user, now have %d users\n",user_counter);
+            }
+            else if(fds[i].revents&POLLERR)
+            {
+                printf("get an error from %d\n",fds[i].fd);
+                char errors[100];
+                memset(errors,'\0',100);
+                socklen_t length=sizeof(errors);
+                if(getsockopt(fds[i].fd,SOL_SOCKET,SO_ERROR,&errors,&length)<0)
+                    printf("get socket option failed\n");
+                continue;
+            }
+            else if(fds[i].revents&POLLRDHUP)
+            {
+                //如果客户端关闭连接，那么服务器也关闭对应连接，并将用户总数-1
+                //users数组将最后一个用户的文件描述符前移至删除的位置
+                users[fds[i].fd]=users[fds[user_counter].fd];
+
+                close(fds[i].fd);
+                //将删除位置的文件描述符替换为最后一位的文件描述符
+                fds[i--]=fds[user_counter--];
+                printf("a client left\n");
+            }
+            else if(fds[i].revents&POLLIN)
+            {
+                int connfd=fds[i].fd;
+                memset(users[connfd].buf,'\0',BUFSIZE);
+                ret=recv(connfd,users[connfd].buf,BUFSIZE-1,0);
+                printf("get %d bytes of client data %s from %d\n",ret,users[connfd].buf,connfd);
+                if(ret<0)
+                {
+                    //如果读操作出错，则关闭连接
+                    //如果不能重读
+                    if(errno!=EAGAIN)
+                    {
+                        close(connfd);
+                        users[fds[i].fd]=users[fds[user_counter].fd];
+                        fds[i--]=fds[user_counter--];
+                    }
+                }
+                else if(ret>0)
+                {
+                    //如果接收到客户端数据，则通知其他socket连接准备写数据
+                    for(int j=1;j<user_counter+1;j++)
+                    {
+                        if(fds[j].fd==connfd)
+                        {
+                            continue;
+                        }
+                        fds[j].events|=~POLLIN;
+                        fds[j].events|=POLLOUT;
+                        users[fds[j].fd].write_buf=users[connfd].buf;
+                    }
+                }
+            }
+            else if(fds[i].revents&POLLOUT)
+            {
+                int connfd=fds[i].fd;
+                if(!users[connfd].write_buf)
+                {
+                    continue;
+                }
+                ret=send(connfd,users[connfd].write_buf,strlen(users[connfd].write_buf),0);
+                //恢复读数据的状态
+                users[connfd].write_buf=NULL;
+                fds[i].events|=~POLLOUT;
+                fds[i].events|=POLLIN;
+            }
+        }
+    }
+    delete [] users;
+    close(listenfd);
+    return 0;
+}
+```
+
+### 9.7 同时处理TCP和UDP服务
+从bind系统调用的参数来看，一个socket只能与一个socket地址绑定，即一个socket只能用来监听一个窗口。I/O复用能够让服务器程序调试管理多个监听socket，也可以同时处理该端口上的TCP和UDP请求。
+
+#### 服务端
+```c++
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/epoll.h>
+#include <pthread.h>
+
+#define MAX_EVENT_NUMBER 1024
+#define TCP_BUFFER_SIZE 512
+#define UDP_BUFFER_SIZE 1024
+
+int setnonblocking( int fd )
+{
+    int old_option = fcntl( fd, F_GETFL );
+    int new_option = old_option | O_NONBLOCK;
+    fcntl( fd, F_SETFL, new_option );
+    return old_option;
+}
+
+void addfd( int epollfd, int fd )
+{
+    epoll_event event;
+    event.data.fd = fd;
+    //设置边缘触发模式
+    event.events = EPOLLIN | EPOLLET;
+    // event.events = EPOLLIN;
+    //epollfd设定为fd，然后设置fd为无阻塞
+    epoll_ctl( epollfd, EPOLL_CTL_ADD, fd, &event );
+    setnonblocking( fd );
+}
+
+int main( int argc, char* argv[] )
+{
+    if( argc <= 2 )
+    {
+        printf( "usage: %s ip_address port_number\n", basename( argv[0] ) );
+        return 1;
+    }
+    const char* ip = argv[1];
+    int port = atoi( argv[2] );
+
+    int ret = 0;
+    struct sockaddr_in address;
+    //绑定TCP socket
+    bzero( &address, sizeof( address ) );
+    address.sin_family = AF_INET;
+    inet_pton( AF_INET, ip, &address.sin_addr );
+    address.sin_port = htons( port );
+
+    int listenfd = socket( PF_INET, SOCK_STREAM, 0 );
+    assert( listenfd >= 0 );
+
+    ret = bind( listenfd, ( struct sockaddr* )&address, sizeof( address ) );
+    assert( ret != -1 );
+
+    ret = listen( listenfd, 5 );
+    assert( ret != -1 );
+    //绑定UDP socket
+    bzero( &address, sizeof( address ) );
+    address.sin_family = AF_INET;
+    inet_pton( AF_INET, ip, &address.sin_addr );
+    address.sin_port = htons( port );
+    int udpfd = socket( PF_INET, SOCK_DGRAM, 0 );
+    assert( udpfd >= 0 );
+
+    ret = bind( udpfd, ( struct sockaddr* )&address, sizeof( address ) );
+    assert( ret != -1 );
+
+    epoll_event events[ MAX_EVENT_NUMBER ];
+    int epollfd = epoll_create( 5 );
+    assert( epollfd != -1 );
+
+    //注册TCP socket和UDP socket上的可读事件
+    addfd( epollfd, listenfd );
+    addfd( epollfd, udpfd );
+
+    while(true)
+    {
+        int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );
+        if ( number < 0 )
+        {
+            printf( "epoll failure\n" );
+            break;
+        }
+    
+        for ( int i = 0; i < number; i++ )
+        {
+            int sockfd = events[i].data.fd;
+            if ( sockfd == listenfd )
+            {
+                struct sockaddr_in client_address;
+                socklen_t client_addrlength = sizeof( client_address );
+                int connfd = accept( listenfd, ( struct sockaddr* )&client_address, &client_addrlength );
+                addfd( epollfd, connfd );
+            }
+            else if ( sockfd == udpfd )
+            {
+                char buf[ UDP_BUFFER_SIZE ];
+                memset( buf, '\0', UDP_BUFFER_SIZE );
+                struct sockaddr_in client_address;
+                socklen_t client_addrlength = sizeof( client_address );
+
+                ret = recvfrom( udpfd, buf, UDP_BUFFER_SIZE-1, 0, ( struct sockaddr* )&client_address, &client_addrlength );
+                if( ret > 0 )
+                {
+                    sendto( udpfd, buf, UDP_BUFFER_SIZE-1, 0, ( struct sockaddr* )&client_address, client_addrlength );
+                }
+            }
+            else if ( events[i].events & EPOLLIN )
+            {
+                char buf[ TCP_BUFFER_SIZE ];
+                while( 1 )
+                {
+                    memset( buf, '\0', TCP_BUFFER_SIZE );
+                    ret = recv( sockfd, buf, TCP_BUFFER_SIZE-1, 0 );
+                    if( ret < 0 )
+                    {
+                        if( ( errno == EAGAIN ) || ( errno == EWOULDBLOCK ) )
+                        {
+                            break;
+                        }
+                        close( sockfd );
+                        break;
+                    }
+                    else if( ret == 0 )
+                    {
+                        close( sockfd );
+                    }
+                    else
+                    {
+                        send( sockfd, buf, ret, 0 );
+                    }
+                }
+            }
+            else
+            {
+                printf( "something else happened \n" );
+            }
+        }
+    }
+
+    close( listenfd );
+    return 0;
+}
+```
+
