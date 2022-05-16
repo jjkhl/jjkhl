@@ -130,3 +130,59 @@ public:
     }
 };
 ```
+## [06.字符串压缩](https://leetcode.cn/problems/compress-string-lcci/)
+```c++
+class Solution {
+public:
+    string compressString(string S) {
+        string res="";
+        int left=0,right=0;
+        int count=0;
+        while(right<S.size())
+        {
+            if(S[left]==S[right])
+            {
+                right++;
+                count++;
+            }
+            else
+            {
+                res=res+S[left]+to_string(count);
+                left=right;
+                count=0;
+            }
+        }
+        res=res+S[left]+to_string(count);
+        return res.size()>=S.size()?S:res;
+    }
+};
+```
+
+## [07.旋转矩阵](https://leetcode.cn/problems/rotate-matrix-lcci/)
+```c++
+//先沿主对角线翻转，再沿竖直方向上的对称轴翻转
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int rows=matrix.size();
+        int cols=matrix[0].size();
+        for(int i=0;i<rows;i++)
+        {
+            for(int j=0;j<cols;j++)
+            {
+                if(i<j)
+                {
+                    swap(matrix[i][j],matrix[j][i]);
+                }
+            }
+        }
+        for(int i=0;i<rows;i++)
+        {
+            for(int j=0;j<cols/2;j++)
+            {
+                swap(matrix[i][j],matrix[i][cols-j-1]);
+            }
+        }
+    }
+};
+```
