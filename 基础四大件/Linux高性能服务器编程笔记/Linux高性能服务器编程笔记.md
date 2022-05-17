@@ -4,6 +4,33 @@
 参考笔记地址：
 * https://blog.csdn.net/jojozym/article/details/106034037
 * https://github.com/HiganFish/Notes-HighPerformanceLinuxServerProgramming
+
+**Libevent库的安装**：
+* 官网下载压缩包：https://libevent.org/
+* 创建一个没有中文路径的文件夹解压：`tar -zxvf libevent-2.1.12-stable.tar.gz`
+* 进入该文件：`cd  libevent-2.1.12-stable/`
+* 设置安装路径：`./configure`；默认`/usr/local/lib`
+* 编译：`make`
+* 安装：`make install`
+* 测试libevent是否安装成功(root下)：`ls -al /usr/lib | grep libevent`
+
+简单示例：
+```c++
+#include <event.h>
+#include <stdio.h>
+
+int main()
+{
+   const  char ** methods = event_get_supported_methods();//获取libevent后端支持的方法
+    int i =0;
+    for(i = 0;methods[i] != NULL ;i++)
+    {
+        printf("%s\n",methods[i]);
+    }
+    return 0;
+}
+```
+编译方法：`g++ test.cpp -o test -levent`
 # TCP/IP协议详解
 ## 第1章 TCP/IPV4协议族
 
@@ -701,8 +728,9 @@ SIGIO信号也可以用来报告I/O事件。我们可以为一个目标文件描述符指定宿主进程，那么被
 |异步I/O|内核执行读写操作并触发读写完成事件，程序没有阻塞阶段|
 
 ### 8.4 两种高效的事件处理模式
+[深刻理解Reactor和Proactor模式](https://www.zhihu.com/question/26943938)
 #### 8.4.1 Reactor模式
-Reactor模式要求主线程(I/O处理单元)只负责监听文件描述上是否有事件发生，有的话立即将该事件通知工作线程(逻辑单元)。
+Reactor模式要求主线程(I/O处理单元)只负责监听文件描述符上是否有事件发生，有的话立即将该事件通知工作线程(逻辑单元)。
 使用同步I/O模型(以epoll_wait为例)实现的Reactor模式工作流程：
 1. 主线程往epoll内核事件表注册socket上的读就绪事件
 2. 主线程调用epoll_wait等待socket上有数据可读
@@ -1430,5 +1458,1590 @@ int main( int argc, char* argv[] )
     close( listenfd );
     return 0;
 }
+```
+
+## 第10章 信号
+信号是由用户、系统或进程发送给目标进程的信息，以通知目标进程某个状态的改变或系统异常。Linux信号产生条件如下：
+* 对于前台进程，用户可以通过输人特殊的终端字符来给它发送信号。比如输人Ctrl+C，通常会给进程发送一个中断信号
+* 系统异常。比如浮点异常和非法内存段访问。
+* 系统状态变换。比如alarm定时器到期将引起SIGALRM信号。
+* 运行kill命令或调用kill函数
+
+### 10.1 Linux信号概述
+#### 10.1.1 发送信号
+Linux下，一个进程给其它进程发送信号的API是kill函数：
+```c++
+#include<sys.types.h>
+#include<signal.h>
+int kill(pid_t pid,int sig);
+//成功返回0，失败返回-1并设置errno
+```
+kill函数的pid参数及其含义
+|pid参数|含义|
+|:--:|:--:|
+|pid>0|信号发送给PID为pid的进程|
+|pid=0|信号发送给本进程组内的其它进程|
+|pid=-1|信号发送给除init进程外的所有进程，但发送者需要拥有堆目标进程发送信号的权限|
+|pid<-1|信号发送给组ID为-pid的进程组中的所有成员|
+
+Linux定义的信号值都大于0，如果sig取值为0，则kill函数不发送任何信号。但将sig设置为0可以用来检测目标进程或进程组是否存在，因为检查工作总在信号发送之前就执行。不过这种检测方式是不可靠的。一方面由于进程PID的回绕，可导致被检测的PID不是我们期望的进程的PID;另一方面，这种检测方法不是原子操作。
+
+kill出错时errno返回值：
+* EINVAL：无效信号
+* EPERM：该进程没有权限发送信号给任何一个目标进程
+* ESRCH：目标进程或进程组不存在
+
+#### 10.1.2 信号处理方式
+接收函数：
+```c++
+#include<signal.h>
+typedef void (*__sighandler_t) (int);
+```
+信号处理函数指代有一个整型参数，该参数用来指示信号类型。
+#### 10.1.3 Linux信号
+Linux标准信号
+|信号|起源|默认行为|含义|
+|:--:|:--:|:--:|:--:|
+|<strong style="color:red">SIGHUP</strong>|POSIX|Term|控制终端被挂起|
+|SIGINT|ANSI|Term|键盘输入以中断进程(ctrl+c)|
+|SIGQUIT|POSIX|Core|键盘输入使进程退出(ctrl+\)|
+|SIGILL|ANSI|Core|非法指令|
+|SIGTRAP|POSIX|Core|断点陷阱，用于调试|
+|SIGABRT|ANSI|Core|进程调用abort函数时生成该信号|
+|SIGIOT|4.2 BSD|Core|和SIGABRT相同|
+|SIGBUS|4.2 BSD|Core|总线错误，错误内存访问|
+|SIGFPE|ANSI|Core|浮点异常|
+|SIGKILL|POSIX|Term|终止一个进程，该型号不可被捕获或忽略|
+|SIGUSRI|POSIX|Term|用户自定义信号之一|
+|SIGSEGV|ANSI|Core|非法内存段引用|
+|SIGUSR2|POSIX|Term|用户自定义信号之一|
+|<strong style="color:red">SIGPIPE</strong>|POSIX|Term|往读端被关闭的管道或socket连接中写数据|
+|SIGALRM|POSIX|Term|由alarm或setitimer设置的实时闹钟超时引起|
+|SIGTERM|ANSI|Term|终止进程，kill命令默认发送的信号就是SIGTERM|
+|SIGSTKFLT|Linux|Term|早期的Linux使用该信号来报告数学协处理器栈错误|
+|SIFCLD|System V|Ign|和SIGCHLD相同|
+|SIGCHLD|POSIX|Ign|子进程状态发生变换(退出或暂停)|
+|SIGCONT|POSIX|Cont|启动被暂停的进程(ctrl+q)，如果目标进程未处于暂停状态，则信号被忽略|
+|SIGSTOP|POSIX|Stop|暂停进程(ctrl+s)，该信号不可被捕获或忽略|
+|SIGTSTP|POSIX|Stop|挂起进程(ctrl+z)|
+|SIGTTIN|POSIX|Stop|后台进程视图从终端读取输入|
+|SIGTTOU|POSIX|Stop|后台进程视图往终端输出内容|
+|<strong style="color:red">SIGURG</strong>|4.2 BSD|Ign|socket连接上接收到紧急数据|
+|SIGXCPU|4.2 BSD|Core|进程的CPU使用事件超出其软限制|
+|SIGXFSZ|4.2 BSD|Core|文件尺寸超过其软限制|
+|SIGVTALRM|4.2 BSD|Term|与SIGALRM类似，不过它只统计本进程用户空间代码的运行时间|
+|SIGPROF|4.3 BSD|Ign|终端窗口大小发生变化|
+|SIGPOLL|System V|Term|与SIGIO类似|
+|SIGIO|4.2 BSD|Term|IO就绪|
+|SIGPWR|System V|Term|对于使用UPS(Uninterruptable Power Supply)的系统，当电池电量过低时，SIGPWR信号将被触发|
+|SIGSYS|POSIX|Core|非法系统调用|
+|SIGUNUSED||Core|保留，通常与SIGSYS效果相同|
+
+### 信号函数
+#### 10.2.1 signal系统调用
+```c++
+// 为一个信号设置处理函数
+#include <signal.h>
+// _handler 指定sig的处理函数
+_sighandler_t signal(int sig, __sighandler_t _handler)
+//sig参数：要捕获的信号类型
+//_handler参数：指定信号sig的处理函数
+
+
+int sigaction(int sig, struct sigaction* act, struct sigaction* oact)
+//sig:要捕获的信号类型
+//act：指定新的信号处理方式
+//oact：输出信号先前的处理方式
+
+struct sigaction
+{
+#ifdef __USER_POSIX199309
+    union
+    {
+        _sighandler_t sa_handler;
+        void (*sa_sigaction) (int,siginfo_t*,void*);
+    }
+    _sigaction_handler;
+    #define sa_handler __sigaction_handler.sa_handler
+    #define sa_sigaction __sigaction_handler.sa_sigaction
+    #else
+        _sighandler_t sa_handler;
+    #endif
+        _sigset_t sa_mask;
+        int sa_flags;
+        void (*sa_restorer) (void);
+};
+//sa_hander成员指定信号处理函数，sa_mask成员设置进程的信号掩码，已指定哪些信号不能发送给本进程。
+```
+![sa_flags](picture/sa_flags选项.png)
+
+### 10.3 信号集
+#### 10.3.1 信号集函数
+```c++
+#include<signal.h>
+int sigemptyset(sigset_t* _set);//清空信号集
+int sigfillset(sigset_t* _set);//在信号集中设置所有信号
+int sigaddset(sigset_t* _set,int _signo);//将信号_signo添加至信号集中
+int sigdelset(sigset_t* _set,int _signo);//信号_signo从信号集中删除
+int sigismember(_const sigset_t* _set, int _signo;//测试_signo是否在信号集中
+```
+
+#### 10.3.2 进程信号掩码
+设置或查看进程的信号掩码：
+```c++
+#include<signal.h>
+int sigprocmask(int _how,_const sigset_t* _set,sigset_t* _oset);
+//_set：设置新的信号掩码
+//_oset：输出原来的信号掩码
+```
+_how参数
+|_how参数|含义|
+|:--:|:--:|
+|SIG_BLOCK|新的进程信号掩码是其当前值和_set指定信号集的并集|
+|SIG_UNBLOCK|新的进程信号掩码是其当前值和~_set信号集的交集，因此_set指定的信号集将不被屏蔽|
+|SIG_SETMASK|直接将进程信号掩码设置为_set|
+
+#### 10.3.3 被挂起的信号
+设置进程信号掩码后，被屏蔽的信号将不能被进程接收。如果给进程发送一个被屏蔽的信号，则操作系统将该型号设置为进程的一个被挂起的信号。如果我们取消对被挂起信号的屏蔽，则它能立即被进程接收到。
+获取进程当前被挂起的信号集：
+```c++
+#include<signal.h>
+int sigpending(sigset_t* set);
+//set：保存被挂起的信号集
+```
+### 10.4 统一事件源
+信号是一种异步事件：信号处理函数和程序的主循环是两条不同的执行路线。很显然，信号处理函数需要尽可能快地执行完毕，以确保该信号不被屏蔽（前提到过，为了避免一些竞态条件，信号在处理期间，系统不会再次触发它）太久。
+
+一种典型的解决方案是：把信号的主要处理逻辑放到程序的主循环中，当信号处理函数被触时，它只是简单地通知主循环程序接收到信号，并把信号值传递给主循环，主循环再根据收到的信号值执行目标信号对应的逻辑代码。
+
+信号处理函数通常使用管道来将信号“传递”给主循环：信号处理函数往管道的写端写人信号值，主循环则从管道的读端读出该信号值。那么主循环怎么知道管道上何时有数据可读呢？这很简单，我们只需要使用I／O复系统调用来监听管道的读端文件描述符上的可读事件·如此一来，信号事件就能和其他I/O事件一样被处理，即统一事件源。
+### 10.5 网络编程相关信号
+#### 10.5.1 SIGHUP
+当挂起进程的控制终端时，SIGHUP信号将被触发。对于没有控制终端的网络后台程序而言，通常使用SIGHUP信号来强制服务器重读配置文件。
+#### 10.5.2 SIGPIPE
+默认情况下，往一个读端关闭的通道或socket连接中写数据将引发SIGPIPE信号。
+#### 10.5.3 SIGURG
+Linux下，内核通知应用程序带外数据到达的主要方法有：
+* I/O复用技术：select等系统调用在接收到带外数据时将返回，并向应用程序报告socket上的异常事件
+* 使用SIGURG信号
+
+## 第十一章 定时器
+网络程序需要处理的第三类时间是定时事件，比如定期检测一个客户连接的活动状态。我们将每个定时事件分别封装为定时器，并使用某种容器类数据机构，将所有定时器串联起来，以实现对定时事件的统一管理。
+Linux的三种定时方法：
+* socket选项SO_RCVTIMEO和SO_SNDTIMEO
+* SIGALRM信号
+* I/O复用系统调用的超时参数
+
+### 11.1 socket选项SO_RCVTIMEO和SO_SNDTIMEO
+
+![](picture/SO_RCVTIMEO和SO_SNDTIMEO选项作用.png)
+
+```c++
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+
+int timeout_connect( const char* ip, int port, int time )
+{
+    int ret = 0;
+    struct sockaddr_in address;
+    bzero( &address, sizeof( address ) );
+    address.sin_family = AF_INET;
+    inet_pton( AF_INET, ip, &address.sin_addr );
+    address.sin_port = htons( port );
+
+    int sockfd = socket( PF_INET, SOCK_STREAM, 0 );
+    assert( sockfd >= 0 );
+
+    struct timeval timeout;
+    timeout.tv_sec = time;
+    timeout.tv_usec = 0;
+    socklen_t len = sizeof( timeout );
+    ret = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, len );
+    assert( ret != -1 );
+
+    ret = connect( sockfd, ( struct sockaddr* )&address, sizeof( address ) );
+    if ( ret == -1 )
+    {
+        if( errno == EINPROGRESS )
+        {
+            printf( "connecting timeout\n" );
+            return -1;
+        }
+        printf( "error occur when connecting to server\n" );
+        return -1;
+    }
+
+    return sockfd;
+}
+
+int main( int argc, char* argv[] )
+{
+    if( argc <= 2 )
+    {
+        printf( "usage: %s ip_address port_number\n", basename( argv[0] ) );
+        return 1;
+    }
+    const char* ip = argv[1];
+    int port = atoi( argv[2] );
+
+    int sockfd = timeout_connect( ip, port, 10 );
+    if ( sockfd < 0 )
+    {
+        return 1;
+    }
+    return 0;
+}
+
+```
+### 11.2 SIGALRM信号
+#### 11.2.1 基于升序链表的定时器
+```c++
+//11-02 lst_timer.h
+#ifndef LST_TIMER
+#define LST_TIMER
+
+#include <time.h>
+
+#define BUFFER_SIZE 64
+class util_timer;
+//用户结构数据：客户端socket地址、socket文件描述符、读缓存和定时器
+struct client_data
+{
+    sockaddr_in address;
+    int sockfd;
+    char buf[ BUFFER_SIZE ];
+    util_timer* timer;
+};
+
+//定时器类
+class util_timer
+{
+public:
+    util_timer() : prev( NULL ), next( NULL ){}
+
+public:
+   time_t expire; //任务的超时时间，这里使用绝对事件
+   void (*cb_func)( client_data* );//任务回调函数
+   //回调函数处理的客户数据，由定时器的执行者传递给回调函数
+   client_data* user_data;
+   util_timer* prev;//指向前一个定时器
+   util_timer* next;//指向下一个定时器
+};
+
+//定时器链表，是一个升序、双向链表，且带有头结点和尾节点
+class sort_timer_lst
+{
+public:
+    sort_timer_lst() : head( NULL ), tail( NULL ) {}
+    //链表被销毁时，删除其中所有定时器
+    ~sort_timer_lst()
+    {
+        util_timer* tmp = head;
+        while( tmp )
+        {
+            head = tmp->next;
+            delete tmp;
+            tmp = head;
+        }
+    }
+    //将目标定时器timer添加到链表中
+    void add_timer( util_timer* timer )
+    {
+        if( !timer )
+        {
+            return;
+        }
+        if( !head )
+        {
+            head = tail = timer;
+            return; 
+        }
+        /*如果目标定时器的超时时间小于当前链表中所有定时器的超时时间，
+        则把该定时器插入链表头部，作为链表的新的头结点，
+        否则就需要调用重载函数add_timer，把它插入链表中合适的位置。
+        */
+        if( timer->expire < head->expire )
+        {
+            timer->next = head;
+            head->prev = timer;
+            head = timer;
+            return;
+        }
+        add_timer( timer, head );
+    }
+    /*
+    当某个定时任务发生变化时，调整对应的定时器在链表中的位置。
+    这个函数只考虑被调整的定时器的超时时间延长的情况，即该定时器需要往链表的尾部移动
+    */
+    void adjust_timer( util_timer* timer )
+    {
+        if( !timer )
+        {
+            return;
+        }
+    //如果被调整的目标定时器处于链表尾部，或者该定时器新的超时值仍然小于其下一个定时器的超时值，则不用调整
+        util_timer* tmp = timer->next;
+        if( !tmp || ( timer->expire < tmp->expire ) )
+        {
+            return;
+        }
+    //如果目标定时器不是链表的头结点，则将该定时器从链表中取出，然后插入其原来所在位置之后的部分链表中
+        if( timer == head )
+        {
+            head = head->next;
+            head->prev = NULL;
+            timer->next = NULL;
+            add_timer( timer, head );
+        }
+    //如果目标定时器不是链表的头结点，则将该定时器从链表中取出，然后插入其原来所在位置之后的部分链表中
+        else
+        {
+            timer->prev->next = timer->next;
+            timer->next->prev = timer->prev;
+            add_timer( timer, timer->next );
+        }
+    }
+    //将目标定时器timer从链表中删除
+    void del_timer( util_timer* timer )
+    {
+        if( !timer )
+        {
+            return;
+        }
+        //链表中只有一个定时器，即目标定时器
+        if( ( timer == head ) && ( timer == tail ) )
+        {
+            delete timer;
+            head = NULL;
+            tail = NULL;
+            return;
+        }
+        //如果链表中至少由2各定时器，且目标定时器是链表的头结点，
+        //则将链表的头结点重置为原头结点的下一个节点，然后删除目标定时器
+        if( timer == head )
+        {
+            head = head->next;
+            head->prev = NULL;
+            delete timer;
+            return;
+        }
+        //如果链表中至少由2个定时器，且目标定时器是链表的尾节点
+        //则将链表的尾节点重置为原尾节点的前一个节点，然后删除目标定时器
+        if( timer == tail )
+        {
+            tail = tail->prev;
+            tail->next = NULL;
+            delete timer;
+            return;
+        }
+        //如果目标定时器位于链表中间，则把它前后的定时器串联起来，然后删除目标定时器
+        timer->prev->next = timer->next;
+        timer->next->prev = timer->prev;
+        delete timer;
+    }
+    /*
+    SIGALRM信号每次被触发就在其信号处理函数(如果使用统一事件源，则是主函数)中窒息感一次tick函数，以处理链表上到期的任务
+    */
+    void tick()
+    {
+        if( !head )
+        {
+            return;
+        }
+        printf( "timer tick\n" );
+        time_t cur = time( NULL );
+        util_timer* tmp = head;
+        while( tmp )
+        {
+        //因为每个定时器都使用绝对时间作为超时值，所以我们可以把定时器的超时值和系统当前时间，比较以判断定时器是否到期
+            if( cur < tmp->expire )
+            {
+                break;
+            }
+        //调用定时器的回调函数，以执行定时任务
+            tmp->cb_func( tmp->user_data );
+        //执行完定时器中的定时任务后，就删除该节点，并充值链表头结点
+            head = tmp->next;
+            if( head )
+            {
+                head->prev = NULL;
+            }
+            delete tmp;
+            tmp = head;
+        }
+    }
+
+private:
+//一个重载的辅助函数，它被公有的add_timer函数和adjust_timer函数调用。
+//该函数表示将目标定时器timer添加到节点lst_head之后的部分链表中
+    void add_timer( util_timer* timer, util_timer* lst_head )
+    {
+        util_timer* prev = lst_head;
+        util_timer* tmp = prev->next;
+//遍历lst_head节点之后的部分链表，直到找到一个超时时间大于目标定时器的超时时间的节点，并将目标定时器插入该节点之前
+        while( tmp )
+        {
+            if( timer->expire < tmp->expire )
+            {
+                prev->next = timer;
+                timer->next = tmp;
+                tmp->prev = timer;
+                timer->prev = prev;
+                break;
+            }
+            prev = tmp;
+            tmp = tmp->next;
+        }
+//如果遍历完lst_head节点之后的部分链表，仍未找到超时时间大于目标定时器的超时时间的节点，
+//则将目标定时器插入链表尾部，并把它设置为链表新的尾节点
+        if( !tmp )
+        {
+            prev->next = timer;
+            timer->prev = prev;
+            timer->next = NULL;
+            tail = timer;
+        }
+        
+    }
+
+private:
+    util_timer* head;
+    util_timer* tail;
+};
+
+#endif
+
+```
+
+#### 11.2.2 处理非活动连接
+利用alarm函数周期性地触发SIGALRM信号，该信号的信号处理函数利用管道通知主循环执行定时器链表上额定时任务——关闭非活动的连接。
+```c++
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/epoll.h>
+#include <pthread.h>
+#include "lst_timer.h"
+
+#define FD_LIMIT 65535
+#define MAX_EVENT_NUMBER 1024
+#define TIMESLOT 5
+
+static int pipefd[2];
+//利用lis_timer.h的升序链表来管理定时器
+static sort_timer_lst timer_lst;
+static int epollfd = 0;
+
+int setnonblocking( int fd )
+{
+    int old_option = fcntl( fd, F_GETFL );
+    int new_option = old_option | O_NONBLOCK;
+    fcntl( fd, F_SETFL, new_option );
+    return old_option;
+}
+
+void addfd( int epollfd, int fd )
+{
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLIN | EPOLLET;
+    epoll_ctl( epollfd, EPOLL_CTL_ADD, fd, &event );
+    setnonblocking( fd );
+}
+
+void sig_handler( int sig )
+{
+    int save_errno = errno;
+    int msg = sig;
+    send( pipefd[1], ( char* )&msg, 1, 0 );
+    errno = save_errno;
+}
+
+void addsig( int sig )
+{
+    struct sigaction sa;
+    memset( &sa, '\0', sizeof( sa ) );
+    sa.sa_handler = sig_handler;
+    sa.sa_flags |= SA_RESTART;
+    sigfillset( &sa.sa_mask );
+    assert( sigaction( sig, &sa, NULL ) != -1 );
+}
+
+void timer_handler()
+{
+//定时处理任务，实际上就是调用tick函数
+    timer_lst.tick();
+//因为一次alarm调用只会引起一次SIGALRM信号，所以我们需重新定时，以不断触发SIGALRM信号
+    alarm( TIMESLOT );
+}
+//定时器回调函数，它删除非活动连接socket上的注册时间，并关闭
+void cb_func( client_data* user_data )
+{
+    epoll_ctl( epollfd, EPOLL_CTL_DEL, user_data->sockfd, 0 );
+    assert( user_data );
+    close( user_data->sockfd );
+    printf( "close fd %d\n", user_data->sockfd );
+}
+
+int main( int argc, char* argv[] )
+{
+    if( argc <= 2 )
+    {
+        printf( "usage: %s ip_address port_number\n", basename( argv[0] ) );
+        return 1;
+    }
+    const char* ip = argv[1];
+    int port = atoi( argv[2] );
+
+    int ret = 0;
+    struct sockaddr_in address;
+    bzero( &address, sizeof( address ) );
+    address.sin_family = AF_INET;
+    inet_pton( AF_INET, ip, &address.sin_addr );
+    address.sin_port = htons( port );
+
+    int listenfd = socket( PF_INET, SOCK_STREAM, 0 );
+    assert( listenfd >= 0 );
+
+    ret = bind( listenfd, ( struct sockaddr* )&address, sizeof( address ) );
+    assert( ret != -1 );
+
+    ret = listen( listenfd, 5 );
+    assert( ret != -1 );
+
+    epoll_event events[ MAX_EVENT_NUMBER ];
+    int epollfd = epoll_create( 5 );
+    assert( epollfd != -1 );
+    addfd( epollfd, listenfd );
+
+    ret = socketpair( PF_UNIX, SOCK_STREAM, 0, pipefd );
+    assert( ret != -1 );
+    setnonblocking( pipefd[1] );
+    addfd( epollfd, pipefd[0] );
+
+    // 设置信号处理函数
+    addsig( SIGALRM );
+    addsig( SIGTERM );
+    bool stop_server = false;
+
+    client_data* users = new client_data[FD_LIMIT]; 
+    bool timeout = false;
+    alarm( TIMESLOT );//定时
+
+    while( !stop_server )
+    {
+        int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );
+        if ( ( number < 0 ) && ( errno != EINTR ) )
+        {
+            printf( "epoll failure\n" );
+            break;
+        }
+    
+        for ( int i = 0; i < number; i++ )
+        {
+            int sockfd = events[i].data.fd;
+            //处理新到的客户连接
+            if( sockfd == listenfd )
+            {
+                struct sockaddr_in client_address;
+                socklen_t client_addrlength = sizeof( client_address );
+                int connfd = accept( listenfd, ( struct sockaddr* )&client_address, &client_addrlength );
+                addfd( epollfd, connfd );
+                users[connfd].address = client_address;
+                users[connfd].sockfd = connfd;
+//创建定时器，设置其回调函数与超时时间，然后绑定定时器与用户数据，最后将定时器添加到链表timer_lst中
+                util_timer* timer = new util_timer;
+                timer->user_data = &users[connfd];
+                timer->cb_func = cb_func;
+                time_t cur = time( NULL );
+                timer->expire = cur + 3 * TIMESLOT;
+                users[connfd].timer = timer;
+                timer_lst.add_timer( timer );
+            }
+            //处理信号
+            else if( ( sockfd == pipefd[0] ) && ( events[i].events & EPOLLIN ) )
+            {
+                int sig;
+                char signals[1024];
+                ret = recv( pipefd[0], signals, sizeof( signals ), 0 );
+                if( ret == -1 )
+                {
+                    // handle the error
+                    continue;
+                }
+                else if( ret == 0 )
+                {
+                    continue;
+                }
+                else
+                {
+                    for( int i = 0; i < ret; ++i )
+                    {
+                        switch( signals[i] )
+                        {
+                            case SIGALRM:
+                            {
+//用timeout变量标记有定时任务需要处理，但不立即处理定时任务，。这时因为定时任务的优先级不是很高，需要优先处理其它更重要的任务
+                                timeout = true;
+                                break;
+                            }
+                            case SIGTERM:
+                            {
+                                stop_server = true;
+                            }
+                        }
+                    }
+                }
+            }
+            //处理客户连接上接收的数据
+            else if(  events[i].events & EPOLLIN )
+            {
+                memset( users[sockfd].buf, '\0', BUFFER_SIZE );
+                ret = recv( sockfd, users[sockfd].buf, BUFFER_SIZE-1, 0 );
+                printf( "get %d bytes of client data %s from %d\n", ret, users[sockfd].buf, sockfd );
+                util_timer* timer = users[sockfd].timer;
+                if( ret < 0 )
+                {
+                //如果发生错误，则关闭连接，并移除其对应的定时器
+                    if( errno != EAGAIN )
+                    {
+                        cb_func( &users[sockfd] );
+                        if( timer )
+                        {
+                            timer_lst.del_timer( timer );
+                        }
+                    }
+                }
+                else if( ret == 0 )
+                {
+            //如果对方已经关闭连接，则我们也关闭连接，并移除对应的定时器
+                    cb_func( &users[sockfd] );
+                    if( timer )
+                    {
+                        timer_lst.del_timer( timer );
+                    }
+                }
+                else
+                {
+                    //send( sockfd, users[sockfd].buf, BUFFER_SIZE-1, 0 );
+            //如果某个客户连接上有数据可读，则我们需要调整该连接对应的定时器，以延迟该连接被关闭时间
+                    if( timer )
+                    {
+                        time_t cur = time( NULL );
+                        timer->expire = cur + 3 * TIMESLOT;
+                        printf( "adjust timer once\n" );
+                        timer_lst.adjust_timer( timer );
+                    }
+                }
+            }
+            else
+            {
+                // others
+            }
+        }
+//最后处理定时时间，因为I/O时间有更高的优先级
+        if( timeout )
+        {
+            timer_handler();
+            timeout = false;
+        }
+    }
+
+    close( listenfd );
+    close( pipefd[1] );
+    close( pipefd[0] );
+    delete [] users;
+    return 0;
+}
+
+```
+### 11.3 I/O复用系统调用的超时参数
+使用I/O复用来定时，需要不断更新定时参数以反映剩余时间：
+```c++
+#define TIMEOUT 5000
+
+int timeout = TIMEOUT;
+time_t start = time( NULL );
+time_t end = time( NULL );
+while( 1 )
+{
+    printf( "the timeout is now %d mill-seconds\n", timeout );
+    start = time( NULL );
+    int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, timeout );
+    if( ( number < 0 ) && ( errno != EINTR ) )
+    {
+        printf( "epoll failure\n" );
+        break;
+    }
+//epoll_wait返回0，说明超时时间一到，此时便可处理定时任务，并重置定时时间
+    if( number == 0 )
+    {
+        // timeout
+        timeout = TIMEOUT;
+        continue;
+    }
+//返回值>0，则本次epoll_wait调用持续的时间是(end-start)*1000ms
+//需要将定时时间timeout减去这段时间，以获得下次epoll_wait调用的超时参数。
+    end = time( NULL );
+    timeout -= ( end - start ) * 1000;
+//重新计算之后的timeout值有可能等于0，说明本次epoll_wait调用返回时，不仅有文件描述符就绪，而且其超时时间也刚好到达
+//此时需要处理定时任务并重置定时时间
+
+    if( timeout <= 0 )
+    {
+        // timeout
+        timeout = TIMEOUT;
+    }
+
+    // handle connections
+}
+```
+
+### 11.4 高性能定时器
+暂时放弃
+#### 11.4.1 时间轮
+#### 11.4.2 时间堆
+
+## 第十二章 高性能I/O框架库Libevent
+### 12.1 I/O框架库概述
+各个框架库实现原理基本类似，要么是Reactor模式实现，要么是Proactor模式实现，要么两种都实现。举例来说，基于Reactor模式实现的IO框架包括以下几个组件：句柄（handle）、事件多路分发器（EventDemultiplexer）、事件处理器（EventHandler）和具体的事件处理器（ConcreteEventHandler）、Reactor。
+
+**句柄**：
+I/O框架库要处理的对象，即I/O事件、信号和定时事件，统一称为事件源，一个事件源通常和一个句柄绑定在一起。
+
+句柄的作用：当内核检测到就绪事件时，它将通过句柄来通知应用程序这一事件。
+
+在Linux环境下，I/O事件对应的句柄时文件描述符，信号事件对应的句柄就是信号值。
+
+**事件多路分发器**
+事件到来是随机、异步的。程序需要循环地等待并发事件，这就是事件循环。在事件循环中，等待事件一般使用I/O复用计数来实现。
+
+I/O框架库一般将系统支持的各种I/O复用系统调用封装成统一的接口，称为事件多路分发器。
+
+事件多路分发器的`demultiplex`方法是等待事件的核心函数，其内部调用的是select、poll、epoll_wait等函数；register_event和remove_event分别对应添加事件和删除事件功能。
+
+**事件处理器和具体事件处理器**
+事件处理器执行事件对应的业务逻辑。它通常包含一个或多个handle_event回调函数，这些回调函数在事件循环中被执行。
+
+I/O框架库提供的事件处理器通常是一个接口，用户需要继承它来实现自己的事件处理器，即具体时间处理器。
+
+必须将事件处理器与get_handle返回的句柄绑定，才能在事件发生时取到正确的事件处理器。
+
+**Reactor**
+Reactor是I/O框架库的核心，提供的方法包括：
+* handle_events。执行事件循环，重复过程：等待事件，然后依次处理所有就绪事件对应的事件处理器
+* register_handler。调用事件多路分发器的register_event方法来往事件多路分发器中注册一个事件
+* remove_handler。该方法调用事件多路分发器的remove_event方法来删除事件多路分发器中的一个事件。
+
+![时序图](picture/IO框架库的工作时序图.png)
+
+### 12.2 Libevent源码分析
+特点：
+* 跨平台支持。
+* 统一事件源：对I/O事件、信号和定时时间提供统一的处理
+* 线程安全：Libevent使用libevent_pthreads库来提供线程安全支持
+* 基于Reactor模式的实现
+
+#### 12.2.1 一个实例
+Libevent库实现了一个"hello world"程序
+```c++
+#include <sys/signal.h>
+#include <event.h>
+
+void signal_cb( int fd, short event, void* argc )
+{
+    struct event_base* base = ( event_base* )argc;
+    struct timeval delay = { 2, 0 };
+    printf( "Caught an interrupt signal; exiting cleanly in two seconds...\n" );
+    event_base_loopexit( base, &delay );
+}  
+
+void timeout_cb( int fd, short event, void* argc )
+{
+    printf( "timeout\n" );
+}
+
+int main()  
+{  
+    struct event_base* base = event_init();
+
+    struct event* signal_event = evsignal_new( base, SIGINT, signal_cb, base );
+    event_add( signal_event, NULL );
+
+    timeval tv = { 1, 0 };
+    struct event* timeout_event = evtimer_new( base, timeout_cb, NULL );
+    event_add( timeout_event, &tv );
+
+    event_base_dispatch( base );
+
+    event_free( timeout_event );
+    event_free( signal_event );
+    event_base_free( base );
+}  
+```
+
+主要逻辑：
+1. 调用`event_init函数`创建`event_base对象`。一个`event_base对象`相当于一个Reactor实例
+2. 创建具体的事件处理器，并设置它们所从属的Reactor实例。evsignal_new和evtimer_new分别用于创建信号事件处理器和定时事件处理器，它们是定义在`include/event2/event.h`中的宏/
+```c++
+#define evsignal_new(b,x,cb,arg) event_new((b),(x),EV_SIGNAL|EV_PERSIST,(cb),(arg))
+#define evtimer_new(b,cb,arg) event_new((b),-1,0,(cb),(arg))
+typedef void (*event_callback_fn)(evutil_socket_t, short, void *);
+
+struct event* event_new(struct event_base* base,evutil_socket_t fd,short events,void (*cb)event_callback_fn,void* arg);
+```
+base：指定新创建事件处理器从属的Reactor
+fd：指定与该事件处理器关联的句柄，创建I/O事件处理器时，应该给fd传递文件描述符值；创建信号处理事件时，应该给fd参数传递信号值
+<span id="types_of_events">events：指定事件类型，具体如下</span>
+![事件类型](picture/Libevent支持的事件类型.png)
+
+EV_PERSIST：事件被触发后，自动重新对这个event调用event_add函数。
+
+cb：指定目标是将对应的回调函数
+arg：Reactor传递给回调函数的参数
+
+event_new函数成功时返回一个event类型对象，也就是Libevent的事件处理器。
+约定的概念如下：
+* 事件：一个句柄上绑定的事件
+* 事件处理器：也是event结合体类型的对象，除了包含时间必备的句柄和事件类型外，还有回调函数等其它成员
+* 事件由事件多路分发器管理，事件处理器由事件队列管理。
+* 事件循环对一个就绪事件的处理，指的是执行该事件对应的事件处理器中的回调函数。
+3. 调用event_add函数，将事件处理器添加到注册事件队列中，并将该事件处理器对应的事件添加到事件多路分发器中。event_add函数相当于Reactor中的register_handler方法。
+4. 调用event_base_dispatch函数来执行事件循环
+5. 事件循环结束后，使用*_free系列函数来释放系统资源
+
+#### 12.2.3 event结构体
+event结构体是Libevent中的事件处理器，封装了句柄、事件类型、回调函数以及其它必要的标志和数据，在`usr/include/event2/event_struct.h`中定义：
+```c++
+struct event {
+	struct event_callback ev_evcallback;
+
+	/* for managing timeouts */
+	union {
+		TAILQ_ENTRY(event) ev_next_with_common_timeout;
+		int min_heap_idx;
+	} ev_timeout_pos;
+	evutil_socket_t ev_fd;
+
+	struct event_base *ev_base;
+
+	union {
+		/* used for io events */
+		struct {
+			LIST_ENTRY (event) ev_io_next;
+			struct timeval ev_timeout;
+		} ev_io;
+
+		/* used by signal events */
+		struct {
+			LIST_ENTRY (event) ev_signal_next;
+			short ev_ncalls;
+			/* Allows deletes in callback */
+			short *ev_pncalls;
+		} ev_signal;
+	} ev_;
+
+	short ev_events;
+	short ev_res;		/* result passed to event callback */
+	struct timeval ev_timeout;
+};
+```
+* ev_events：代表事件类型，其取值按[表12-2](#types_of_events)所示的标志的按位或。
+* ev_next：所有已注册的事件处理器(包括I/O事件处理器和信号事件处理器)通过该成员串联成一个为队列，称之为注册事件队列。
+* ev_active_next：所有就绪的事件处理器通过该成员串联为一个为队列，称之为活动事件队列。在事件循环中给，Reactor会按优先级从高到低遍历所有活动事件队列，并依次处理其中的事件处理器
+* ev_timeout_pos：该联合体只用于定时事件处理器。对于通用定时器(存储在尾队列的定时器)，ev_timeout_pos联合体的ev_next_with_common_timeout成员指出了该定时器在通用定时器队列中的位置；对于其它定时器，ev_timeout_pos联合体的min_heap_idx成员指出了该定时器在时间堆的位置。一个定时器是否通用取决于其超时值的大小。
+* _ev。该联合体的ev.ev_io.ev_io_next成员串联成一个为队列，称为<strong style="color:red">I/O事件队列</strong>。所有具有相同信号值得信号时间处理器通过ev.ev_signal.ev_signal_next成员串联成一个尾队列，成为给<strong style="color:red">信号事件队列</strong>。ev.ev_signal.ev_ncalls成员指定信号事件发生时，Reactor需要执行多少次该事件对应的事件处理器中的回调函数。ev.ev_signal.ev_pncalls指针成员要么是NULL，要么指向ev.ev_signal.ev_ncalls
+
+* ev_fd：对于I/O事件处理器，它是文件描述符值；对于信号事件处理器，它是信号值。
+* ev_base：该事件处理器从属的event_base实例
+* ev_res：记录当前激活事件的类型
+* ev_flags：某些事件标志，选值定义在`include/event2/event_struct.h`
+```c++
+#define EVLIST_TIMEOUT 0x01 //事件处理器从属于通用定时器队列或时间堆
+#define EVLIST_INSERTED 0x02//事件处理器从属于注册事件队列
+#define EVLIST_SIGNAL 0x04//没有使用
+#define EVLIST_ACTIVE 0x08//事件处理器从属于活动事件队列
+#define EVLIST_INTERNAL 0x10//内部使用
+#define EVLIST_INIT 0x80//事件处理器已被初始化
+#define EVLIST_ALL (0xf000|0x9f)//定义所有标志
+```
+* ev_pri：事件处理器优先级，值越小有限度越高
+* ev_closure：event_base执行事件处理器的回调函数时的行为，选值定义在`event_internal.h`：
+```c++
+#define EV_CLOSURE_NONE 0//默认
+#define EV_CLOSURE_SIGNAL 1//执行信号事件处理器的回调函数时，调用ev.ev_signal.ev_ncalls次该回调函数
+#define EV_CLOSURE_PERSIST 2//执行完回调函数后，在此将事件处理器加入注册事件队列中
+```
+* ev_timeout：只指定时器的超时值
+* ev_callback：事件处理器的回调函数，由event_base调用。回调函数被调用时，它的3个参数分别被传入事件处理器的如下3个成员：ev_fd、ev_res和ev_arg。
+* ev_arg：回调函数的参数
+
+#### 12.2.4 往注册事件队列中添加事件处理器
+event.c文件中的event_add函数主要是调用另外一个内部函数`event_add_internal`(最新的为`event_add_nolock_`)
+```c++
+int
+event_add_nolock_(struct event *ev, const struct timeval *tv,
+    int tv_is_absolute)
+{
+	struct event_base *base = ev->ev_base;
+	int res = 0;
+	int notify = 0;
+
+	EVENT_BASE_ASSERT_LOCKED(base);
+	event_debug_assert_is_setup_(ev);
+
+	event_debug((
+		 "event_add: event: %p (fd "EV_SOCK_FMT"), %s%s%s%scall %p",
+		 ev,
+		 EV_SOCK_ARG(ev->ev_fd),
+		 ev->ev_events & EV_READ ? "EV_READ " : " ",
+		 ev->ev_events & EV_WRITE ? "EV_WRITE " : " ",
+		 ev->ev_events & EV_CLOSED ? "EV_CLOSED " : " ",
+		 tv ? "EV_TIMEOUT " : " ",
+		 ev->ev_callback));
+
+	EVUTIL_ASSERT(!(ev->ev_flags & ~EVLIST_ALL));
+
+	if (ev->ev_flags & EVLIST_FINALIZING) {
+		/* XXXX debug */
+		return (-1);
+	}
+
+	/*
+	 * prepare for timeout insertion further below, if we get a
+	 * failure on any step, we should not change any state.
+	 */
+	if (tv != NULL && !(ev->ev_flags & EVLIST_TIMEOUT)) {
+		if (min_heap_reserve_(&base->timeheap,
+			1 + min_heap_size_(&base->timeheap)) == -1)
+			return (-1);  /* ENOMEM == errno */
+	}
+
+	/* If the main thread is currently executing a signal event's
+	 * callback, and we are not the main thread, then we want to wait
+	 * until the callback is done before we mess with the event, or else
+	 * we can race on ev_ncalls and ev_pncalls below. */
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+	if (base->current_event == event_to_event_callback(ev) &&
+	    (ev->ev_events & EV_SIGNAL)
+	    && !EVBASE_IN_THREAD(base)) {
+		++base->current_event_waiters;
+		EVTHREAD_COND_WAIT(base->current_event_cond, base->th_base_lock);
+	}
+#endif
+
+	if ((ev->ev_events & (EV_READ|EV_WRITE|EV_CLOSED|EV_SIGNAL)) &&
+	    !(ev->ev_flags & (EVLIST_INSERTED|EVLIST_ACTIVE|EVLIST_ACTIVE_LATER))) {
+		if (ev->ev_events & (EV_READ|EV_WRITE|EV_CLOSED))
+			res = evmap_io_add_(base, ev->ev_fd, ev);
+		else if (ev->ev_events & EV_SIGNAL)
+			res = evmap_signal_add_(base, (int)ev->ev_fd, ev);
+		if (res != -1)
+			event_queue_insert_inserted(base, ev);
+		if (res == 1) {
+			/* evmap says we need to notify the main thread. */
+			notify = 1;
+			res = 0;
+		}
+	}
+
+	/*
+	 * we should change the timeout state only if the previous event
+	 * addition succeeded.
+	 */
+	if (res != -1 && tv != NULL) {
+		struct timeval now;
+		int common_timeout;
+#ifdef USE_REINSERT_TIMEOUT
+		int was_common;
+		int old_timeout_idx;
+#endif
+
+		/*
+		 * for persistent timeout events, we remember the
+		 * timeout value and re-add the event.
+		 *
+		 * If tv_is_absolute, this was already set.
+		 */
+		if (ev->ev_closure == EV_CLOSURE_EVENT_PERSIST && !tv_is_absolute)
+			ev->ev_io_timeout = *tv;
+
+#ifndef USE_REINSERT_TIMEOUT
+		if (ev->ev_flags & EVLIST_TIMEOUT) {
+			event_queue_remove_timeout(base, ev);
+		}
+#endif
+
+		/* Check if it is active due to a timeout.  Rescheduling
+		 * this timeout before the callback can be executed
+		 * removes it from the active list. */
+		if ((ev->ev_flags & EVLIST_ACTIVE) &&
+		    (ev->ev_res & EV_TIMEOUT)) {
+			if (ev->ev_events & EV_SIGNAL) {
+				/* See if we are just active executing
+				 * this event in a loop
+				 */
+				if (ev->ev_ncalls && ev->ev_pncalls) {
+					/* Abort loop */
+					*ev->ev_pncalls = 0;
+				}
+			}
+
+			event_queue_remove_active(base, event_to_event_callback(ev));
+		}
+
+		gettime(base, &now);
+
+		common_timeout = is_common_timeout(tv, base);
+#ifdef USE_REINSERT_TIMEOUT
+		was_common = is_common_timeout(&ev->ev_timeout, base);
+		old_timeout_idx = COMMON_TIMEOUT_IDX(&ev->ev_timeout);
+#endif
+
+		if (tv_is_absolute) {
+			ev->ev_timeout = *tv;
+		} else if (common_timeout) {
+			struct timeval tmp = *tv;
+			tmp.tv_usec &= MICROSECONDS_MASK;
+			evutil_timeradd(&now, &tmp, &ev->ev_timeout);
+			ev->ev_timeout.tv_usec |=
+			    (tv->tv_usec & ~MICROSECONDS_MASK);
+		} else {
+			evutil_timeradd(&now, tv, &ev->ev_timeout);
+		}
+
+		event_debug((
+			 "event_add: event %p, timeout in %d seconds %d useconds, call %p",
+			 ev, (int)tv->tv_sec, (int)tv->tv_usec, ev->ev_callback));
+
+#ifdef USE_REINSERT_TIMEOUT
+		event_queue_reinsert_timeout(base, ev, was_common, common_timeout, old_timeout_idx);
+#else
+		event_queue_insert_timeout(base, ev);
+#endif
+
+		if (common_timeout) {
+			struct common_timeout_list *ctl =
+			    get_common_timeout_list(base, &ev->ev_timeout);
+			if (ev == TAILQ_FIRST(&ctl->events)) {
+				common_timeout_schedule(ctl, &now, ev);
+			}
+		} else {
+			struct event* top = NULL;
+			/* See if the earliest timeout is now earlier than it
+			 * was before: if so, we will need to tell the main
+			 * thread to wake up earlier than it would otherwise.
+			 * We double check the timeout of the top element to
+			 * handle time distortions due to system suspension.
+			 */
+			if (min_heap_elt_is_top_(ev))
+				notify = 1;
+			else if ((top = min_heap_top_(&base->timeheap)) != NULL &&
+					 evutil_timercmp(&top->ev_timeout, &now, <))
+				notify = 1;
+		}
+	}
+
+	/* if we are not in the right thread, we need to wake up the loop */
+	if (res != -1 && notify && EVBASE_NEED_NOTIFY(base))
+		evthread_notify_base(base);
+
+	event_debug_note_add_(ev);
+
+	return (res);
+}
+```
+重要的函数：
+* evmap_io_add：该函数将I/O事件添加到事件多路分发器中，并将对应的事件处理器添加到I/O事件队列中，同时建立I/O事件和I/O事件处理器之间的映射关系
+* evmap_signal_add：该函数将信号事件添加到事件多路分发器中，并将对应的事件处理器添加到信号事件队列中，同时建立信号事件和信号事件处理器之间的映射挂安息
+* event_queue_insert：该函数将事件处理器添加到各种给事件队列中，将I/O事件处理器和信号处理器插入注册事件队列；将定时器插入通用定时器队列或时间堆；将被激活的事件处理器添加到活动事件队列中。
+
+#### 12.2.5 往时间多路分发器中注册事件
+event_queue_insert函数只能将一个事件处理器加入event_base的某个事件队列中。
+通过调用`evmap.c`中的evmap_io_add和evmap_signal_add两个函数让事件多路分发器来监听其对应的事件，同时建立文件描述符、信号值与事件处理器之间的映射关系。
+```c++
+#ifdef EVMAP_USE_HT
+//entries存储信号值和信号事件处理器之间的映射关系(用信号值索引数组entries即得到对应的信号事件处理器)
+struct event_signal_map {
+	/* An array of evmap_io * or of evmap_signal *; empty entries are
+	 * set to NULL. */
+	void **entries;
+	/* The number of entries available in entries */
+	int nentries;
+};
+
+struct event_map_entry {
+	HT_ENTRY(event_map_entry) map_node;
+	evutil_socket_t fd;
+	union { /* This is a union in case we need to make more things that can
+			   be in the hashtable. */
+		struct evmap_io evmap_io;
+	} ent;
+};
+// I/O事件队列，确切来说，evmap_io.events才是I/O事件队列
+struct evmap_io {
+	struct event_dlist events;
+	ev_uint16_t nread;
+	ev_uint16_t nwrite;
+	ev_uint16_t nclose;
+};
+//信号事件队列，确切来说，evmap_signal.events才是信号队列
+struct evmap_signal {
+	struct event_dlist events;
+};
+```
+
+evmap_io_add函数
+```c++
+/* return -1 on error, 0 on success if nothing changed in the event backend,
+ * and 1 on success if something did. */
+int
+evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
+{
+	const struct eventop *evsel = base->evsel;
+	struct event_io_map *io = &base->io;
+	struct evmap_io *ctx = NULL;
+	int nread, nwrite, nclose, retval = 0;
+	short res = 0, old = 0;
+	struct event *old_ev;
+
+	EVUTIL_ASSERT(fd == ev->ev_fd);
+
+	if (fd < 0)
+		return 0;
+
+#ifndef EVMAP_USE_HT
+	if (fd >= io->nentries) {
+		if (evmap_make_space(io, fd, sizeof(struct evmap_io *)) == -1)
+			return (-1);
+	}
+#endif
+	GET_IO_SLOT_AND_CTOR(ctx, io, fd, evmap_io, evmap_io_init,
+						 evsel->fdinfo_len);
+
+	nread = ctx->nread;
+	nwrite = ctx->nwrite;
+	nclose = ctx->nclose;
+
+	if (nread)
+		old |= EV_READ;
+	if (nwrite)
+		old |= EV_WRITE;
+	if (nclose)
+		old |= EV_CLOSED;
+
+	if (ev->ev_events & EV_READ) {
+		if (++nread == 1)
+			res |= EV_READ;
+	}
+	if (ev->ev_events & EV_WRITE) {
+		if (++nwrite == 1)
+			res |= EV_WRITE;
+	}
+	if (ev->ev_events & EV_CLOSED) {
+		if (++nclose == 1)
+			res |= EV_CLOSED;
+	}
+	if (EVUTIL_UNLIKELY(nread > 0xffff || nwrite > 0xffff || nclose > 0xffff)) {
+		event_warnx("Too many events reading or writing on fd %d",
+		    (int)fd);
+		return -1;
+	}
+	if (EVENT_DEBUG_MODE_IS_ON() &&
+	    (old_ev = LIST_FIRST(&ctx->events)) &&
+	    (old_ev->ev_events&EV_ET) != (ev->ev_events&EV_ET)) {
+		event_warnx("Tried to mix edge-triggered and non-edge-triggered"
+		    " events on fd %d", (int)fd);
+		return -1;
+	}
+
+	if (res) {
+		void *extra = ((char*)ctx) + sizeof(struct evmap_io);
+		/* XXX(niels): we cannot mix edge-triggered and
+		 * level-triggered, we should probably assert on
+		 * this. */
+		if (evsel->add(base, ev->ev_fd,
+			old, (ev->ev_events & EV_ET) | res, extra) == -1)
+			return (-1);
+		retval = 1;
+	}
+
+	ctx->nread = (ev_uint16_t) nread;
+	ctx->nwrite = (ev_uint16_t) nwrite;
+	ctx->nclose = (ev_uint16_t) nclose;
+    //将ev插到I/O事件队列ctx的尾部
+	LIST_INSERT_HEAD(&ctx->events, ev, ev_io_next);
+
+	return (retval);
+}
+```
+
+#### 12.2.6 eventop结构体
+eventop结构体封装了I/O复用机制必要的一些操作，比如注册事件、等待事件等。它为event_base支持的所有后端I/O复用机制提供了一个统一的接口。该结构体定义在event_internal.h中：
+```c++
+struct eventop {
+	/** The name of this backend. */
+	const char *name;
+	/** Function to set up an event_base to use this backend.  It should
+	 * create a new structure holding whatever information is needed to
+	 * run the backend, and return it.  The returned pointer will get
+	 * stored by event_init into the event_base.evbase field.  On failure,
+	 * this function should return NULL. */
+	void *(*init)(struct event_base *);
+	/** Enable reading/writing on a given fd or signal.  'events' will be
+	 * the events that we're trying to enable: one or more of EV_READ,
+	 * EV_WRITE, EV_SIGNAL, and EV_ET.  'old' will be those events that
+	 * were enabled on this fd previously.  'fdinfo' will be a structure
+	 * associated with the fd by the evmap; its size is defined by the
+	 * fdinfo field below.  It will be set to 0 the first time the fd is
+	 * added.  The function should return 0 on success and -1 on error.
+	 */
+	int (*add)(struct event_base *, evutil_socket_t fd, short old, short events, void *fdinfo);
+	/** As "add", except 'events' contains the events we mean to disable. */
+	int (*del)(struct event_base *, evutil_socket_t fd, short old, short events, void *fdinfo);
+	/** Function to implement the core of an event loop.  It must see which
+	    added events are ready, and cause event_active to be called for each
+	    active event (usually via event_io_active or such).  It should
+	    return 0 on success and -1 on error.
+	 */
+	int (*dispatch)(struct event_base *, struct timeval *);
+	/** Function to clean up and free our data from the event_base. */
+	void (*dealloc)(struct event_base *);
+	/** Flag: set if we need to reinitialize the event base after we fork.
+	 */
+	int need_reinit;
+	/** Bit-array of supported event_method_features that this backend can
+	 * provide. */
+	enum event_method_feature features;
+	/** Length of the extra information we should record for each fd that
+	    has one or more active events.  This information is recorded
+	    as part of the evmap entry for each fd, and passed as an argument
+	    to the add and del functions above.
+	 */
+	size_t fdinfo_len;
+};
+```
+
+优先级定义在`event.c`中：
+```c++
+#ifdef EVENT__HAVE_EVENT_PORTS
+extern const struct eventop evportops;
+#endif
+#ifdef EVENT__HAVE_SELECT
+extern const struct eventop selectops;
+#endif
+#ifdef EVENT__HAVE_POLL
+extern const struct eventop pollops;
+#endif
+#ifdef EVENT__HAVE_EPOLL
+extern const struct eventop epollops;
+#endif
+#ifdef EVENT__HAVE_WORKING_KQUEUE
+extern const struct eventop kqops;
+#endif
+#ifdef EVENT__HAVE_DEVPOLL
+extern const struct eventop devpollops;
+#endif
+#ifdef _WIN32
+extern const struct eventop win32ops;
+#endif
+
+/* Array of backends in order of preference. */
+static const struct eventop *eventops[] = {
+#ifdef EVENT__HAVE_EVENT_PORTS
+	&evportops,
+#endif
+#ifdef EVENT__HAVE_WORKING_KQUEUE
+	&kqops,
+#endif
+#ifdef EVENT__HAVE_EPOLL
+	&epollops,
+#endif
+#ifdef EVENT__HAVE_DEVPOLL
+	&devpollops,
+#endif
+#ifdef EVENT__HAVE_POLL
+	&pollops,
+#endif
+#ifdef EVENT__HAVE_SELECT
+	&selectops,
+#endif
+#ifdef _WIN32
+	&win32ops,
+#endif
+	NULL
+```
+
+#### 12.2.7 event_base结构体
+结构体event_base是Libevent的Reactor，定义在`event_internal.h`
+```c++
+struct event_base {
+	/** Function pointers and other data to describe this event_base's
+	 * backend. */
+	const struct eventop *evsel;
+	/** Pointer to backend-specific data. */
+	void *evbase;
+
+	/** List of changes to tell backend about at next dispatch.  Only used
+	 * by the O(1) backends. */
+	struct event_changelist changelist;
+
+	/** Function pointers used to describe the backend that this event_base
+	 * uses for signals */
+	const struct eventop *evsigsel;
+	/** Data to implement the common signal handler code. */
+	struct evsig_info sig;
+
+	/** Number of virtual events */
+	int virtual_event_count;
+	/** Maximum number of virtual events active */
+	int virtual_event_count_max;
+	/** Number of total events added to this event_base */
+	int event_count;
+	/** Maximum number of total events added to this event_base */
+	int event_count_max;
+	/** Number of total events active in this event_base */
+	int event_count_active;
+	/** Maximum number of total events active in this event_base */
+	int event_count_active_max;
+
+	/** Set if we should terminate the loop once we're done processing
+	 * events. */
+	int event_gotterm;
+	/** Set if we should terminate the loop immediately */
+	int event_break;
+	/** Set if we should start a new instance of the loop immediately. */
+	int event_continue;
+
+	/** The currently running priority of events */
+	int event_running_priority;
+
+	/** Set if we're running the event_base_loop function, to prevent
+	 * reentrant invocation. */
+	int running_loop;
+
+	/** Set to the number of deferred_cbs we've made 'active' in the
+	 * loop.  This is a hack to prevent starvation; it would be smarter
+	 * to just use event_config_set_max_dispatch_interval's max_callbacks
+	 * feature */
+	int n_deferreds_queued;
+
+	/* Active event management. */
+	/** An array of nactivequeues queues for active event_callbacks (ones
+	 * that have triggered, and whose callbacks need to be called).  Low
+	 * priority numbers are more important, and stall higher ones.
+	 */
+	struct evcallback_list *activequeues;
+	/** The length of the activequeues array */
+	int nactivequeues;
+	/** A list of event_callbacks that should become active the next time
+	 * we process events, but not this time. */
+	struct evcallback_list active_later_queue;
+
+	/* common timeout logic */
+
+	/** An array of common_timeout_list* for all of the common timeout
+	 * values we know. */
+	struct common_timeout_list **common_timeout_queues;
+	/** The number of entries used in common_timeout_queues */
+	int n_common_timeouts;
+	/** The total size of common_timeout_queues. */
+	int n_common_timeouts_allocated;
+
+	/** Mapping from file descriptors to enabled (added) events */
+	struct event_io_map io;
+
+	/** Mapping from signal numbers to enabled (added) events. */
+	struct event_signal_map sigmap;
+
+	/** Priority queue of events with timeouts. */
+	struct min_heap timeheap;
+
+	/** Stored timeval: used to avoid calling gettimeofday/clock_gettime
+	 * too often. */
+	struct timeval tv_cache;
+
+	struct evutil_monotonic_timer monotonic_timer;
+
+	/** Difference between internal time (maybe from clock_gettime) and
+	 * gettimeofday. */
+	struct timeval tv_clock_diff;
+	/** Second in which we last updated tv_clock_diff, in monotonic time. */
+	time_t last_updated_clock_diff;
+
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+	/* threading support */
+	/** The thread currently running the event_loop for this base */
+	unsigned long th_owner_id;
+	/** A lock to prevent conflicting accesses to this event_base */
+	void *th_base_lock;
+	/** A condition that gets signalled when we're done processing an
+	 * event with waiters on it. */
+	void *current_event_cond;
+	/** Number of threads blocking on current_event_cond. */
+	int current_event_waiters;
+#endif
+	/** The event whose callback is executing right now */
+	struct event_callback *current_event;
+
+#ifdef _WIN32
+	/** IOCP support structure, if IOCP is enabled. */
+	struct event_iocp_port *iocp;
+#endif
+
+	/** Flags that this base was configured with */
+	enum event_base_config_flag flags;
+
+	struct timeval max_dispatch_time;
+	int max_dispatch_callbacks;
+	int limit_callbacks_after_prio;
+
+	/* Notify main thread to wake up break, etc. */
+	/** True if the base already has a pending notify, and we don't need
+	 * to add any more. */
+	int is_notify_pending;
+	/** A socketpair used by some th_notify functions to wake up the main
+	 * thread. */
+	evutil_socket_t th_notify_fd[2];
+	/** An event used by some th_notify functions to wake up the main
+	 * thread. */
+	struct event th_notify;
+	/** A function used to wake up the main thread from another thread. */
+	int (*th_notify_fn)(struct event_base *base);
+
+	/** Saved seed for weak random number generator. Some backends use
+	 * this to produce fairness among sockets. Protected by th_base_lock. */
+	struct evutil_weakrand_state weakrand_seed;
+
+	/** List of event_onces that have not yet fired. */
+	LIST_HEAD(once_event_list, event_once) once_events;
+
+};
+
+```
+#### 12.2.8 事件循环event_base_loop
+该函数首先调用I/O事件多路分发器的事件监听函数，以等待事件；当有事件发生时，依次处理。
+```c++
+int
+event_base_loop(struct event_base *base, int flags)
+{
+	const struct eventop *evsel = base->evsel;
+	struct timeval tv;
+	struct timeval *tv_p;
+	int res, done, retval = 0;
+
+	/* Grab the lock.  We will release it inside evsel.dispatch, and again
+	 * as we invoke user callbacks. */
+	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
+
+	if (base->running_loop) {
+		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
+		    " can run on each event_base at once.", __func__);
+		EVBASE_RELEASE_LOCK(base, th_base_lock);
+		return -1;
+	}
+
+	base->running_loop = 1;
+
+	clear_time_cache(base);
+
+	if (base->sig.ev_signal_added && base->sig.ev_n_signals_added)
+		evsig_set_base_(base);
+
+	done = 0;
+
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+	base->th_owner_id = EVTHREAD_GET_ID();
+#endif
+
+	base->event_gotterm = base->event_break = 0;
+
+	while (!done) {
+		base->event_continue = 0;
+		base->n_deferreds_queued = 0;
+
+		/* Terminate the loop if we have been asked to */
+		if (base->event_gotterm) {
+			break;
+		}
+
+		if (base->event_break) {
+			break;
+		}
+
+		tv_p = &tv;
+		if (!N_ACTIVE_CALLBACKS(base) && !(flags & EVLOOP_NONBLOCK)) {
+			timeout_next(base, &tv_p);
+		} else {
+			/*
+			 * if we have active events, we just poll new events
+			 * without waiting.
+			 */
+			evutil_timerclear(&tv);
+		}
+
+		/* If we have no events, we just exit */
+		if (0==(flags&EVLOOP_NO_EXIT_ON_EMPTY) &&
+		    !event_haveevents(base) && !N_ACTIVE_CALLBACKS(base)) {
+			event_debug(("%s: no events registered.", __func__));
+			retval = 1;
+			goto done;
+		}
+
+		event_queue_make_later_events_active(base);
+
+		clear_time_cache(base);
+
+		res = evsel->dispatch(base, tv_p);
+
+		if (res == -1) {
+			event_debug(("%s: dispatch returned unsuccessfully.",
+				__func__));
+			retval = -1;
+			goto done;
+		}
+
+		update_time_cache(base);
+
+		timeout_process(base);
+
+		if (N_ACTIVE_CALLBACKS(base)) {
+			int n = event_process_active(base);
+			if ((flags & EVLOOP_ONCE)
+			    && N_ACTIVE_CALLBACKS(base) == 0
+			    && n != 0)
+				done = 1;
+		} else if (flags & EVLOOP_NONBLOCK)
+			done = 1;
+	}
+	event_debug(("%s: asked to terminate loop.", __func__));
+
+done:
+	clear_time_cache(base);
+	base->running_loop = 0;
+
+	EVBASE_RELEASE_LOCK(base, th_base_lock);
+
+	return (retval);
+}
+
 ```
 
