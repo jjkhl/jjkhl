@@ -186,3 +186,121 @@ public:
     }
 };
 ```
+
+## [08.零矩阵](https://leetcode.cn/problems/zero-matrix-lcci/)
+同[73.矩阵置零](https://leetcode-cn.com/problems/set-matrix-zeroes/)
+```c++
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        int rows=matrix.size(),cols=matrix[0].size();
+        int row_flag=false;//true表示第一行有0
+        int col_flag=false;//true表示第一列有0
+
+        for(int i=0;i<rows;i++)
+        {
+            if(0==matrix[i][0])
+            {
+                col_flag=true;
+                break;
+            }
+        }
+        for(int j=0;j<cols;j++)
+        {
+            if(0==matrix[0][j])
+            {
+                row_flag=true;
+                break;
+            }
+        }
+
+        for(int i=1;i<rows;i++)
+        {
+            for(int j=1;j<cols;j++)
+            {
+                if(0==matrix[i][j])
+                {
+                    matrix[i][0]=matrix[0][j]=0;
+                }
+            }
+        }
+
+        for(int j=1;j<cols;j++)
+        {
+            if(0==matrix[0][j])
+            {
+                for(int i=1;i<rows;i++)
+                    matrix[i][j]=0;
+            }
+        }
+
+        for(int i=1;i<rows;i++)
+        {
+            if(0==matrix[i][0])
+            {
+                for(int j=1;j<cols;j++)
+                    matrix[i][j]=0;
+            }
+        }
+
+        if(row_flag)
+        {
+            for(int j=0;j<cols;j++)
+                matrix[0][j]=0;
+        }
+
+        if(col_flag)
+        {
+            for(int i=0;i<rows;i++)
+                matrix[i][0]=0;
+        }
+    }
+};
+```
+
+## [09.字符串轮转](https://leetcode.cn/problems/string-rotation-lcci/)
+```c++
+//一次搜索
+class Solution {
+public:
+    bool isFlipedString(string s1, string s2) {
+        return s1.length() == s2.length() && (s2 + s2).find(s1) != -1;
+    }
+};
+//双指针法
+class Solution {
+public:
+    bool isFlipedString(string s1, string s2) {
+        int len1=s1.size();
+        int len2=s2.size();
+        if(len1!=len2) return false;
+        int index1=0,index2=0;
+        while(index1<len1&&index2<len2)
+        {
+            if(s1[index1++]!=s2[index2++])
+            {
+                index2--;
+            }
+        }
+        if(index2==len2&&index1!=len1)
+        {
+            index2=0;
+            while(index1<len1)
+            {
+                if(s1[index1++]!=s2[index2++])
+                    return false;
+            }
+        }
+        else if(index1==len1&&index2!=len2)
+        {
+            index1=0;
+            while(index2<len2)
+            {
+                if(s1[index1++]!=s2[index2++])
+                    return false;
+            }
+        }
+        return true;
+    }
+};
+```
