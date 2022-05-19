@@ -4022,4 +4022,341 @@ int main()
 }
 ```
 
-## 
+## 第十四章 多线程编程
+### 14.1 Linux线程概述
+#### 14.1.1 线程模型
+线程是程序中完成一个独立任务的完整执行序列，即一个可调度的实体。
+根据运行环境和调度者身份，线程分为内核线程和用户线程。
+内核线程：也称为LWP(Light Weight Process,轻量级进程)，运行在内核空间，由内核来调度。
+用户线程：运行在用户空间，由线程库调用。
+
+当进程的一个内核线程获得CPU的使用权时，就加载并运行一个用户线程。
+
+内核线程相当于用户线程运行的“容器”。一个进程拥有M个内核线程和N个用户线程，其中M≤N。
+
+根据M:N的取值，线程的实现方式有：
+1. 完全在用户空间实现：该线程无需内核支持，线程库负责管理所有执行线程，线程库利用longjmp来切换线程的执行，让它们看起来像是"并发执行"，但实际上内核仍是把整个进程作为最小单位来调度。
+2. 完全由内核调度：内核负责创建、调度线程，运行在用户空间的线程库无需执行管理任务。
+3. 双层调度(two level scheduler)：内核调度M个内核线程，线程库调度N个用户线程。不但不会消耗过多的内核资源，而且线程切换速度较快，可以充分利用多处理器的优势。
+
+### 14.2 创建线程和结束线程
+1. 线程创建
+```c++
+#include<pthread.h>
+int pthread_create(pthread_t* thread,const pthread_attr_t* attr, void*(*start_routine)(void*),void* arg);
+//成功返回0，失败返回错误码。
+//一个用户可以打开的线程数量不能超过RLIMIT_NPROC软资源限制，同时系统上所有用户能创建的线程综述也不能超过/porc/sys/kernel/thread-max内核擦桉树所定义的值
+```
+attr：设置新线程的属性，NULL表示使用默认线程属性
+start_routine和arg：指定线程将运行的函数及其参数
+
+2. 线程退出
+线程一旦被创建好，内核就可以调度内核线程来执行start_routine函数指针所指向的函数。线程函数在结束时调用线程退出函数：
+```c++
+#include<pthread.h>
+void pthread_exit(void *retval);
+```
+该函数通过向线程的回收者传递其退出信息。它执行完之后不会返回调用者，而且永远不会失败。
+3. 线程回收
+该函数一直阻塞直到被回收的线程结束为止
+```c++
+#include<pthread.h>
+int pthread_join(pthread_t thread,void** retval);
+//成功返回0，失败返回错误码
+```
+thread：目标线程的标识符
+retval：目标线程返回的退出信息
+
+错误码：
+|错误码|描述|
+|---|---|
+|EDEADLK|可能引起死锁。比如两个线程互相针对对方调用pthread_join，或者线程对自身调用pthread_join|
+|EINVAL|目标线程不可回收，或者已有其它线程在回收该目标线程|
+|ESRCH|目标线程不存在|
+4. 线程终止
+```c++
+#include<pthread.h>
+int pthread_cancel(pthread_t thread);
+//成功返回0，失败返回错误码
+```
+thread：目标线程的标识符
+
+接收到取消请求的目标线程可以决定是否允许被取消以及如何取消：
+```c++
+#include<pthread>
+int pthread_setcancelstaee(int state,int *oldstate);
+int pthread_setcanceltype(int type,int *oldtype);
+//成功返回0，失败返回错误码
+```
+
+第一个参数分别设置线程的取消状态(是否允许取消)和取消类型(如何取消)
+第二个参数分别记录线程原来的取消状态和取消类型。
+
+state参数的可选值：
+* PTHREAD_CANCEL_ENABLE：允许线程被取消。它是线程被创建的默认取消状态。
+* PTHREAD_CANCEL_DISABLE：禁止线程被取消。如果一个线程收到取消请求，请求将会被挂起，直到该线程允许被取消。
+
+type参数可选值：
+* PTHREAD_CANCEL_ASYNCHRONOUS：线程随时可以被取消，它将使得接收到的取消请求的目标线程立即采取行动
+* PTHREAD_CANCEL_DEFERRED：允许目标线程推迟行动，直到它调用下面几个所谓的取消点函数中的一个：pthread_join、pthread_testcancel、pthread_cond_wait、pthread_cond_timedwait、sem_wait和sigwait。
+
+### 14.3 线程属性
+pthread_attr_t结构体定义了一套完整的线程属性：
+```c++
+#include<bits/pthreadtypes.h>
+#define __SIZEOF_PTHRAD_ATTR_T 36
+typedef union
+{
+    char __size[__SIZE_PTHREAD_ATTR_T];
+    long int __align;
+}pthread_attr_t;
+```
+
+线程函数
+![](picture/线程属性函数.png)
+
+线程函数参数含义：
+![](picture/线程属性函数参数含义.png)
+
+### 14.4 POSIX信号量
+POSIX信号量函数名字都是以`sem_`开头，常用函数如下：
+```c++
+#include<semaphore.h>
+//初始化一个未命名的信号量
+int sem_init(sem_t* sem,int pshared,unsigned int value);//不能初始化一个已初始化的信号量
+
+//销毁信号量，以释放其占用的内核资源
+int sem_destroy(sem_t* sem);//不能销毁一个正在被其它线程等待的信号量
+
+//以原子操作的方式将信号量值减1。如果信号量的值为0，则sem_wait将被阻塞，直到这个信号量具有非0值
+int sem_wait(sem_t* sem);
+
+/*
+与sem_wait相似，但是始终立即返回
+信号量值为0，将返回-1并设置errno为EAGAIN
+*/
+int sem_trywait(sem_t* sem);
+
+//原子操作的方式将信号量值加1。当信号量值大于0，其它正在调用sem_wait等待信号量的线程将被唤醒
+int sem_post(sem_t* sem);
+```
+
+### 14.5 互斥锁
+#### 14.5.1 互斥锁基础API
+```c++
+#include<pthread.h>
+int pthread_mutex_init(pthread_mutex_t *mutex,const pthread_mutexattr_t* mutexattr);
+int pthread_mutex_destroy(pthread_mutex_t* mutex);
+int pthread_mutex_lock(pthread_mutex_t* mutex);
+int pthread_mutex_trylock(pthread_mutex_t* mutex);
+int pthread_mutex_unlock(pthread_mutex_t* mutex);
+```
+
+pshared：指定信号量的类型。0表示这个信号量是当前进程的局部信号量，该信号量不能在多个进程之间共享。
+value：指定信号量的初始值。
+
+#### 14.5.2 互斥锁属性
+![](picture/互斥锁属性.png)
+
+### 14.6 条件变量
+条件变量用于线程之间同步共享数据的值，提供了一种线程间的通知机制：当某个共享数据达到某个值，唤醒等待这个共享数据的线程
+相关函数：
+```c++
+#include<pthread.h>
+int pthread_cond_init(pthread_cond_t* con,const pthread_condattr_t* cond_attr);
+/*
+初始化方式2：
+pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
+*/
+
+//销毁条件变量，销毁一个正在被等待的条件变量将失败并返回EBUSY
+int pthread_cond_destroy(pthread_cond_t* cond);
+
+//以广播的方式唤醒所有等待目标条件变量的线程
+int pthread_cond_broadcast(pthread_cond_t* cond);
+
+//唤醒一个等待目标条件的线程。
+int pthread_cond_signal(pthread_cond_t* cond);
+
+//等待目标条件变量
+/*
+函数执行时，先把调用线程放入条件变量的等待队列中，然后将互斥量mutex解锁。
+*/
+int pthread_cond_wait(pthread_cond_t* cond,pthread_mutex_t* mutex);
+```
+cond：指向要操作的目标条件变量，NULL表示使用默认属性
+mutex：保护条件变量的互斥锁，以确保pthread_cond_wait操作的原子性
+
+### 14.7 线程同步机制包装类
+14-2 locker.h文件：
+```c++
+#ifndef LOCKER_H
+#define LOCKER_H
+
+#include <exception>
+#include <pthread.h>
+#include <semaphore.h>
+
+//封装信号量的类
+class sem
+{
+public:
+//创建并初始化信号量
+    sem()
+    {
+//第二个参数为0表示这个信号量是当前进程的局部信号量
+        if( sem_init( &m_sem, 0, 0 ) != 0 )
+        {
+//构造函数没有返回值，可以通过抛出异常来报告错误
+            throw std::exception();
+        }
+    }
+//销毁信号量
+    ~sem()
+    {
+        sem_destroy( &m_sem );
+    }
+//等待信号量，成功返回true
+    bool wait()
+    {
+        return sem_wait( &m_sem ) == 0;
+    }
+//将信号量值+1，成功返回true
+    bool post()
+    {
+        return sem_post( &m_sem ) == 0;
+    }
+
+private:
+    sem_t m_sem;
+};
+
+//封装互斥锁的类
+class locker
+{
+public:
+//创建并初始化互斥锁
+    locker()
+    {
+        if( pthread_mutex_init( &m_mutex, NULL ) != 0 )
+        {
+            throw std::exception();
+        }
+    }
+//销毁互斥锁
+    ~locker()
+    {
+        pthread_mutex_destroy( &m_mutex );
+    }
+//获取互斥锁，成功加锁返回true
+    bool lock()
+    {
+        return pthread_mutex_lock( &m_mutex ) == 0;
+    }
+//释放互斥锁，成功释放返回true
+    bool unlock()
+    {
+        return pthread_mutex_unlock( &m_mutex ) == 0;
+    }
+
+private:
+    pthread_mutex_t m_mutex;
+};
+
+//封装条件变量的类
+class cond
+{
+public:
+//创建并初始化条件变量 
+    cond()
+    {
+        if( pthread_mutex_init( &m_mutex, NULL ) != 0 )
+        {
+            throw std::exception();
+        }
+        if ( pthread_cond_init( &m_cond, NULL ) != 0 )
+        {
+//构造函数中一旦出现问题，就应该立即释放已经成功分配了的资源
+            pthread_mutex_destroy( &m_mutex );
+            throw std::exception();
+        }
+    }
+//销毁条件变量
+    ~cond()
+    {
+        pthread_mutex_destroy( &m_mutex );
+        pthread_cond_destroy( &m_cond );
+    }
+//等待条件变量
+    bool wait()
+    {
+        int ret = 0;
+        pthread_mutex_lock( &m_mutex );
+        ret = pthread_cond_wait( &m_cond, &m_mutex );
+        pthread_mutex_unlock( &m_mutex );
+        return ret == 0;
+    }
+//唤醒等待条件变量的线程
+    bool signal()
+    {
+        return pthread_cond_signal( &m_cond ) == 0;
+    }
+
+private:
+    pthread_mutex_t m_mutex;
+    pthread_cond_t m_cond;
+};
+
+#endif
+
+```
+
+### 14.8 多线程环境
+#### 14.8.1 可重入函数
+线程安全(可重入函数)：一个函数能被多个线程同时调用且不发生竞态条件。
+
+#### 14.8.2 线程和进程
+一个多线程程序的某个线程调用了fork函数，新创建的子进程不会创建和父进程相同数量搞得线程。
+
+子进程只拥有一个执行线程，它是调用fork的线程完整复制，并且子进程将自动继承父进程中互斥锁(条件变量)的状态。
+
+但是存在一个问题：子进程可能不清楚从父进程继承过来的互斥锁的具体状态，此时子进程若再次对该互斥锁执行加锁操作就会导致死锁。
+
+`pthread_atfork函数`：确保fork调用后父进程和子进程都拥有一个清楚的锁状态
+```c++
+#include<pthread.h>
+int pthread_atfork(void(*prepare)(void),void(*parent)(void),void (*child)(void));
+```
+prepare句柄：在fork调用创建出子进程之前被执行。它可以用来锁住所有父进程中的互斥锁。
+
+parent句柄：在fork创建出子进程之后，fork返回之前，在父进程中被执行。释放所有在prepare句柄中被被锁住的互斥锁
+
+child句柄：fork返回之前，在子进程中被执行。释放所有在prepare句柄中被被锁住的互斥锁
+
+#### 14.8.3 线程和信号
+每个线程都可以独立设置信号掩码。
+```c++
+#include<pthread.h>
+#include<signal.h>
+int pthread_sigmask(int how,const sigset_t* newmask,sigset_t* oldmask);
+/*
+	SIG_BLOCK:   结果集是当前集合参数集的并集
+	SIG_UNBLOCK: 结果集是当前集合参数集的差集
+	SIG_SETMASK: 结果集是由参数集指向的集
+	*/
+//成功返回0，失败返回错误码
+```
+
+定义专门的线程处理所有的信号：
+* 在主线程创建出其它子线程之前就调用pthread_sigmask来设置好信号掩码，所有新创建的子线程都将自动继承这个信号掩码。这样做之后，实际上所有线程都不会响应被屏蔽的信号了。
+* 在某个线程调用sigwait来等待信号并处理
+```c++
+#include<signal.h>
+int sigwait(const sigset_t* set,int *sig);
+
+```
+set：需要等待的信号的集合。可以简单指定其为第一步中创建的信号掩码，表示在该线程中等待所有被屏蔽的信号。
+sig：使用的整数用于存储该函数返回的信号值。
+
+当使用了sigwait，就不应该再为信号设置信号处理函数。因为当程序接收到了信号时，二者中只能有一个起作用。
+
