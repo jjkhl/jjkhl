@@ -1,6 +1,6 @@
 # [程序员面试金典（第 6 版）](https://leetcode.cn/problem-list/xb9lfcwi/)
 
-## [01.判断字符是否唯一](https://leetcode.cn/problems/is-unique-lcci/)
+## [0101.判断字符是否唯一](https://leetcode.cn/problems/is-unique-lcci/)
 ```c++
 //位运算来表示26位字母，如果该位置&x=1，表示已有该字母
 class Solution {
@@ -16,7 +16,7 @@ public:
     }
 };
 ```
-## [02.判定是否互为字符重排](https://leetcode.cn/problems/check-permutation-lcci/)
+## [0102.判定是否互为字符重排](https://leetcode.cn/problems/check-permutation-lcci/)
 ```c++
 class Solution {
 public:
@@ -41,7 +41,7 @@ public:
     }
 };
 ```
-## [03.URL化](https://leetcode.cn/problems/string-to-url-lcci/)
+## [0103.URL化](https://leetcode.cn/problems/string-to-url-lcci/)
 **该题同**[剑指offer05](https://leetcode.cn/problems/ti-huan-kong-ge-lcof/)
 ```c++
 //注意题目假定该字符串尾部有足够的空间存放新增字符，并且知道字符串的“真实”长度。
@@ -65,7 +65,7 @@ public:
     }
 };
 ```
-## [04.回文子串](https://leetcode.cn/problems/palindrome-permutation-lcci/)
+## [0104.回文子串](https://leetcode.cn/problems/palindrome-permutation-lcci/)
 ```c++
 class Solution {
 public:
@@ -91,7 +91,7 @@ public:
 };
 ```
 
-## [05.一次编辑](https://leetcode.cn/problems/one-away-lcci/)
+## [0105.一次编辑](https://leetcode.cn/problems/one-away-lcci/)
 ```c++
 //双指针法
 class Solution {
@@ -130,7 +130,7 @@ public:
     }
 };
 ```
-## [06.字符串压缩](https://leetcode.cn/problems/compress-string-lcci/)
+## [0106.字符串压缩](https://leetcode.cn/problems/compress-string-lcci/)
 ```c++
 class Solution {
 public:
@@ -158,7 +158,7 @@ public:
 };
 ```
 
-## [07.旋转矩阵](https://leetcode.cn/problems/rotate-matrix-lcci/)
+## [0107.旋转矩阵](https://leetcode.cn/problems/rotate-matrix-lcci/)
 ```c++
 //先沿主对角线翻转，再沿竖直方向上的对称轴翻转
 class Solution {
@@ -187,7 +187,7 @@ public:
 };
 ```
 
-## [08.零矩阵](https://leetcode.cn/problems/zero-matrix-lcci/)
+## [0108.零矩阵](https://leetcode.cn/problems/zero-matrix-lcci/)
 同[73.矩阵置零](https://leetcode-cn.com/problems/set-matrix-zeroes/)
 ```c++
 class Solution {
@@ -258,7 +258,7 @@ public:
 };
 ```
 
-## [09.字符串轮转](https://leetcode.cn/problems/string-rotation-lcci/)
+## [0109.字符串轮转](https://leetcode.cn/problems/string-rotation-lcci/)
 ```c++
 //一次搜索
 class Solution {
@@ -304,3 +304,73 @@ public:
     }
 };
 ```
+
+## [0201移除重复节点](https://leetcode.cn/problems/remove-duplicate-node-lcci/)
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* removeDuplicateNodes(ListNode* head) {
+        if(head==NULL)
+            return head;
+        unordered_set<int> occurred={head->val};
+        ListNode* pos=head;
+        //枚举前驱节点
+        while(pos->next)
+        {
+            //当前当待删除的节点
+            ListNode* cur=pos->next;
+            if(!occurred.count(cur->val))
+            {
+                occurred.insert(cur->val);
+                pos=pos->next;
+            }
+            else
+            {
+                pos->next=pos->next->next;
+            }
+        }
+        pos->next=NULL;
+        return head;
+    }
+};
+```
+
+## [0202.返回倒数第K个节点](https://leetcode.cn/problems/kth-node-from-end-of-list-lcci/)
+```c++
+class Solution {
+public:
+    int kthToLast(ListNode* head, int k) {
+        ListNode *slow=head,*fast=head;
+        while(k--)
+        {
+            fast=fast->next;
+        }
+        while(fast)
+        {
+            slow=slow->next;
+            fast=fast->next;
+        }
+        return slow->val;
+    }
+};
+```
+
+## [0203.删除中间节点](https://leetcode.cn/problems/delete-middle-node-lcci/)
+```c++
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        node->val=node->next->val;
+        node->next=node->next->next;
+    }
+};
+```
+
