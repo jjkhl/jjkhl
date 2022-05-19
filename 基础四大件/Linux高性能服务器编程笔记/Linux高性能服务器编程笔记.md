@@ -3821,3 +3821,205 @@ int run_child(int idx, client_data *users, char *share_mem)
     return 0;
 }
 ```
+
+### 13.7 消息队列
+消息队列是两个进程之间传递二进制块数据的一种简单高效的方式。每个数据块都有一个特定的类型，接收方可以根据类型来有选择地接收数据，而不一定像管道和命名管道那样必须以先进先出地方式接收数据。
+
+Linux消息队列地API都定义在`sys/msg.h`，包括4个系统调用：msgget、msgsnd、msgrcv、msgctl
+
+#### 13.7.1 msgget
+msgget：创建一个消息队列，或者获取一个已有的消息队列
+```c++
+#include<sys/msg.h>
+int msgget(key_t key,int msgflg);
+//成功返回消息队列的标识符(正整数)，失败返回-1并设置errno
+
+如果msgget用于创建消息队列，则与之关联的内核数据结构msqid_df将被创建并初始化
+
+struct msqid_ds
+{
+  struct ipc_perm msg_perm;	/* structure describing operation permission */
+  __MSQ_PAD_TIME (msg_stime, 1);	/* time of last msgsnd command */
+  __MSQ_PAD_TIME (msg_rtime, 2);	/* time of last msgrcv command */
+  __MSQ_PAD_TIME (msg_ctime, 3);	/* time of last change */
+  __syscall_ulong_t __msg_cbytes; /* current number of bytes on queue */
+  msgqnum_t msg_qnum;		/* number of messages currently on queue */
+  msglen_t msg_qbytes;		/* max number of bytes allowed on queue */
+  __pid_t msg_lspid;		/* pid of last msgsnd() */
+  __pid_t msg_lrpid;		/* pid of last msgrcv() */
+  __syscall_ulong_t __glibc_reserved4;
+  __syscall_ulong_t __glibc_reserved5;
+};
+```
+key：标识一个全局唯一的消息队列
+msgflg：
+> 0(取消息队列标识符，不存在报错)；
+> IPC_CREATE(但msgflg&IPC_CREATE为真，如果内核中不存在键值与key相等的消息队列，则新建一个消息队列；如果存在则返回)；
+> IPC_CRAET|IPC_EXCL：如果内核中不存在键值与key相等的消息队列，则新建一个消息队列；如果存在则报错
+
+#### 13.7.2 msgsnd系统调用
+msgsnd：把一条消息添加到消息队列中
+```c++
+#include<sys/msg.h>
+int msgsnd(int msqid, const void* msg_ptr, size_t msg_sz,int msgflg);
+```
+msqid：由msgget调用返回的消息队列标识符
+msg_ptr：指向一个准备发送的消息，消息必须被定义为如下类型
+```c++
+struct msgbuf
+{
+    long mtype; //消息类型
+    char mtext[512];//消息数据
+};
+```
+
+mtype成员指定消息的类型，它必须是一个正整数。mtext是消息数据，msg_sz参数是消息数据部分的长度，为0表示没有消息数据。
+
+msgflg参数控制msgsnd行为。通常仅支持IPC_NOWAIT标志，即以非阻塞的方式发送消息。若IPC_NOWAIT标志被指定，则msgsnd将立即返回并设置errno为EAGAIN
+
+* 消息队列被移除，msgsnd立即返回并设置errno为EIDRM
+* 程序接收到信号，msgsnd立即防护i并设置errno为EINTR
+
+#### 13.7.3 msgrcv系统调用
+msgrcv：从消息队列中获取消息
+```c++
+#include<sys/msg.h>
+int msgrcv(int msqid,void* msg_ptr,size_t msg_sz,long int msgtype, int msgflg);
+```
+
+msgqid：msgget调用返回的消息队列标识符
+msg_ptr：存储接收的消息
+msg_sz：消息数据部分的长度
+msgtype：指定接收何种类型搞得消息
+> msgtype=0：读取消息队列的第一个消息
+> msgtype>0：读取消息队列中第一个类型为msgtype的消息
+> msgtype<0：读取消息队列第一个类型值比msgtype的绝对值小的消息
+
+msgflg：控制msgrcv函数行为
+|标志位|含义|
+|---|---|
+|IPC_NOWAIT|如果消息队列中没有消息，则msgrcv调用立即返回并设置errno为ENOMSG|
+|MSG_EXCEPT|msgtype>0，则接收消息队列的第一个非msgtype类型的消息|
+|MSG_NOERROR|如果消息数据部分的长度超过了msg_sz，就将它截断|
+
+#### 13.7.4 msgctl系统调用
+msgctl：控制消息队列的某些属性
+```c++
+#include<sys/msg.h>
+int msgctl(int msqid,int command, struct msqid_ds* buf);
+//失败返回-1并设置errno
+```
+msqid：msgget调用返回的消息队列标识符
+command：要执行的命令
+msgctl支持的命令：
+|命令|含义|成功时的返回值|
+|---|---|---|
+|IPC_STAT|将消息队列关联的内核数据结构复制到buf(第三个参数，下同)中|0|
+|IPC_SET|将buf中的部分成员复制到消息队列关联的内核数据结构中，同时内核数据中的msqid_ds.msg_ctime被更新|0|
+|IPC_RMID|立即移除消息队列，唤醒所有等待读消息和写消息的进程(这些调用立即返回并设置errno为EIDRM)|0|
+|IPC_INFO|获取系统消息队列资源配置信息，将结果存储在buf中。应用程序需要将buf转换为msginfo结构体类型来读取这些系统信息，msginfo结构体与seminfo类似|内核消息队列信息数组中已被使用的项的最大索引值|
+|MSG_INFO|与IPS_INFO类似，返回的是已分配的消息队列占用的资源信息|同IPC_INFO|
+|MSG_STAT|与IPC_STAT类似，不过此时msqid参数不是用来表示消息队列标识符，而是内核消息队列信息数组的索引(每个消息队列的消息都是该数组中的一项)|内核消息队列信息数组中的索引值为msqid的消息队列的标识符|
+
+### 13.8 IPC命令
+Linux提供的ipcs命令，以观察当前系统上拥有的共享资源实例。
+输出结果分段显示了系统拥有的共享内存、信号量和消息队列。
+
+ipcrm上述遗留在资源中的共享资源。
+
+### 13.9 在进程间传递文件描述符
+fork调用之后，父进程中打开的文件描述符在子进程中仍保持打开，所以文件描述符可以很方便地从父进程传递到子进程。
+
+传递一个文件描述符并不是传递一个文件描述符的值，而是在接收进程中创建一个新的文件描述符，并且该文件描述符和发送进程中被传递的文件描述符指向内核中相同的文件表现。
+
+代码13-5：在进程间传递文件描述符
+```c++
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+
+static const int CONTROL_LEN = CMSG_LEN( sizeof(int) );
+
+void send_fd( int fd, int fd_to_send )
+{
+    struct iovec iov[1];
+    struct msghdr msg;
+    char buf[0];
+
+    iov[0].iov_base = buf;
+    iov[0].iov_len = 1;
+    msg.msg_name    = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov     = iov;
+    msg.msg_iovlen = 1;
+
+    cmsghdr cm;
+    cm.cmsg_len = CONTROL_LEN;
+    cm.cmsg_level = SOL_SOCKET;
+    cm.cmsg_type = SCM_RIGHTS;
+    *(int *)CMSG_DATA( &cm ) = fd_to_send;
+    msg.msg_control = &cm;
+    msg.msg_controllen = CONTROL_LEN;
+
+    sendmsg( fd, &msg, 0 );
+}
+
+int recv_fd( int fd )
+{
+    struct iovec iov[1];
+    struct msghdr msg;
+    char buf[0];
+
+    iov[0].iov_base = buf;
+    iov[0].iov_len = 1;
+    msg.msg_name    = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov     = iov;
+    msg.msg_iovlen = 1;
+
+    cmsghdr cm;
+    msg.msg_control = &cm;
+    msg.msg_controllen = CONTROL_LEN;
+
+    recvmsg( fd, &msg, 0 );
+
+    int fd_to_read = *(int *)CMSG_DATA( &cm );
+    return fd_to_read;
+}
+
+int main()
+{
+    int pipefd[2];
+    int fd_to_pass = 0;
+
+    int ret = socketpair( PF_UNIX, SOCK_DGRAM, 0, pipefd );
+    assert( ret != -1 );
+
+    pid_t pid = fork();
+    assert( pid >= 0 );
+
+    if ( pid == 0 )
+    {
+        close( pipefd[0] );
+        fd_to_pass = open( "test.txt", O_RDWR, 0666 );
+        send_fd( pipefd[1], ( fd_to_pass > 0 ) ? fd_to_pass : 0 );
+        close( fd_to_pass );
+        exit( 0 );
+    }
+
+    close( pipefd[1] );
+    fd_to_pass = recv_fd( pipefd[0] );
+    char buf[1024];
+    memset( buf, '\0', 1024 );
+    read( fd_to_pass, buf, 1024 );
+    printf( "I got fd %d and data %s\n", fd_to_pass, buf );
+    close( fd_to_pass );
+    return 0;
+}
+```
+
+## 
