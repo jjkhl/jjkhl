@@ -38,6 +38,14 @@ int main()
 
 TCP/IP协议族是一个四层协议系统，自底而上分别是数据链路层、网络层、传输层、应用层。上层协议使用下层协议提供的服务，如图1-1所示。
 
+详细层数：
+物理层：用以建立、维护和拆除物理链路连接。
+数据链路层：网卡接口的网络驱动程序，以处理数据在物理媒介上的传输
+网络层：实现数据包的选路和转发
+传输层：为两台主机上的应用程序提供端到端的通信
+会话层：提供包括访问验证和会话管理在内的建立和维护应用之间通信的机制。
+表示层：提供格式化的表示和转换数据服务，解决用户信息的语法表示问题。将欲交换的数据从适合于某一用户的抽象语法，转换为适合于OSI系统内部使用的传送语法。数据的压缩和解压缩、加密和解密等工作都由表示层负责。
+应用层：负责处理应用程序的逻辑，在用户空间中，它负责处理众多逻辑，比如文件传输、名称查询和网络管理等
 ### 数据链路层
 该层实现了网卡接口的网络驱动程序，以处理数据在物理媒介上的传输，常用的协议有ARP协议(Address Resolve Protocol，地址解析协议)和RARP协议(Reverse Address Resolve Protocol，地址解析协议)。
 
@@ -273,7 +281,7 @@ int main()
     return 0;
 }
 ```
-### [dup和dup2函数](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md#dup&dup2)
+### [dup和dup2函数](../基础四大件/TCPIP网络编程(尹圣雨)/网络编程.md)
 复制一个现有的文件描述符
 ```c
 #include <unistd.h>
@@ -4188,7 +4196,7 @@ cond：指向要操作的目标条件变量，NULL表示使用默认属性
 mutex：保护条件变量的互斥锁，以确保pthread_cond_wait操作的原子性
 
 ### 14.7 线程同步机制包装类
-14-2 locker.h文件：
+14-2 <span id="locker.h">locker.h文件：</span>
 ```c++
 #ifndef LOCKER_H
 #define LOCKER_H
@@ -4360,3 +4368,674 @@ sig：使用的整数用于存储该函数返回的信号值。
 
 当使用了sigwait，就不应该再为信号设置信号处理函数。因为当程序接收到了信号时，二者中只能有一个起作用。
 
+## 第十五章 进程池和线程池
+动态创建子进程(子线程)的缺点：
+* 比较耗费事件，导致较慢的客户响应
+* 通常只为一个客户服务，这将导致系统上产生大量微细进程(线程)，进程(线程)间的切换耗费大量CPU时间
+* 动态创建的子进程是当前进程的完整映像。当前进程必须谨慎地管理其分配地文件描述符和堆内存等资源。否则子进程可能复制这些资源，从而使系统地可用资源急剧下降，从而向服务器的性能。
+
+### 15.1 进程池和线程池概述
+线程池与进程池类似，这里以进程池为例：
+进程池是由服务器预先创建的一组子进程，数目一般在3~10个之间，应该和CPU数量差不多。
+
+进程池中的所有子进程都运行着相同的代码，并具有相同的属性，比如优先级、PGID等；且没有打开不必要的文件描述符(父进程继承而来)，也不会错误地使用大块地堆内存(父进程复制得到)。
+
+主进程选择子进程的方式：
+* 随机算法和Round Robin(轮流选取)算法。
+* 共享的工作队列。
+
+主进程和子进程之间的通知机制：预先建立好一条管道，然后通过该管道来实现所有的进程间通信。
+
+主进程和子进程之间的数据传递：设置所有数据为全局
+
+![进程池模型](picture/进程池模型.png)
+
+### 15.2 处理多客户
+问题：
+* 监听socket和连接socket是否都由主进程来统一管理
+> 半同步/半反应堆模式是由主进程来统一管理；半同步/半异步模式以及领导者/追随者模式，这时由
+* 一个客户连接上的所有任务是否始终复用一个TCP连接
+> 客户任务是无状态的，可以考虑使用不同的子进程来为该客户的不同请求服务；客户任务存在上下文关系，最好一直用同一个子进程来为之服务。
+
+
+![](picture/多个子进程处理同一个客户连接上的不同任务.png)
+
+### 15.3 进程池代码示例
+```c++
+/*
+    文件名：processpool.h
+    功能：实现半同步/半异步并发模式的进程池
+*/
+
+#ifndef PROCESSPOOL_H
+#define PROCESSPOOL_H
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<string.h>
+#include<errno.h>
+#include<assert.h>
+#include<signal.h>
+#include<fcntl.h>
+#include<sys/socket.h>
+#include<arpa/inet.h>
+#include<sys/epoll.h>
+#include<wait.h>
+
+//描述一个子进程的类，m_pid是目标子进程的PID，m_pipe是父进程和子进程通信用的管道
+class process
+{
+public:
+    process():m_pid(-1){}
+public:
+    pid_t m_pid;
+    int m_pipefd[2];
+};
+
+//进程池类，为了代码复用将其定义为模板类。其模板参数是处理逻辑任务的类
+template<typename T>
+class processpool
+{
+private:
+    //将构造函数定义为私有的，因为我们只能通过后面的create静态函数来船舰processpool实例
+    processpool(int listenfd,int process_number=8);
+
+public:
+    //单例模式，以保证程序最多创建一个processpool实例，这是程序正确处理信号的必要条件
+    static processpool<T>* create(int listenfd,int process_number=8)
+    {
+        if(!m_instance)
+        {
+            m_instance=new processpool<T>(listenfd,process_number);
+        }
+        return m_instance;
+    }
+    ~processpool()
+    {
+        delete []m_sub_process;
+    }
+    //启动线程池
+    void run();
+private:
+    void setup_sig_pipe();
+    void run_parent();
+    void run_child();
+
+private:
+    //进程池允许的最大子进程数量
+    static const int MAX_PROCESS_NUMBER=16;
+
+    //每个子进程最多处理能处理的客户数量
+    static const int USER_PER_PROCESS=65536;
+
+    //epoll最多能处理的事件数
+    static const int MAX_EVENT_NUMBER=10000;
+
+    //进程池中的进程总数
+    int m_process_number;
+
+    //子进程在池中的进程总数,也是子进程与父进程通信对应的管道编号
+    int m_idx;
+
+    //每个进程都有一个epoll内核事件表，用m_epollfd标识
+    int m_epollfd;
+
+    //监听socket
+    int m_listenfd;
+
+    //子进程通过m_stop来决定是否停止运行
+    int m_stop;
+
+    //保存所有子进程的描述信息
+    process* m_sub_process;
+
+    //进程池静态实例
+    static processpool<T>* m_instance;
+};
+
+//进程池静态实例初始化
+template<typename T>
+processpool<T>* processpool<T>::m_instance=NULL;
+
+/*
+    用于处理信号的管道，以实现统一事件源。也称为信号管道
+*/
+static int sig_pipefd[2];
+
+//设置文件描述符为非阻塞状态
+static int setnonblocking(int fd)
+{
+    int old_option=fcntl(fd,F_GETFL);
+    int new_option=old_option|O_NONBLOCK;
+    fcntl(fd,F_SETFL,new_option);
+    return old_option;
+}
+
+//往epoll中添加文件描述符
+static void addfd(int epollfd,int fd)
+{
+    epoll_event event;
+    event.data.fd=fd;
+    //设置边缘触发模式
+    event.events=EPOLLIN|EPOLLET;
+    epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
+    setnonblocking(fd);
+}
+
+//从epollfd标识的epoll内核事件表中删除fd上所有的注册事件
+static void removefd(int epollfd,int fd)
+{
+    epoll_ctl(epollfd,EPOLL_CTL_DEL,fd,0);
+    close(fd);
+}
+
+//信号错误处理函数
+static void sig_handler(int sig)
+{
+    int save_errno=errno;
+    int msg=sig;
+    send(sig_pipefd[1],(char*)&msg,1,0);
+    errno=save_errno;
+}
+
+//添加信号
+static void addsig(int sig,void(handler)(int),bool restart=true)
+{
+    struct sigaction sa;
+    memset(&sa,'\0',sizeof(sa));
+    sa.sa_handler=handler;
+    if(restart)
+    {
+        sa.sa_flags|=SA_RESTART;
+    }
+    //将参数sa.sa_mask信号集初始化, 然后把所有的信号加入到此信号集里
+    sigfillset(&sa.sa_mask);
+    assert(sigaction(sig,&sa,NULL)!=-1);
+}
+
+/*
+进程池构造函数。
+listenfd：监听socket，必须在创建进程池之前被创建，否则子进程无法直接引用它
+process_number：指定进程池中子进程的数量
+*/
+template<typename T>
+processpool<T>::processpool(int listenfd,int process_number)
+:m_listenfd(listenfd),m_process_number(process_number),m_idx(-1),m_stop(false)
+{
+    //检查process_number的合理性
+    assert((process_number>0)&&(process_number<=MAX_PROCESS_NUMBER));
+    m_sub_process=new process[process_number];
+    assert(m_sub_process);
+
+    //创建process_number个子进程，并建立它们和父进程之间的管道
+    for(int i=0;i<process_number;++i)
+    {
+        //创建m_sub_process[i]的双向通信通道
+        int ret=socketpair(PF_UNIX,SOCK_STREAM,0,m_sub_process[i].m_pipefd);
+        assert(0==ret);
+
+        m_sub_process[i].m_pid=fork();
+        assert(m_sub_process[i].m_pid>=0);
+
+        //父进程
+        if(m_sub_process[i].m_pid>0)
+        {
+            //关闭管道入端
+            close(m_sub_process[i].m_pipefd[1]);
+            continue;
+        }
+        //子进程
+        else
+        {
+            //关闭管道出端
+            close(m_sub_process[i].m_pipefd[0]);
+            //只有子进程更新进程总数，后续可以根据这个判断父进程还是子进程
+            m_idx=i;
+            break;
+        }
+    }
+}
+
+/*
+统一事件源：将信号事件和其它I/O事件统一处理
+当捕捉到消息时，其对应的信号处理函数被触发，
+但此时该函数只是简单地将消息通知给主循环，
+而后主循环根据收到的信号值去执行相关的逻辑代码
+*/
+template<typename T>
+void processpool<T>::setup_sig_pipe()
+{
+    //创建epoll事件监听表和信号管道
+    m_epollfd=epoll_create(5);
+    assert(m_epollfd!=-1);
+
+    int ret=socketpair(PF_UNIX,SOCK_STREAM,0,sig_pipefd);
+    assert(ret!=-1);
+
+    //管道入端非阻塞
+    setnonblocking(sig_pipefd[1]);
+    //往m_epollfd添加管道出端
+    addfd(m_epollfd,sig_pipefd[0]);
+
+    //设置信号处理函数
+    addsig(SIGCHLD,sig_handler);
+    addsig(SIGTERM,sig_handler);
+    addsig(SIGINT,sig_handler);
+/*
+当进程断开，系统会发送一个SIGPIPE信号，默认下会终止并客户端退出，设置SIG_IGN可以不让客户端退出
+SIG_IGN：忽略的方式
+参考网址：https://blog.csdn.net/qq_34888036/article/details/81014529
+*/
+    addsig(SIGPIPE,SIG_IGN);
+}
+
+/*
+父进程中m_idx值为-1，子进程m_idx值大于等于0
+可以根据m_idx值判断运行的是父进程代码还是子进程代码
+*/
+template<typename T>
+void processpool<T>::run()
+{
+    if(m_idx!=-1)
+    {
+        run_child();
+        return;
+    }
+    run_parent();
+}
+
+template<typename T>
+void processpool<T>::run_child()
+{
+    setup_sig_pipe();
+
+    //每个子进程都通过其在进程池的序号值m_idx找到与父进程通信的管道
+    int pipefd=m_sub_process[m_idx].m_pipefd[1];
+    //子进程需要监听管道文件描述符pipefd，引文父进程将通过它来通知子进程accept新连接
+    addfd(m_epollfd,pipefd);
+
+    //epoll_event结构介绍：https://www.dazhuanlan.com/iqka/topics/1144768
+    epoll_event events[MAX_EVENT_NUMBER];
+    T* users=new T[USER_PER_PROCESS];
+    assert(users);
+
+    int number=0;
+    int ret=-1;
+    while(!m_stop)
+    {
+        number=epoll_wait(m_epollfd,events,MAX_EVENT_NUMBER,-1);
+/*
+EINTR错误来源：
+1.write：由于信号中断，没写成功任何数据
+2.open：由于信号中断，没读到任何数据
+3.recv
+4.sem_wait：函数调用被信号处理函数中断
+*/
+        if((number<0)&&(errno!=EINTR))
+        {
+            printf("epoll failure\n");
+            break;
+        }
+
+        for(int i=0;i<number;i++)
+        {
+            int sockfd=events[i].data.fd;
+            if((sockfd==pipefd)&&(events[i].events&EPOLLIN))
+            {
+                int client=0;
+        /*
+        从父、子进程之间的管道读取数据，并将结果保存在变量client中
+        如果读取成功，则表示有新的用户连接到来
+        */
+                ret=recv(sockfd,(char*)&client,sizeof(client),0);
+                if(((ret<0)&&(errno!=EAGAIN))||ret==0)
+                {
+                    continue;
+                }
+                else
+                {
+                    sockaddr_in client_address;
+                    socklen_t client_addrlength=sizeof(client_address);
+                    int connfd=accept(m_listenfd,(sockaddr*)&client_address,&client_addrlength);
+                    if(connfd<0)
+                    {
+                        printf("errno is: %d\n",errno);
+                        continue;
+                    }
+                    addfd(m_epollfd,connfd);
+        /*
+        模板类T必须实现init方法，以初始化一个客户连接。
+        直接使用connfd来索引逻辑处理对象(T类型的对象)，以提高程序效率
+        */
+                    users[connfd].init(m_epollfd,connfd,client_address);
+                }
+            }
+            //处理子进程接受到的信号
+            else if((sockfd==sig_pipefd[0])&&(events[i].events&EPOLLIN))
+            {
+                int sig;
+                char signals[1024];
+                ret=recv(sig_pipefd[0],signals,sizeof(signals),0);
+                if(ret<=0)
+                    continue;
+                else
+                {
+                    for(int j=0;j<ret;j++)
+                    {
+                        switch(signals[i])
+                        {
+                            case SIGCHLD:
+                            {
+                                pid_t pid;
+                                int stat;
+                                while((pid=waitpid(-1,&stat,WNOHANG))>0)
+                                {
+                                    continue;
+                                }
+                                break;
+                            }
+                            case SIGTERM:
+                            case SIGINT:
+                            {
+                                m_stop=true;
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            else if(events[i].events&EPOLLIN)
+            {
+                users[sockfd].process();
+            }
+            else
+            {
+                continue;
+            }
+        }
+    }
+    delete []users;
+    users=NULL;
+    close(pipefd);
+//提醒读者：应该由m_listenfd的创建者来关闭这个文件描述符
+//即所谓"对象"由哪个函数创建就应该由哪个函数销毁
+    //close(m_listenfd);
+}
+
+template<typename T>
+void processpool<T>::run_parent()
+{
+    setup_sig_pipe();
+    //父进程监听m_listenfd
+    addfd(m_epollfd,m_listenfd);
+
+    epoll_event events[MAX_EVENT_NUMBER];
+    int sub_process_counter=0;
+    int new_conn=1;
+    int number=0;
+    int ret=-1;
+
+    while(!m_stop)
+    {
+        number=epoll_wait(m_epollfd,events,MAX_EVENT_NUMBER,-1);
+        if((number<0)&&(errno!=EINTR))
+        {
+            printf("epoll failure\n");
+            break;
+        }
+        for(int i=0;i<number;++i)
+        {
+            int sockfd=events[i].data.fd;
+            if(sockfd==m_listenfd)
+            {
+                //如果有新连接到来，采用Round Robin方式将其分配给一个子进程处理
+                int i=sub_process_counter;
+                do
+                {
+                    if(m_sub_process[i].m_pid!=-1)
+                        break;
+                    i=(i+1)%m_process_number;
+                }while(i!=sub_process_counter);
+                if(m_sub_process[i].m_pid==-1)
+                {
+                    m_stop=true;
+                    break;
+                }
+                sub_process_counter=(i+1)%m_process_number;
+                send(m_sub_process[i].m_pipefd[0],(char*)&new_conn,sizeof(new_conn),0);
+                printf("send request to child %d\n",i);
+            }
+            //处理父进程接收到的信号
+            else if((sockfd==sig_pipefd[0])&&(events[i].events&EPOLLIN))
+            {
+                int sig;
+                char signals[1024];
+                ret=recv(sig_pipefd[0],signals,sizeof(signals),0);
+                if(ret<=0)
+                {
+                    continue;
+                }
+                else
+                {
+                    for(int i=0;i<ret;++i)
+                    {
+                        switch(signals[i])
+                        {
+                            case SIGCHLD:
+                            {
+                                pid_t pid;
+                                int stat;
+                                while((pid==waitpid(-1,&stat,WNOHANG))>0)
+                                {
+                                    for(int i=0;i<m_process_number;++i)
+                                    {
+                /*
+                如果进程池中第i个子进程退出了，则主进程关闭相应的通信管道，并设置相应的m_pid为-1，以标记该子进程已退出
+                */
+                                        if(pid==m_sub_process[i].m_pid)
+                                        {
+                                            printf("child %d join\n",i);
+                                            close(m_sub_process[i].m_pipefd[0]);
+                                            m_sub_process[i].m_pid=-1;
+                                        }
+                                    }
+                                }
+                                //如果所有子进程全都退出，则父进程也退出
+                                m_stop=true;
+                                for(int j=0;j<m_process_number;j++)
+                                {
+                                    if(m_sub_process[j].m_pid!=-1)
+                                        m_stop=false;
+                                }
+                                break;
+                            }
+                            case SIGTERM:
+                            case SIGINT:
+                            {
+                    /*
+                    如果父进程接受到终止信号，那么就杀死所有子进程，并等待它们全部结束
+                    当然，通知子进程结束更好的方式是向父、子进程之间的通道管道发送特殊数据
+                    */
+                                printf("kill all the child now\n");
+                                for(int j=0;j<m_process_number;++j)
+                                {
+                                    int pid=m_sub_process[i].m_pid;
+                                    if(pid!=-1)
+                                    {
+                                        kill(pid,SIGTERM);
+                                    }
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                continue;
+            }
+        }
+    }
+    /*由创建者关闭这个文件描述符*/
+    // close(m_listenfd);
+    close(m_epollfd);
+}
+#endif
+```
+
+### 15.4 用进程池实现简单的CGI服务器
+```c++
+/*
+CGI程序：放置在服务器上的一段可执行程序。作为HTTP服务器的时候，客户端可以通过GET或者POST请求来调用这可执行程序。
+*/
+#include"processpool.h"
+
+//处理客户CGI请求的类，可以作为processpool类的模板参数
+class cgi_conn
+{
+public:
+    cgi_conn(){};
+    ~cgi_conn(){};
+    //初始化客户连接，清空读缓冲区
+    void init(int epollfd,int sockfd,const sockaddr_in& client_addr)
+    {
+        m_epollfd=epollfd;
+        m_sockfd=sockfd;
+        m_address=client_addr;
+        m_read_idx=0;
+    }
+    void process()
+    {
+        int idx=0;
+        int ret=-1;
+        //循环读取和分析客户数据
+        while(true)
+        {
+            idx=m_read_idx;
+            ret=recv(m_sockfd,m_buf+idx,BUFFER_SIZE-1-idx,0);
+            //如果读操作发生错误，则关闭客户连接。但如果是暂时无数据可读，则退出循环
+            if(ret<0)
+            {
+                if(errno!=EAGAIN)
+                {
+                    removefd(m_epollfd,m_sockfd);
+                }
+                break;
+            }
+            //如果对方关闭连接，则服务器也关闭连接
+            else if(ret==0)
+            {
+                removefd(m_epollfd,m_sockfd);
+                break;
+            }
+            else
+            {
+                m_read_idx+=ret;
+                printf("user content is: %s\n",m_buf);
+                //如果遇到字符"\r\n"，则开始处理客户请求
+                for(;idx<m_read_idx;++idx)
+                {
+                    if((idx>=1)&&(m_buf[idx-1]=='\r')&&(m_buf[idx]=='\n'))
+                        break;
+                }
+                //如果没有遇到字符"\r\n"，则需要读取更多客户数据
+                if(idx==m_read_idx)
+                {
+                    continue;
+                }
+                m_buf[idx-1]='\0';
+
+                char *file_name=m_buf;
+                //判断客户要运行的CGI程序是否存在
+                //F_OK只判断是否存在
+                if(access(file_name,F_OK)==-1)
+                {
+                    removefd(m_epollfd,m_sockfd);
+                    break;
+                }
+                //创建子进程来执行CGI程序
+                ret=fork();
+                if(-1==ret)
+                {
+                    removefd(m_epollfd,m_sockfd);
+                    break;
+                }
+                else if(ret>0)
+                {
+                    //父进程只需要关闭连接
+                    removefd(m_epollfd,m_sockfd);
+                    break;
+                }
+                else
+                {
+                    //子进程将标准输出定向到m_sockfd,并执行CGI程序
+                    close(STDOUT_FILENO);
+                    dup(m_sockfd);
+                    execl(m_buf,m_buf,0);
+                    exit(0);
+                }
+            }
+        }
+    }
+
+private:
+    //读缓冲区大小
+    static const int BUFFER_SIZE=1024;
+    static int m_epollfd;
+    int m_sockfd;
+    sockaddr_in m_address;
+    char m_buf[BUFFER_SIZE];
+    //标记读缓冲中已经读入的客户数据的最后一个字节的下一个位置
+    int m_read_idx;
+};
+
+int cgi_conn::m_epollfd=-1;
+
+int main(int argc,char** argv)
+{
+    if(argc<=2)
+    {
+        printf("usage: %s ip_address port_number\n",basename(argv[0]));
+        return 1;
+    }
+    const char* ip=argv[1];
+    int port=atoi(argv[2]);
+    int listenfd=socket(PF_INET,SOCK_STREAM,0);
+    assert(listenfd>=0);
+
+    int ret=0;
+    sockaddr_in address;
+    bzero(&address,sizeof(address));
+    address.sin_family=AF_INET;
+    address.sin_addr.s_addr=inet_addr(ip);
+    address.sin_port=htons(port);
+
+    ret=bind(listenfd,(sockaddr*)&address,sizeof(address));
+    assert(ret!=-1);
+    ret=listen(listenfd,5);
+    assert(ret!=-1);
+
+    //单例模式初始化
+    processpool<cgi_conn>* pool=processpool<cgi_conn>::create(listenfd);
+    if(pool)
+    {
+        pool->run();
+        delete pool;
+    }
+    //main函数创建了文件描述符，由main函数关闭文件描述符
+    close(listenfd);
+    return 0;
+}
+```
+
+### 15.5 半同步/半反应堆线程池实现
+[`14章`local文件](#locker.h)
+[main.cpp](半同步半反应堆代码/main.cpp)
+[threadpool.h](半同步半反应堆代码/threadpool.h)
+[http_conn.h](半同步半反应堆代码/http_conn.h/)
+[http_conn.cpp](半同步半反应堆代码/http_conn.cpp)
