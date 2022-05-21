@@ -5034,8 +5034,366 @@ int main(int argc,char** argv)
 ```
 
 ### 15.5 半同步/半反应堆线程池实现
-[`14章`local文件](#locker.h)
+[local文件](#locker.h)
 [main.cpp](半同步半反应堆代码/main.cpp)
 [threadpool.h](半同步半反应堆代码/threadpool.h)
 [http_conn.h](半同步半反应堆代码/http_conn.h/)
 [http_conn.cpp](半同步半反应堆代码/http_conn.cpp)
+
+压力测试：
+* 在ernext-laptop上执行，监听端口12345：`./websrv 127.0.0.1 12345`
+* 测试程序：`./stress_test 127.0.0.1 12345 1000`
+[压力测试代码](#pressure_test)
+
+[github示例](#https://github.com/czGitAccount/Linux_Server_Programming_emamples)
+# 高性能服务器优化与监测
+
+## 第十六章 服务器调制、调试和测试
+Linux下，可以通过修改文件的方式来调整内核参数，其中系统或进程能打开的最大文件描述符尤其重要
+
+编写压力测试工具是服务器开发的一个部分，它能模拟现实世界中高并发的客户请求，以测试服务器在高压状态下的稳定性。
+
+### 16.1 最大文件描述符
+两个限制：
+* 用户级限制：目标用户运行的所有进程全部能打开的文件描述符
+* 系统级限制：所有用户总全部能打开的文件描述符
+
+查看用户级文件描述符限制：`ulimit -n`
+
+暂设用户级文件描述符为max_file_number，只在当前会话中有效：`ulimit -SHn max-file-number`
+
+永久修改用户级文件描述符：
+```
+文件位置：/etc/security/limits.conf
+加入内容：
+hard nofile max-file-number
+soft nofile max-file-number
+```
+
+暂时修改系统限制：`sysctl -w fs.file-max=max-file-number`
+
+永久修改系统级文件描述符：
+```
+文件位置：/etc/sysctl.conf
+加入内容：
+fs.file-max=max-file-number
+最后执行命令：
+sysctl -p
+```
+### 16.2 调整内核参数
+查看所有内核参数：`sysctl -a`
+几乎所有内核模块都在`/proc/sys`文件系统下提供了某些配置文件以供用户调整模块的属性和行为。通常一个配置文件对应一个内核参数，文件名就是参数的名字，文件的内容是参数的值。
+#### 16.2.1 /proc/sys/fs目录下的部分文件
+对于服务器程序最重要的两个参数：
+1. `/proc/sys/fs/file-max`：系统级文件描述符数限制。直接修改这个参数和16.1节讨论的修改方法有相同效果。一般修改后，应用程序需要把`/proc/sys/fs/inode-max`设置为新`/proc/sys/fs/file-max`值得3~4倍
+2. `proc/sys/fs/epoll/max_user_watches`：一个用户往epoll内核事件表中注册的事件总量。指的是该用户打开的所有epoll实例总共能监听的事件数目。往epoll内核事件表注册一个事件，32位系统上大约消耗90字节内核空间，64位系统上消耗160字节空间。
+
+#### 16.2.2 /proc/sys/net目录下的部分文件
+和TCP/IP协议相关的参数主要位于如下三个子目录：core、ipv4和ipv6
+部分参数示例如下：
+1. `/proc/sys/net/core/samaxconn`：指定listen监听队列里，能够建立完整连接从而进入ESTABLISHED状态的socket的最大数目。
+2. `/proc/sys/net/ipv4/tcp_max_syn_backlog`：指定listen监听队列里，能够转移至ESTABLISHED或者SYN_RCVD状态的socket最大数目
+3. `/proc/sys/net/ipv4/tcp_wmem`：包含3个值，分别指定一个socket的TCP读缓冲区的最小值、默认值和最大值
+4. `/proc/sys/net/ipv4/tcp_rmem`：包含3个值，分别指定一个socket的TCP写缓冲区的最小值、默认值和最大值
+5. `/proc/sys/net/ipv4/tcp_syncookies`：指定是否打开TCP同步标签(syncookie)。同步标签通过启动cookie来防止一个监听socket因不停地重复接收来自同一个地址地连续请求(同步报文段)，而导致listen监听队列溢出(所谓地SYN风暴)
+
+### 16.3 gdb调试
+#### 16.3.1 用gdb调试多进程程序
+1. 单独调试子进程
+比如说要调试CGI进程池服务器地某一个子进程，我们可以先运行服务器，然后找到目标子进程的PID，再将其附加到gdb调试器上
+步骤如下：
+* 启动服务器：`./cgisrv 127.0.0.1 12345`
+* 查看所有子进程的PID：`ps -ef | grep cgisrv`
+* 启动gdb调试：`gdb`
+* 将子进程4183附加到gdb调试器：`attach 4183`
+* 设置processpool.h的264行的断点：`b processpool.h:264`
+* 继续：`c`
+
+2. 使用调试器选项follow-fork-mode
+该选项允许我们选择程序在执行fork系统调用后是继续调试父进程还是子进程
+使用方法：`(gdb) set follow-fork-mode mode`
+其中mode可以选择parent和child，分别表示调试父进程和子进程。
+步骤如下：
+* 使用gdb打开运行文件：`gdb ./cgisrv`
+* 设置调试子进程：`(gdb) set follow-fork-mode child`
+* 设置断点：`b processpool.h:264`
+* 运行程序：`r 127.0.0.1 12345`
+
+#### 16.3.2 用gdb调试多线程程序
+常用命令：
+* `info threads`：显示当前可调试的所有线程
+* `thread ID`：调试目标ID指定的线程
+* `set scheduler-locking[off|on|step]`：通过设置scheduler-locking的值：off表示不锁定任何线程，即所有线程都可以继续执行，默认；on表示只有当前被调试的线程会继续执行；step表示在单步执行的时候，只有当前线程会执行。
+
+#### 16.4 <span id="pressure_test">压力测试</span>
+```c++
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/epoll.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+
+static const char* request = "GET http://localhost/index.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\nxxxxxxxxxxxx";
+
+int setnonblocking( int fd )
+{
+    int old_option = fcntl( fd, F_GETFL );
+    int new_option = old_option | O_NONBLOCK;
+    fcntl( fd, F_SETFL, new_option );
+    return old_option;
+}
+
+void addfd( int epoll_fd, int fd )
+{
+    epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLOUT | EPOLLET | EPOLLERR;
+    epoll_ctl( epoll_fd, EPOLL_CTL_ADD, fd, &event );
+    setnonblocking( fd );
+}
+
+bool write_nbytes( int sockfd, const char* buffer, int len )
+{
+    int bytes_write = 0;
+    printf( "write out %d bytes to socket %d\n", len, sockfd );
+    while( 1 ) 
+    {   
+        bytes_write = send( sockfd, buffer, len, 0 );
+        if ( bytes_write == -1 )
+        {   
+            return false;
+        }   
+        else if ( bytes_write == 0 ) 
+        {   
+            return false;
+        }   
+
+        len -= bytes_write;
+        buffer = buffer + bytes_write;
+        if ( len <= 0 ) 
+        {   
+            return true;
+        }   
+    }   
+}
+
+bool read_once( int sockfd, char* buffer, int len )
+{
+    int bytes_read = 0;
+    memset( buffer, '\0', len );
+    bytes_read = recv( sockfd, buffer, len, 0 );
+    if ( bytes_read == -1 )
+    {
+        return false;
+    }
+    else if ( bytes_read == 0 )
+    {
+        return false;
+    }
+	printf( "read in %d bytes from socket %d with content: %s\n", bytes_read, sockfd, buffer );
+
+    return true;
+}
+
+void start_conn( int epoll_fd, int num, const char* ip, int port )
+{
+    int ret = 0;
+    struct sockaddr_in address;
+    bzero( &address, sizeof( address ) );
+    address.sin_family = AF_INET;
+    inet_pton( AF_INET, ip, &address.sin_addr );
+    address.sin_port = htons( port );
+
+    for ( int i = 0; i < num; ++i )
+    {
+        sleep( 1 );
+        int sockfd = socket( PF_INET, SOCK_STREAM, 0 );
+        printf( "create 1 sock\n" );
+        if( sockfd < 0 )
+        {
+            continue;
+        }
+
+        if (  connect( sockfd, ( struct sockaddr* )&address, sizeof( address ) ) == 0  )
+        {
+            printf( "build connection %d\n", i );
+            addfd( epoll_fd, sockfd );
+        }
+    }
+}
+
+void close_conn( int epoll_fd, int sockfd )
+{
+    epoll_ctl( epoll_fd, EPOLL_CTL_DEL, sockfd, 0 );
+    close( sockfd );
+}
+
+int main( int argc, char* argv[] )
+{
+    assert( argc == 4 );
+    int epoll_fd = epoll_create( 100 );
+    start_conn( epoll_fd, atoi( argv[ 3 ] ), argv[1], atoi( argv[2] ) );
+    epoll_event events[ 10000 ];
+    char buffer[ 2048 ];
+    while ( 1 )
+    {
+        int fds = epoll_wait( epoll_fd, events, 10000, 2000 );
+        for ( int i = 0; i < fds; i++ )
+        {   
+            int sockfd = events[i].data.fd;
+            if ( events[i].events & EPOLLIN )
+            {   
+                if ( ! read_once( sockfd, buffer, 2048 ) )
+                {
+                    close_conn( epoll_fd, sockfd );
+                }
+                struct epoll_event event;
+                event.events = EPOLLOUT | EPOLLET | EPOLLERR;
+                event.data.fd = sockfd;
+                epoll_ctl( epoll_fd, EPOLL_CTL_MOD, sockfd, &event );
+            }
+            else if( events[i].events & EPOLLOUT ) 
+            {
+                if ( ! write_nbytes( sockfd, request, strlen( request ) ) )
+                {
+                    close_conn( epoll_fd, sockfd );
+                }
+                struct epoll_event event;
+                event.events = EPOLLIN | EPOLLET | EPOLLERR;
+                event.data.fd = sockfd;
+                epoll_ctl( epoll_fd, EPOLL_CTL_MOD, sockfd, &event );
+            }
+            else if( events[i].events & EPOLLERR )
+            {
+                close_conn( epoll_fd, sockfd );
+            }
+        }
+    }
+}
+```
+
+## 第十七章 系统监测工具
+### 17.1 tcpdump
+tcpdump抓包常见选项：
+![tcpdump常见选项](picture/tcpdump常见选项.png)
+
+tcpdump表达式的操作数分为以下3中：
+* 类型(type)：解释其后面紧跟着的参数的含义。tcpdump支持的类型包括host、net、port和portrange。分别指主机名(或IP地址)，用CIDR方法表示的网络地址，端口及端口范围。
+> 抓取整个1.2.3.0/255.255.255.0网络上的数据包：`tcpdump net 1.2.3.0/24`
+* 方向(dir)：src指定数据包的发送端，dst指定数据包的目的端。
+> 抓取进入端口13579的数据包：`tcpdump dst port 13579`
+* 协议(proto)：指定目标协议。
+> 抓取所有ICMP数据包：`tcpdump icmp`
+
+逻辑操作符：and(&&)、or(||)、not(!)
+抓取主机ernest-laptop和所有非Kongming20的主机之间交换的IP数据包：`tcpdump ip host ernest-laptop and not Kongming20`
+
+使用反斜杠`\`进行转移或单引号`'`避免被shell所解释。
+抓取主机10.0.2.4，目标端口是3389或22的数据包：`tcpdump 'src 10.0.2.4 and (dst port 3389 or 22)'`
+
+允许直接使用数据包中的部分协议字段的内容来过滤数据包，比如只抓取TCP同步报文段：`tcpdump 'tcp[13]&2!=0'`或`tcpdump 'tcp[tcpflags]&tcp-syn!=0'`(TCP头部的第14个字节的第2个位是同步标志)
+
+### 17.2 lsof
+lsof(list open file)是一个列出当前系统打开的文件描述符的工具。
+常用选项包括：
+![lsof选项](picture/lsof常用选项.png)
+实例：查看websrv服务器打开了哪些文件描述符
+```
+获取websrv程序的进程号：ps -ef | grep websrv
+-p选项指定进程号：sudo lsof -p 6346
+```
+![lsof查看文件描述符](picture/lsof查看打开的文件描述符.png)
+每行内容字段解释：
+* COMMAND：执行程序所使用的终端命令(默认仅显示前9个字符)
+* PID：文件描述符所属进程的PID
+* USER：拥有该文件描述符的用户的用户名
+* FD：文件描述符的描述。其中cwd表示进程工作目录，rtd表示用户根目录，txt表示进程运行的程序代码，mem表示直接映射到内存的文件。数字表示文件描述符的具体数值，访问权限包括R(可读)、w(可写)和u(可读可写)。
+> 0u、1u、2u分别表示标准输入、标准输出和标准错误输出；3u表示处理LISTEN状态的监听socket；4u表示epoll内核事件表对应的文件描述符
+* TYPE：文件描述符的类型。DIR是目录，REG是普通文件，CHR是字符设备文件，IPv4是IPv4类型的socket文件描述符，0000是未知类型。
+* DEVICE：文件所属设备。对于字符设备和块设备，其表示方法是“主设备号，次设备号”。
+> “8,3”，“8”表示是一个SCSI硬盘，“3”表示是第3个分区，即sda3。
+> “136,3”：“136”表示是一个伪终端，“3”表示是第3个伪终端，即/dev/pts/3。
+* SIZE/OFF：文件大小或者偏移值。显示“0t*”或“0x*”表示一个偏移值，否则就表示文件大小
+* NODE：文件的i节点号。
+* NAME：文件名字
+
+### 17.3 nc
+nc(netcat)主要用来快速构建网络连接。可以让它以服务器方式运行，监听某个端口并接收客户端；也可以以客户端方式运行，先服务器发起连接并收发数据。
+![nc常用选项](picture/nc常用选项.png)
+连接websrv服务器并向它发送数据：
+```
+nc- C 127.0.0.1 13579(服务器监听端口)
+GET http://localhost/a.html HTTP/1.1(回车)
+Host:localhost(回车)
+(回车)
+HTTP/1.1 404 Not Found
+Content-Length:49
+Connection:close
+
+The requested file was not found on this server.
+```
+-C是为了每次按下回车符都会给服务器额外发送一个<CR><LF>，这也是服务器设定的HTTP焊接舒服。发送完第三行服务器，我们得到了服务器的响应，表示服务器没有找到被请求的资源文件a.html
+### 17.4 strace
+strace是测试服务器性能的重要工具。跟踪程序运行过程中执行的系统调用和接收到的信号，并将系统调用名、参数、返回值及信号名输出到标准输出或指定的文件。
+常用选项：
+![strace常用选项](picture/strace常用选项.png)
+
+实例：
+`strace cat /dev/null open("/dev/null",O_RDONLY|O_LARGEFILE)=3`
+解释：程序`cat/dev/null`在运行过程中执行了open系统调用，oepn以只读方式打开大文件`/dev/null`，然后返回了一个值为3的文件描述符
+
+```
+系统调用共发生错误，strace命令输出错误标识和描述
+strace cat /foo/bar
+open("/foo/car",O_RDONLY|O_LARGEFILE) =-1 ENOENT (No such file or directory)
+```
+
+查看websrv服务器在处理客户连接和数据时使用系统调用情况：
+```
+$ ./websrv 127.0.0.1 13579
+$ ps -ef | grep websrv
+shuang 30526 29064 0 05:19 pts/7 00:00:00 ./websrv 127.0.0.1 13579
+$ sudo strace -p 30526
+epoll_wait(4, 
+
+可见服务器当前正在执行epoll_wait系统调用以等待客户请求。
+```
+
+### 17.5 netstat
+netstat是一个功能强大的网络信息统计工具。可以打印本地接口上全部连接、路由表信息、网卡接口信息等。
+常用选项：
+* -n：使用IP地址标识主机，而不是主机名；使用数字表示端口号，而不是服务名称
+* -a：显示结果中也包含监听socket
+* -t：仅显示TCP连接
+* -r：显示路由信息
+* -i：显示网卡接口的数据流量
+* -c：每隔1s输出一次
+* -o：显示socket定时器的信息
+* -p：显示socket所属的进程的PID和名字
+
+telnet实例：
+![telnet实例](picture/telnet实例.png)
+
+### 17.6 vmstat
+vmstat(virtual memory statistics)，能实时输出系统的各种资源的使用情况，比如进程信息、内存使用、CPU使用率以及I/O使用情况
+![vmstat](picture/vmstat常用选项和参数.png)
+
+可以使用ipstat获取磁盘使用情况的更多信息，mpstat获取CPU使用情况，vmstat主要用于查看系统内存的使用情况
+
+### 17.7 ifstat
+ifstat(interface statistics)：网络流量监测工具
+![ifstat](picture/ifstat常用选项.png)
+
+### 17.8 mpstat
+mpstat(multi-processor statistics)：实时检测多处理器系统上每个CPU的使用情况
+典型用法：`mpstat [-P [ALL] [interval] [count]]`
+P：指定要监控的CPU号(0~CPU个数-1)，其值“ALL”表示监听所有CPU
+interval：采样间隔(单位：s)
+count：采样次数，但最后还会输出count次采样结果的平均值
+![mpstat](picture/mpstat实例.png)
