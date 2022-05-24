@@ -79,7 +79,7 @@ public:
     }
 };
 ```
-## [435.无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/)
+## <span id="435">[435.无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/)</span>
 ```c++
 class Solution {
 public:
@@ -105,3 +105,115 @@ public:
     }
 };
 ```
+
+## [605.种花问题](https://leetcode.cn/problems/can-place-flowers/)
+```c++
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+        int len=flowerbed.size();
+        for(int i=0;i<len;i++)
+        {
+            if(flowerbed[i]==0&&(i==0||!flowerbed[i-1])&&(i==len-1||!flowerbed[i+1]))
+            {
+                n--;
+                flowerbed[i]=1;
+            }
+            if(n<=0) return true;
+        }
+        return false;
+    }
+};
+
+//跳两格
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+        int len=flowerbed.size();
+        for(int i=0;i<len;i+=2)
+        {
+            //当前为空地
+            if(flowerbed[i]==0)
+            {
+                //如果是最后一格或下一个为空
+                if(i==len-1||flowerbed[i+1]==0)
+                {
+                    n--;
+                }
+                else i++;
+            }
+            if(n<=0) return true;
+        }
+        return false;
+    }
+};
+//首尾加0
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+        flowerbed.insert(flowerbed.begin(),0);
+        flowerbed.insert(flowerbed.end(),0);
+        int len=flowerbed.size();
+        for(int i=1;i<len-1;i++)
+        {
+            if(flowerbed[i]==0)
+            {
+                if(flowerbed[i-1]==0&&flowerbed[i+1]==0)
+                {
+                    flowerbed[i]=1;
+                    n--;
+                }
+            }
+            if(n<=0) return true;
+        }
+        return false;
+    }
+};
+```
+## [452.用最少的箭引爆气球](https://leetcode.cn/problems/minimum-number-of-arrows-to-burst-balloons/)
+和[435无重叠区间](#435)相似
+```c++
+//方式一
+class Solution {
+public:
+    int findMinArrowShots(vector<vector<int>>& points) {
+        sort(points.begin(),points.end(),[](const vector<int>&a,const vector<int>&b){return a[1]<b[1];});
+        int prevBorder=points[0][1];
+        int count=1;
+        for(int i=1;i<points.size();i++)
+        {
+            if(prevBorder<points[i][0])
+            {
+                count++;
+                prevBorder=points[i][1];
+            }
+        }
+        return count;
+    }
+};
+
+//方式二
+class Solution {
+private:
+    static bool cmp(const vector<int>& a, const vector<int>& b) {
+        return a[0] < b[0];
+    }
+public:
+    int findMinArrowShots(vector<vector<int>>& points) {
+        if (points.size() == 0) return 0;
+        sort(points.begin(), points.end(), cmp);
+
+        int result = 1; // points 不为空至少需要一支箭
+        for (int i = 1; i < points.size(); i++) {
+            if (points[i][0] > points[i - 1][1]) {  // 气球i和气球i-1不挨着，注意这里不是>=
+                result++; // 需要一支箭
+            }
+            else {  // 气球i和气球i-1挨着
+                points[i][1] = min(points[i - 1][1], points[i][1]); // 更新重叠气球最小右边界
+            }
+        }
+        return result;
+    }
+};
+```
+
