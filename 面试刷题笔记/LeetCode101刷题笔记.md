@@ -216,4 +216,127 @@ public:
     }
 };
 ```
+## [763.划分字母区间](https://leetcode.cn/problems/partition-labels/)
+```c++
+class Solution {
+public:
+    vector<int> partitionLabels(string S) {
+        int *hash = new int[27]{0}; // i为字符，hash[i]为字符出现的最后位置
+        for (int i = 0; i < S.size(); i++) { // 统计每一个字符最后出现的位置
+            hash[S[i] - 'a'] = i;
+        }
+        vector<int> result;
+        int left = 0;
+        int right = 0;
+        for (int i = 0; i < S.size(); i++) {
+            right = max(right, hash[S[i] - 'a']); // 找到字符出现的最远边界
+            if (i == right) {
+                result.push_back(right - left + 1);
+                left = i + 1;
+            }
+        }
+        delete []hash;
+        return result;
+    }
+};
+```
 
+## [122.买卖股票得最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)
+```c++
+//贪心算法
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int len=prices.size();
+        int sum=0;
+        for(int i=0;i<len-1;i++)
+        {
+            if(prices[i]<prices[i+1])
+            {
+                sum+=prices[i+1]-prices[i];
+            }
+        }
+        return sum;
+    }
+};
+//动态规划
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int dp[2]={-prices[0],0};//持有，未持有
+        for(int i=0;i<prices.size();i++)
+        {
+            int lastHold=dp[0];
+            //持有不动，未持有买入
+            dp[0]=max(dp[0],dp[1]-prices[i]);
+            //未持有不动，持有卖出
+            dp[1]=max(dp[1],lastHold+prices[i]);
+        }
+        return max(dp[0],dp[1]);
+    }
+};
+```
+
+## [406.根据身高重建队列](https://leetcode.cn/problems/queue-reconstruction-by-height/)
+```c++
+//使用list比vector插入效率高
+class Solution {
+public:
+    // 身高从大到小排（身高相同k小的站前面）
+    static bool cmp(const vector<int> a, const vector<int> b) {
+        if (a[0] == b[0]) return a[1] < b[1];
+        return a[0] > b[0];
+    }
+    vector<vector<int>> reconstructQueue(vector<vector<int>>& people) {
+        sort (people.begin(), people.end(), cmp);
+        list<vector<int>> que; // list底层是链表实现，插入效率比vector高的多
+        for (int i = 0; i < people.size(); i++) {
+            int position = people[i][1]; // 插入到下标为position的位置
+            std::list<vector<int>>::iterator it = que.begin();
+            while (position--) { // 寻找在插入位置
+                it++; 
+            }
+            que.insert(it, people[i]); 
+        }
+        return vector<vector<int>>(que.begin(), que.end());
+    }
+};
+```
+## [665.非递归数列](https://leetcode.cn/problems/non-decreasing-array/)
+```c++
+/*
+  这道题给了我们一个数组，说我们最多有1次修改某个数字的机会，
+  问能不能将数组变为非递减数组。题目中给的例子太少，不能覆盖所有情况，我们再来看下面三个例子：
+	4，2，3
+	-1，4，2，3
+	2，3，3，2，4
+我们通过分析上面三个例子可以发现，当我们发现后面的数字小于前面的数字产生冲突后，
+[1]有时候需要修改前面较大的数字(比如前两个例子需要修改4)，
+[2]有时候却要修改后面较小的那个数字(比如前第三个例子需要修改2)，
+那么有什么内在规律吗？是有的，判断修改那个数字其实跟再前面一个数的大小有关系，
+首先如果再前面的数不存在，比如例子1，4前面没有数字了，我们直接修改前面的数字为当前的数字2即可。
+而当再前面的数字存在，并且小于当前数时，比如例子2，-1小于2，我们还是需要修改前面的数字4为当前数字2；
+如果再前面的数大于当前数，比如例子3，3大于2，我们需要修改当前数2为前面的数3。
+
+//题解思路：https://leetcode.cn/problems/non-decreasing-array/comments/
+*/
+class Solution {
+public:
+    bool checkPossibility(vector<int>& nums) { 
+        if(nums.empty() || nums.size() <= 1)
+        return true;
+        int cnt = 0;
+        for(int i = 1; i < nums.size() && cnt <2; i++)
+        {
+            if(nums[i-1] <= nums[i])
+                continue;
+            cnt++;
+            if(i-2>=0 && nums[i-2] >nums[i])
+                nums[i] = nums[i-1];  //修改当前数字     2 3 3 2 4  ->  2 3 3 3 4 
+            else    
+                nums[i-1] = nums[i];   //修改前面的数字  -1 4 2 3 ->  -1 2 2 3
+        }
+        return cnt<=1;
+    }
+};
+```
