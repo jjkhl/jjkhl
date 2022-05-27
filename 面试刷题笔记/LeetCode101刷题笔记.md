@@ -340,3 +340,98 @@ public:
     }
 };
 ```
+
+# 第三章 双指针
+指针函数和函数指针
+```c++
+//指针函数返回类型是指针
+int *add(int a,int b)
+{
+    int *sum=new int(a+b);
+    return sum;
+}
+
+//函数指针，指向函数的指针
+int add1(int a,int b)
+{
+    return a+b;
+}
+int (*m)(int,int)=add1;
+```
+
+## [167.两数之和II-输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& numbers, int target) {
+        int left=0,right=numbers.size()-1;
+        while(left<right)
+        {
+            if(numbers[left]+numbers[right]>target) --right;
+            else if(numbers[left]+numbers[right]<target) ++left;
+            else break;
+        }
+        return {left+1,right+1};
+    }
+};
+```
+
+## [88.合并两个有序数组](https://leetcode.cn/problems/merge-sorted-array/)
+```c++
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int pos=-1+m--+n--;
+        while(m>=0&&n>=0)
+        {
+            nums1[pos--]=nums1[m]>nums2[n]?nums1[m--]:nums2[n--];
+        }
+        while(n>=0)
+        {
+            nums1[pos--]=nums2[n--];
+        }
+    }
+};
+```
+
+## [142.环形列表](https://leetcode.cn/problems/linked-list-cycle-ii/)
+```c++
+//地址法
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode *cur=head;
+        unordered_set<ListNode*> uset;
+        while(cur)
+        {
+            if(uset.count(cur))
+            {
+                return cur;
+            }
+            uset.insert(cur);
+            cur=cur->next;
+        }
+        return NULL;
+    }
+};
+//快慢指针
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode *slow=head,*fast=head;
+        do
+        {
+            if(!fast||!fast->next) return NULL;
+            slow=slow->next;
+            fast=fast->next->next;
+        }while(slow!=fast);
+        slow=head;
+        while(fast!=slow)
+        {
+            fast=fast->next;
+            slow=slow->next;
+        }
+        return fast;
+    }
+};
+```
