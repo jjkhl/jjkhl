@@ -435,3 +435,46 @@ public:
     }
 };
 ```
+
+## [76.最小覆盖字串](https://leetcode.cn/problems/minimum-window-substring/)
+```c++
+class Solution
+{
+public:
+    string minWindow(string s,string t)
+    {
+        int *need=new int[128]{0};
+        for (char c : t)
+        {
+            need[c]++;
+        }
+        int count = t.size();
+        int len_s = s.size();
+        int left = 0, right = 0, start = 0, size = INT_MAX;
+        while (right < len_s)
+        {
+            char c = s[right];
+            if (need[c]--> 0)
+                count--;
+            //need[c]--;      //先把右边的字符加入窗口
+            if (count == 0) //窗口中已经包含所需的全部字符
+            {
+                while (left < right && need[s[left]] < 0) //缩减窗口，不能有重复的字母存在
+                {
+                    need[s[left++]]++;
+                }                            //此时窗口符合要求
+                if (right - left + 1 < size) //更新答案
+                {
+                    size = right - left + 1;
+                    start = left;
+                }
+                need[s[left++]]++; //左边界右移之前需要释放need[s[left]]
+                count++;
+            }
+            right++;
+        }
+        delete []need;
+        return size == INT_MAX ? "" : s.substr(start, size);
+    }
+};
+```
