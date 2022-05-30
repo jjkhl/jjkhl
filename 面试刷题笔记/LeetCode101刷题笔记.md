@@ -566,3 +566,136 @@ public:
 };
 //思路：https://leetcode.cn/problems/longest-word-in-dictionary-through-deleting/solution/suan-fa-xiao-ai-shuang-zhi-zhen-xiang-ji-6rey/
 ```
+
+# 二分查找
+## [69.x的平方根](https://leetcode.cn/problems/sqrtx/)
+```c++
+class Solution {
+public:
+    int mySqrt(int x) {
+    int left=0,right=x;
+    if(1==x||0==x) return x;
+    while(left<right)
+    {
+        int mid=left+((right-left)>>1);
+        if(mid<x/mid)
+        {
+            left=mid+1;
+        }
+        else if(mid>x/mid) right=mid;
+        else return mid;
+    }
+    return right-1;
+    }
+};
+```
+
+## [34.在排序数组中查找元素的第一个和最后一个位置](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/)
+```c++
+//库函数
+class Solution {
+public:
+    vector<int> searchRange(vector<int>& nums, int target) {
+        auto border=equal_range(nums.begin(),nums.end(),target);
+        if(border.first==border.second) return {-1,-1};
+        return {(int)(border.first-nums.begin()),(int)(border.second-nums.begin()-1)};
+    }
+};
+//左闭右开
+class Solution {
+private:
+int lower_bound(vector<int>& nums,int target)
+{
+    int left=0,right=nums.size(),mid;
+    while(left<right)
+    {
+        mid=left+(right-left)/2;
+        if(nums[mid]>=target)
+        {
+            right=mid;
+        }
+        else
+        {
+            left=mid+1;
+        }
+    }   
+    return left;
+}
+int upper_bound(vector<int>& nums,int target)
+{
+    int left=0,right=nums.size(),mid;
+    while(left<right)
+    {
+        mid=left+(right-left)/2;
+        if(nums[mid]<=target)
+        {
+            left=mid+1;
+        }
+        else
+        {
+            right=mid;
+        }
+    }
+    return left-1;
+}
+public:
+
+    vector<int> searchRange(vector<int>& nums, int target) {
+        if(nums.size()==0) return {-1,-1};
+        int lower=lower_bound(nums,target);
+        int upper=upper_bound(nums,target);
+        if(lower==nums.size()||nums[lower]!=target)
+        {
+            return {-1,-1};
+        }
+        return {lower,upper};
+    }
+};
+```
+
+## [81.搜索旋转排序数组II](https://leetcode.cn/problems/search-in-rotated-sorted-array-ii/)
+```c++
+//左闭右闭
+class Solution {
+public:
+    bool search(vector<int>& nums, int target) {
+        int left=0,right=nums.size()-1;
+        while(left<=right)
+        {
+            int mid=left+(right-left)/2;
+            if(nums[mid]==target) return true;
+            //无法判断[left,mid]升序还是降序
+            if(nums[mid]==nums[left])
+            {
+                ++left;
+            }
+            //[mid,right]升序
+            else if(nums[mid]<=nums[right])
+            {
+                if(target>nums[mid]&&target<=nums[right])
+                {
+                    left=mid+1;
+                }
+                else
+                {
+                    right=mid-1;
+                }
+            }
+            //[left,mid]升序
+            else
+            {
+                if(target>=nums[left]&&target<nums[mid])
+                {
+                    right=mid-1;
+                }
+                else
+                {
+                    left=mid+1;
+                }
+            }
+        }
+        return false;
+        
+    }
+};
+```
