@@ -699,3 +699,130 @@ public:
     }
 };
 ```
+
+## [153.寻找旋转排序数组中的最小值](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/)
+```c++
+/*
+    情况1：左值<中值<右值，无旋转，最小值在左边界
+    情况2：左值>中值，中值<右值，最小值在左半边
+    情况3：左值<中值，中值>右值，最小值在右半边
+    情况4：左值>中值>右值，单调递减，不可能出现
+
+    归总：
+    1.中值<右值，最小值在左半边
+    2.中值>右值，最小值在右半边
+
+    参考网址：https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/solution/er-fen-cha-zhao-wei-shi-yao-zuo-you-bu-dui-cheng-z/
+*/
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int left=0,right=nums.size()-1,mid;
+        while(left<=right)
+        {
+            mid=left+(right-left)/2;
+            if(nums[mid]<nums[right])
+            {
+                right=mid;//不取mid-1是因为mid可能也是最小值
+            }
+            else
+            {
+                left=mid+1;
+            }
+        }
+        return nums[right];
+    }
+};
+
+//找最大值
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int left = 0;
+        int right = nums.size() - 1;
+        while (left < right) {
+            int mid = left + (right - left + 1) / 2;   /* 先加一再除，mid更靠近右边的right */
+            if (nums[left] < nums[mid]) {
+                left = mid;                            /* 向右移动左边界 */
+            } else if (nums[left] > nums[mid]) {
+                right = mid - 1;                       /* 向左移动右边界 */
+            }
+        }
+        return nums[(right + 1) % nums.size()];    /* 最大值向右移动一位就是最小值了（需要考虑最大值在最右边的情况，右移一位后对数组长度取余） */
+    }
+};
+```
+## [154.寻找旋转排序数组中的最小值II](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array-ii/)
+```c++
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int left=0,right=nums.size()-1,mid;
+        while(left<=right)
+        {
+            mid=left+(right-left)/2;
+            if(nums[mid]>nums[right])
+            {
+                left=mid+1;
+            }
+            else if(nums[mid]<nums[right])
+            {
+                right=mid;
+            }
+            else
+            {
+                right--;
+            }
+        }
+        return nums[left];
+    }
+};
+```
+
+## [540.有序数组中的单一元素](https://leetcode.cn/problems/single-element-in-a-sorted-array/)
+```c++
+/*
+成对元素中的第一个所对应的下标必然是偶数，成对元素中的第二个所对应的下标必然是奇数。
+参考思路：https://leetcode.cn/problems/single-element-in-a-sorted-array/solution/gong-shui-san-xie-er-duan-xing-fen-xi-yu-17nv/
+*/
+//异或二分法
+class Solution {
+public:
+    int singleNonDuplicate(vector<int>& nums) {
+        int n = nums.size();
+        int l = 0, r = n - 1;
+        while (l < r) {
+            int mid = l + r >> 1;
+            //mid为奇数,mid^1为偶数；mid为偶数，mid^1为奇数
+            if (nums[mid] == nums[mid ^ 1]) l = mid + 1;
+            else r = mid;
+        }
+        return nums[r];
+    }
+};
+
+//二分法
+class Solution {
+public:
+    int singleNonDuplicate(vector<int>& nums) {
+        int n=nums.size();
+        int left=0,right=n,mid;
+        while(left<right)
+        {
+            mid=left+(right-left>>1);
+            if(mid%2==0)
+            {
+                if(mid+1<n&&nums[mid]==nums[mid+1]) left=mid+1;
+                else right=mid;
+            }
+            else
+            {
+                if(mid-1>=0&&nums[mid-1]==nums[mid]) left=mid+1;
+                else right=mid;
+            }
+        }
+        return nums[right];
+    }
+};
+```
+<!-- ## [4.寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/) -->
