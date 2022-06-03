@@ -1263,3 +1263,121 @@ void heapSort(vector<int> &nums, int size)
     }
 }
 ```
+
+## [215.数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/)
+```c++
+class Solution {
+public:
+    int quickSelection(vector<int>& nums,int left,int right)
+    {
+        int i=left,j=right;
+        int base=nums[left];
+        while(i<j)
+        {
+            while(i<j&&nums[j]>=base) j--;
+            while(i<j&&nums[i]<=base) i++;
+            if(i<j)
+            {
+                swap(nums[i],nums[j]);
+            }
+        }
+        swap(nums[left],nums[i]);
+        return i;
+    }
+    int findKthLargest(vector<int>& nums, int k) {
+        int left=0,right=nums.size()-1;
+        int target=nums.size()-k;
+        while(left<right)
+        {
+            int cur=quickSelection(nums,left,right);
+            if(cur==target)
+            {
+                return nums[cur];
+            }
+            else if(cur<target)
+            {
+                left=cur+1;
+            }
+            else if(cur>target)
+            {
+                right=cur-1;
+            }
+        }
+        return nums[left];
+    }
+};
+```
+
+## [347.前K个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/)
+```c++
+//最佳解法
+class Solution
+{
+public:
+    vector<int> topKFrequent(vector<int> &nums, int k)
+    {
+        if(nums.size()==k) return nums;
+        vector<pair<int,int>> vp;
+        vp.push_back({});
+        int count=1;
+        sort(nums.begin(),nums.end());
+        for(int i=0;i<nums.size()-1;i++)
+        {
+            vp.back().second=nums[i];
+            if(nums[i+1]==nums[i])
+            {
+                ++count;
+            }
+            else
+            {
+                vp.back().first=count;
+                count=1;
+                vp.push_back({1,nums[i+1]});
+            }
+        }
+        if(count>1) vp.back().first=count;
+        sort(vp.rbegin(),vp.rend());
+        vector<int> res(k,0);
+        int index;
+        for(index=0;index<k;index++)
+        {
+            res[index]=vp[index].second;
+        }
+        return res;
+    }
+};
+//桶排序
+class Solution
+{
+public:
+    vector<int> topKFrequent(vector<int> &nums, int k)
+    {
+        unordered_map<int, int> counts;
+        int max_count = 0;
+        for (const int &num : nums)
+        {
+            max_count = max(max_count, ++counts[num]);
+        }
+
+        vector<vector<int>> buckets(max_count + 1);
+        for (const auto &p : counts)
+        {
+            buckets[p.second].push_back(p.first);
+        }
+
+        vector<int> ans;
+        for (int i = max_count; i >= 0 && ans.size() < k; --i)
+        {
+            for (const int &num : buckets[i])
+            {
+                ans.push_back(num);
+                if (ans.size() == k)
+                {
+                    break;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
