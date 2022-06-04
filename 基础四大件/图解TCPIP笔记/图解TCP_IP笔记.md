@@ -93,14 +93,14 @@ RFC(Request For Comment)£ºÕ÷ÇóÒâ¼û±í£¬ÊôÓÚÒ»ÖÖÕ÷ÇóÐ­ÒéÏà¹ØÒâ¼ûµÄÎÄµµ
   * Êý¾Ý±»ÍêÕûµØ½ÓÊÕÒÔºó£¬»á´«¸øÓÉ¶Ë¿ÚºÅÊ¶±ðµÄÓ¦ÓÃ³ÌÐò¡£
 * Ó¦ÓÃ³ÌÐòµÄ´¦Àí£º½ÓÊÕ¶ËÓ¦ÓÃ³ÌÐò»áÖ±½Ó½ÓÊÜ·¢ËÍ¶Ë·¢ËÍµÄÊý¾Ý¡£
 
-## µÚÈýÕÂ Êý¾ÝÁ´Â·
+# µÚÈýÕÂ Êý¾ÝÁ´Â·
 Êý¾ÝÁ´Â·²ãµÄÐ­Òé¶¨ÒåÁËÍ¨¹ýÍ¨ÐÅÃ½½é»¥Á¬µÄÉè±¸Ö®¼ä´«ÊäµÄ¹æ·¶¡£
 
 Êý¾ÝÁ´Â·µÄ¶Î£ºÖµÒ»¸ö±»·Ö¸îµÄÍøÂç¡£
 
 Êý¾ÝÍØÆË£ºÍøÂçµÄÁ¬½ÓºÍ¹¹³ÉµÄÐÄÌ¬¡£
 
-### Êý¾ÝÁ´Â·Ïà¹Ø¼¼Êõ
+## Êý¾ÝÁ´Â·Ïà¹Ø¼¼Êõ
 * MACµØÖ·
 ×÷ÓÃ£ºÊ¶±ðÊý¾ÝÁ´Â·ÖÐ»¥Á¬µÄ½Úµã¡£
 ![macµØÖ·¸ñÊ½](picture/MACµØÖ·¸ñÊ½.png)
@@ -121,7 +121,7 @@ MACµØÖ·³¤48±ÈÌØ¡£ÔÚÊ¹ÓÃÍø¿¨Ê±£¬MACµØÖ·Ò»°ã»á±»ÉÕÈëµ½ROMÖÐ¡£Òò´Ë£¬ÈÎºÎÒ»¸öÍø¿¨µÄM
 
 * VPN£ºÐéÄâ×¨ÓÃÍøÂç£¬ÓÃÓÚÁ¬½Ó¾àÀë½ÏÔ¶µÄµØÓò¡£
 
-## µÚËÄÕÂ IPÐ­Òé
+# µÚËÄÕÂ IPÐ­Òé
 IPÐ­Òé¼´Íø¼ÊÐ­Òé£¬Ïàµ±ÓÚOSI²Î¿¼Ä£ÐÍÖÐµÄµÚ3²ã¡ª¡ªÍøÂç²ã£¬×÷ÓÃÊÇÔÚ¸´ÔÓµÄÍøÂç»·¾³ÖÐ½«Êý¾Ý°ü·¢¸ø×îÖÕµÄÄ¿±êµØÖ·¡£
 
 ÍøÂç²ãÖ÷ÒªÊÇÊµÏÖÖÕ¶Ë½ÚµãÖ®¼äµÄÍ¨ÐÅ£¬Êý¾ÝÁ´Â·²ãÖ÷ÒªÊÇÏë»¥ÁªÍ¬Ò»ÖÖÊý¾ÝÁ´Â·µÄ½ÚµãÖ®¼ä½øÐÐ°ü´«µÝ¡£
@@ -202,7 +202,7 @@ Ipv4Ê×²¿
 * Ô´µØÖ·£º32±ÈÌØ(4×Ö½Ú)£¬±íÊ¾·¢ËÍ¶ËIPµØÖ·
 * Ä¿±êµØÖ·£º32±ÈÌØ£¬½ÓÊÕ¶ËµØÖ·
 
-## µÚÎåÕÂ IPÐ­ÒéÏà¹Ø¼¼Êõ
+# µÚÎåÕÂ IPÐ­ÒéÏà¹Ø¼¼Êõ
 DNS£º×Ô¶¯½«×Ö·û´®×ª»»Îª¾ßÌåµÄIPµØÖ·
 ÓòÃû·þÎñÆ÷£º¹ÜÀíÓòÃûµÄÖ÷»úºÍÏàÓ¦µÄÈí¼þ
 DNS½âÎöÆ÷£º½øÐÐDNS²éÑ¯µÄÖ÷»ú
@@ -220,7 +220,7 @@ NAT(Network Address Trans;ator)£ºÓÃÓÚÔÚ±¾µØÍøÂçÖÐÊ¹ÓÃË½ÓÐµØÖ·£¬ÔÚÁ¬½Ó»¥ÁªÍøÊ±Ê¹Ó
 IP¶à²¥£º
 IPÈÎ²¥£ºÎªÄÇÐ©Ìá¹©Í¬Ò»ÖÖ·þÎñµÄ·þÎñÆ÷ÅäÖÃÍ¬Ò»¸öIPµØÖ·£¬²¢Óë×î½üµÄ·þÎñÆ÷½øÐÐÍ¨ÐÅµÄÒ»ÖÖ·½·¨
 
-## µÚÁùÕÂ TCPÓëUDP
+# µÚÁùÕÂ TCPÓëUDP
 TCP/IP»òUDP/IPÊ¶±ðµÄ5¸öÐÅÏ¢£ºÔ´IPµØÖ·¡¢Ä¿±êIPµØÖ·¡¢Ð­ÒéºÅ¡¢Ô´¶Ë¿ÚºÅ¡¢Ä¿±ê¶Ë¿ÚºÅ
 
 ¾²Ì¬·ÖÅäµÄ¶Ë¿ÚºÅÔÚ1024µ½49151Ö®¼ä
@@ -293,3 +293,87 @@ TCPÊ×²¿¸ñÊ½£º
 > Ñ¡Ïî4ºÍ5ÓÃÓÚÑ¡ÔñÈ·ÈÏÓ¦´ð¡£
 
 ![](picture/´°¿Ú´óÐ¡ºÍÍÌÍÂÁ¿.png)
+
+# µÚÆßÕÂ Â·ÓÉÐ­Òé
+ÎªÁËÄÜÈÃÊý¾Ý°üÕýÈ·´ïµ½Ä¿±êÖ÷»ú£¬Â·ÓÉÆ÷±ØÐëÔÚÍ¾ÖÐ½øÐÐÕýÈ·×ª·¢£¬ÕâÖÖÐÐÎª½Ð×öÂ·ÓÉ¿ØÖÆ»òÂ·ÓÉ¡£
+
+Â·ÓÉÆ÷¸ù¾ÝËùÊÕµ½µÄÊý¾Ý°üÖÐÄ¿±êÖ÷»úµÄIPµØÖ·ÓëÂ·ÓÉ¿ØÖÆ±íµÄ±È½ÏµÃµ½ÏÂÒ»¸öÓ¦¸Ã½ÓÊÜµÄÂ·ÓÉÆ÷¡£
+
+Â·ÓÉÐ­ÒéÀàÐÍ£º
+* Íâ²¿Íø¹ØÐ­Òé(EGP£¬Exterior Gateway Protocol)
+* ÄÚ²¿Íø¹ØÐ­Òé(IGP, Interior Gateway Protocol)
+
+Â·ÓÉ¿ØÖÆËã·¨£º
+* ¾àÀëÏòÁ¿Ëã·¨(DV£¬Distance-Vector)
+  * ¸ù¾Ý¾àÀëºÍ·½Ïò¾ö¶¨Ä¿±êÍøÂç»òÄ¿±êÖ÷»úÎ»ÖÃµÄÒ»ÖÖ·½·¨¡£
+  * Â·ÓÉÆ÷Ö®¼ä¿ÉÒÔ»¥»»Ä¿±êÍøÂçµÄ·½Ïò¼°Æä¾àÀëµÄÏà¹ØÐÅÏ¢£¬²¢ÒÔÕâÐ©ÐÅÏ¢Îª»ù´¡ÖÆÔìÂ·ÓÉ¿ØÖÆ±í¡£µ«ÊÇµ±ÍøÂç¹¹Ôì±äµÃ¸´ÔÓºó£¬ÔÚ»ñµÃÎÈ¶¨µÄÂ·ÓÉÐÅÏ¢Ö®Ç°ÐèÒªÏûºÄÒ»¶¨µÄÊ±¼ä(Â·ÓÉÊÕÁ²)£¬Ò²¼«Ò×·¢ÉúÂ·ÓÉÑ­»·µÈÎÊÌâ
+  * Ã¿¸öÂ·ÓÉÆ÷ÕÆÎÕµÄÐÅÏ¢²»ÏàÍ¬£¬²»ÈÝÒ×ÅÐ¶ÏÃ¿¸öÂ·ÓÉÆ÷ÉÏÐÅÏ¢µÄÕýÈ·ÐÔ
+* Á´Â·×´Ì¬Ëã·¨
+  * Â·ÓÉÆ÷ÔÚÁË½âÍøÂçÕûÌåÁ¬½Ó×´Ì¬µÄ»ù´¡ÉÏÉú³ÉÂ·ÓÉ¿ØÖÆ±íµÄÒ»ÖÖ·½·¨¡£
+  * Ã¿¸öÂ·ÓÉÆ÷±ØÐë±£³ÖÍ¬ÑùµÄÐÅÏ¢²ÅÄÜ½øÐÐÂ·ÓÉÑ¡Ôñ
+  * È±µã£º´ÓÍøÂç´úÀí»ñÈ¡Â·ÓÉÐÅÏ¢±íµÄ¹ý³ÌºÜ¸´ÔÓ
+
+## Ö÷ÒªÂ·ÓÉÐ­ÒéÌØµã
+![](picture/Ö÷ÒªÂ·ÓÉÐ­ÒéÌØµã.png)
+* RIP(Routing Information Protocol)£¬¹ã·ºÓÃÓÚLAN¡£
+  * RIP½«Â·ÓÉ¿ØÖÆÐÅÏ¢¶¨ÆÚ£¨30ÃëÒ»´Î£©ÏòÈ«Íø¹ã²¥¡£Èç¹ûÃ»ÓÐÊÕµ½Â·ÓÉ¿ØÖÆÐÅÏ¢£¬Á¬½Ó¾Í»á±»¶Ï¿ª¡£²»¹ý£¬ÕâÓÐ¿ÉÄÜÊÇÓÉÓÚ¶ª°üµ¼ÖÂµÄ£¬Òò´ËRIP¹æ¶¨µÈ´ý5´Î¡£Èç¹ûµÈÁË6´Î£¨180Ãë£©ÈÔÎ´ÊÕµ½Â·ÓÉÐÅÏ¢£¬²Å»áÕæÕý¹Ø±ÕÁ¬½Ó¡£
+  * »ùÓÚ¾àÀëÏòÁ¿Ëã·¨¾ö¶¨Â·¾¶¡£¾àÀëµ¥Î»ÎªÌøÊý(¾­¹ýÂ·ÓÉÆ÷¸öÊý)¡£
+* RIP2
+  * Ê¹ÓÃ¶à²¥£º¼õÉÙÁËÍøÂçµÄÁ÷Á¿£¬»¹ËõÐ¡ÁË¶ÔÎÞ¹ØÖ÷»úµÄÓ°Ïì
+  * Ö§³Ö×ÓÍøÑÚÂë£ºÖ§³ÖÔÚÆä½»»»µÄÂ·ÓÉÐÅÏ¢ÖÐ¼ÓÈë×ÓÍøÑÚÂëÐÅÏ¢
+  * Â·ÓÉÑ¡ÔñÓò£ºÔÚÍ¬Ò»¸öÍøÂçÖÐ¿ÉÒÔÊ¹ÓÃÂß¼­ÉÏ¶ÀÁ¢µÄ¶à¸öRIP
+  * Íâ²¿Â·ÓÉ±êÖ¾£ºÓÃÓÚ°Ñ´ÓBGPµÈ»ñµÃµÄÂ·ÓÉ¿ØÖÆÐÅÏ¢Í¨¹ýRIP´«µÝ¸øASÄÚ
+  * Éí·ÝÑéÖ¤ÃÜÔ¿£ºÖ»ÓÐÄÜ¹»Ê¶±ðÃÜÂë²ÅÄÜ½ÓÊÜÊý¾Ý£¬·ñÔòºöÂÔ
+* OSPF(Open Shortest Path First)
+  * Á´Â·×´Ì¬ÐÍÂ·ÓÉÐ­Òé.Â·ÓÉÆ÷Ö®¼ä½»»»Á´Â·×´Ì¬Éú³ÉÍøÂçÍØÆËÐÅÏ¢£¬È»ºóÔÙ¸ù¾ÝÕâ¸öÍØÆËÐÅÏ¢Éú³ÉÂ·ÓÉ¿ØÖÆ±í¡£
+  * Ö§³Ö×ÓÍøÑÚÂë
+  * RIPÒªÇó¾­¹ýÂ·ÓÉÆ÷¸öÊýÔ½ÉÙÔ½ºÃ£¬OSPFÔòÊÇÑ¡Ôñ×ÜµÄ´ú¼Û½ÏÐ¡µÄÂ·¾¶¡£
+
+![](picture/ÍøÂçÈ¨ÖØÓëÂ·ÓÉÑ¡Ôñ.png)
+
+RIP°üÀàÐÍÖ»ÓÐÒ»ÖÖ£¬ËüÀûÓÃÂ·ÓÉ¿ØÖÆÐÅÏ¢£¬Ò»±ßÈ·ÈÏÊÇ·ñÁ¬½ÓÁËÍøÂç£¬Ò»±ß´«µÝÍøÂçÐÅÏ¢¡£È±µãÊÇÍøÂç¸öÊýÔ½¶à£¬Ã¿´ÎÒª½»»»µÄÂ·ÓÉ¿ØÖÆÐÅÏ¢Ô½´ó£»ÔÚÎÈ¶¨ÍøÂçÏÂ»á½øÐÐÎÞÒâÒåµÄ¶¨ÆÚ½»»»ÏàÍ¬µÄÂ·ÓÉ¿ØÖÆÐÅÏ¢¡£
+
+OSPFµÄ5ÖÖÀàÐÍ°ü£º
+![](picture/OSPF°üÀàÐÍ.png)
+
+OSPF²»½ö¿ÉÒÔ´ó´ó¼õÉÙÍøÂçÁ÷Á¿£¬»¹¿ÉÒÔ´ïµ½Ñ¸ËÙ¸üÐÂÂ·ÓÉÐÅÏ¢µÄÄ¿µÄ¡£
+
+OSPF¸ù¾ÝÁ´Â·×´Ì¬Éú³ÉÂ·ÓÉ¿ØÖÆ±í
+![](picture/OSPF¸ù¾ÝÁ´Â·×´Ì¬Éú³ÉÂ·ÓÉ¿ØÖÆ±í.png)
+
+LANÖÐÃ¿10Ãë·¢ËÍÒ»¸öHELLO°ü¡£Èç¹ûÃ»ÓÐHELLO°üµ½´ï£¬Ôò½øÐÐÁ¬½ÓÊÇ·ñ¶Ï¿ªµÄÅÐ¶Ï£¨¹ÜÀíÔ±¿ÉÒÔ×Ô¶¨ÒåHELLO°üµÄ·¢ËÍ¼ä¸ôºÍÅÐ¶ÏÁ¬½Ó¶Ï¿ªµÄÊ±¼ä¡£Ö»ÊÇÔÚÍ¬Ò»¸öÁ´Â·ÖÐµÄÉè±¸±ØÐëÅäÖÃÏàÍ¬µÄÖµ¡££© ¡£¾ßÌåÎª£¬ÔÊÐí¿ÕµÈ3´Î£¬Ö±µ½µÚ4´Î£¨40Ãëºó£©ÈÔÎÞÈÎºÎ·´À¡¾ÍÈÏÎªÁ¬½ÓÒÑ¾­¶Ï¿ª¡£Ö®ºóÔÚ½øÐÐÁ¬½Ó¶Ï¿ª»ò»Ö¸´Á¬½Ó²Ù×÷Ê±£¬ÓÉÓÚÁ´Â·×´Ì¬·¢ÉúÁË±ä»¯£¬Â·ÓÉÆ÷»á·¢ËÍÒ»¸öÁ´Â·×´Ì¬¸üÐÂ°ü£¨Link State Update Packet£©Í¨ÖªÆäËûÂ·ÓÉÆ÷ÍøÂç×´Ì¬µÄ±ä»¯¡£
+
+Á´Â·×´Ì¬¸üÐÂ°üËùÒª´«´ïµÄÏûÏ¢´óÖÂ·ÖÎªÁ½Àà£º
+* ÍøÂçLSA(Network Link State Advertisement£¬ÍøÂçÁ´Â·×´Ì¬Í¨¸æ)
+  * ÒÔÍøÂçÎªÖÐÐÄÉú³ÉµÄÐÅÏ¢£¬±íÊ¾Õâ¸öÍøÂçÓëÄÄÐ©Â·ÓÉÆ÷ÏàÁ¬½Ó
+* Â·ÓÉÆ÷LSA(Router Link State Advertisement£¬Â·ÓÉÆ÷Á´Â·×´Ì¬Í¨¸æ)
+  * ÒÔÂ·ÓÉÆ÷ÎªÖÐÐÄÉú³ÉµÄÐÅÏ¢£¬±íÊ¾Õâ¸öÂ·ÓÉÆ÷ÓëÄÄÐ©ÍøÂçÏàÁ¬½Ó
+
+OSPFÂ·ÓÉÆ÷ÖÖÀà
+![](picture/OSPFÂ·ÓÉÆ÷ÖÖÀà.png)
+
+* BGP(Border Gateway Protocol£¬±ß½çÍø¹ØÐ­Òé)
+  * Á¬½Ó²»Í¬×éÖ¯»ú¹¹(»òËµÁ¬½Ó²»Í¬×ÔÖÎÏµÍ³)£¬Ö÷ÒªÓÃÓÚISPÖ®¼äÏàÁ¬½ÓµÄ²¿·Ö
+  * RIPºÍOSPF¸ù¾ÝIPµÄÍøÂçµØÖ·²¿·Ö½øÐÐÂ·ÓÉ¿ØÖÆ£¬µ±BGPÐèÒªÈ«¾Ö½øÐÐÂ·ÓÉ¿ØÖÆ¡£GDPµÄ×îÖÕÂ·ÓÉ¿ØÖÆ±íÓÉÍøÂçµØÖ·ºÍÏÂÒ»Õ¾µÄÂ·ÓÉÆ÷×é±íÊ¾£¬²»¹ý»á¸ù¾ÝË÷Òª¾­¹ýµÄAS¸öÊý½øÐÐÂ·ÓÉ¿ØÖÆ¡£
+  * BGPÑïÉùÆ÷£ºBGP½»»»Â·ÓÉ¿ØÖÆÐÅÏ¢µÄÂ·ÓÉÆ÷¡£
+  * ASÂ·¾¶ÐÅÏ¢·ÃÎÊÁÐ±í£ºBGPÊý¾Ý°üËÍ´ïÄ¿±êÍøÂçÊ±Éú³ÉµÄÒ»¸öÖÐÍ¾¾­¹ýËùÓÐASµÄ±àºÅÁÐ±í¡£
+
+> ÔÚ×öÂ·ÓÉÑ¡ÔñÊ±Ê¹ÓÃµÄ¶ÈÁ¿£¬RIPÖÐ±íÊ¾ÎªÂ·ÓÉÆ÷¸öÊý£¬OSPFÖÐ±íÊ¾ÎªÃ¿¸ö×ÓÍøµÄ³É±¾£¬¶øBGPÔòÓÃAS½øÐÐ¶ÈÁ¿±ê×¼¡£RIPºÍOSPF±¾×ÅÌá¸ß×ª·¢Ð§ÂÊÎªÄ¿µÄ£¬¿¼ÂÇµ½ÁËÍøÂçµÄÌøÊýºÍÍøÂçµÄ´ø¿í¡£BGPÔò»ùÓÚASÖ®¼äµÄºÏÔ¼½øÐÐÊý¾Ý°üµÄ×ª·¢¡£BGPÒ»°ãÑ¡ÔñASÊý×îÉÙµÄÂ·¾¶£¬²»¹ýÈÔÈ»Òª×ñÑ­¸÷¸öASÖ®¼äÇ©Ô¼µÄÏ¸½Ú½øÐÐ¸üÏ¸Á£¶ÈµÄÂ·ÓÉÑ¡Ôñ¡£
+
+![](picture/BGPÊ¹ÓÃASºÅ¹ÜÀíÍøÂçÐÅÏ¢.png)
+
+MPLSÍøÂç
+![](picture/MPLSÍøÂç.png)
+* MPLS(Multi Protocol Label Switching£¬¶àÐ­Òé±ê¼Ç½»»»¼¼Êõ)
+  * MPLSµÄ±ê¼Ç²»ÏñMACµØÖ·Ö±½Ó¶ÔÓ¦Ó²¼þÉè±¸£¬Ö»ÐèÒª¹Ø×¢ËüºÍÏÂÒ»²ãIP²ãÖ®¼ä¶î¹¦ÄÜºÍÐ­Òé¡£
+
+![](picture/IPÓëMPLS×ª·¢µÄ»ù±¾ÐÐÎª¶Ô±È.png)
+LSR(Label Switching Router,±ê¼Ç½»»»Â·ÓÉÆ÷)£ºÊµÏÖMPLS¹¦ÄÜ¹ýµÄÂ·ÓÉÆ÷
+LER(Label Edge Router,±ê¼Ç±ßÔµÂ·ÓÉÆ÷)£ºÓëÍâ²¿ÍøÂ·Á¬½ÓµÄLSRÂ·ÓÉÆ÷
+
+MPLSÓÅµã
+* ×ª·¢ËÙ¶È¿ì
+  * IPµÄ×ª·¢£¬Ê×ÏÈÒª¶ÔÄ¿±êµØÖ·ºÍÂ·ÓÉ¿ØÖÆ±íÖÐ¿É±ä³¤µÄÍøÂçµØÖ·½øÐÐ±È½Ï£¬È»ºó´ÓÖÐÑ¡³ö×î³¤Æ¥ÅäµÄÂ·¾¶²ÅÄÜ½øÐÐ×ª·¢
+  * MPLS×ª·¢£¬ËüÊ¹ÓÃ¹Ì¶¨³¤¶ÈµÄ±ê¼ÇÐÅÏ¢£¬Ê¹µÃ´¦Àí¸ü¼Ó¼òµ¥£¬¿ÉÒÔÍ¨¹ý¸ßËÙµÄÓ²¼þÊµÏÖ×ª·¢¡£
+  * Ïà±È»¥ÁªÍøÖÐµÄÖ÷¸ÉÂ·ÓÉÆ÷ÐèÒª±£´æ´óÁ¿Â·ÓÉ±í²ÅÄÜ½øÐÐ´¦ÀíµÄÏÖ×´£¬MPLSÖ»ÐèÒªÉèÖÃ±ØÒªµÄ¼¸´¦ÐÅÏ¢¼´¿É£¬ËùÒª´¦ÀíµÄÊý¾ÝÁ¿Ò²´ó·ù¶È¼õÉÙ¡£
+* ÀûÓÃ±ê¼ÇÉú³ÉÐéÄâÂ·¾¶£¬²¢ÔÚËüÉÏÃæÊµÏÖIPµÈÊý¾Ý°üµÄÍ¨ÐÅ
