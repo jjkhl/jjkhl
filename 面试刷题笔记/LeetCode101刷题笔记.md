@@ -1310,7 +1310,7 @@ public:
 
 ## [347.前K个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/)
 ```c++
-//最佳解法
+//2次快排
 class Solution
 {
 public:
@@ -1378,6 +1378,107 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+## [451.根据字符出现频率排序](https://leetcode.cn/problems/sort-characters-by-frequency/)
+```c++
+//桶排序
+class Solution
+{
+public:
+    string frequencySort(string s)
+    {
+        int len = s.size();
+        int max_count = 0;
+        if (len <= 2)
+            return s;
+        unordered_map<char, int> umap;
+        for (auto ch : s)
+        {
+            max_count = max(max_count, ++umap[ch]);
+        }
+        vector<vector<char>> buckets(max_count + 1);
+        for (const auto &p : umap)
+        {
+            buckets[p.second].push_back(p.first);
+        }
+        string res = "";
+        for (int i = max_count; i >= 0; i--)
+        {
+            int len1=buckets[i].size();
+            if(len1==0) continue;
+            for (int j = 0; j < len1; j++)
+            {
+                int count = i;
+                while (count--)
+                {
+                    res += buckets[i][j];
+                }
+            }
+        }
+        return res;
+    }
+};
+//2次快排
+class Solution
+{
+public:
+    string frequencySort(string s)
+    {
+        int len = s.size();
+        int count = 1;
+        if (len <= 2)
+            return s;
+        string ret = "";
+        sort(s.begin(), s.end());
+        vector<pair<int, char>> vp;
+        vp.push_back({});
+        for (int i = 0; i < len - 1; i++)
+        {
+            vp.back().second = s[i];
+            if (s[i + 1] == s[i])
+            {
+                ++count;
+            }
+            else
+            {
+                vp.back().first=count;
+                count=1;
+                vp.push_back({1,s[i+1]});
+            }
+        }
+        if(count>1) vp.back().first=count;
+        sort(vp.rbegin(),vp.rend());
+        for(const pair<int,char> &p:vp)
+        {
+            count=p.first;
+            while(count--)
+                ret+=p.second;
+        } 
+        return ret;
+    }
+};
+```
+
+## [75.颜色分类](https://leetcode.cn/problems/sort-colors/)
+```c++
+//双指针
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int zero=0;
+        int two=nums.size()-1;
+        for(int i=0;i<=two;)
+        {
+            if(nums[i]==1)
+                i++;
+            else if(nums[i]==2)
+                swap(nums[i],nums[two--]);
+            else if(nums[i]==0)
+                swap(nums[i++],nums[zero++]);
+        }
     }
 };
 ```
