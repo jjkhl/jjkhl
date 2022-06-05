@@ -1482,3 +1482,177 @@ public:
     }
 };
 ```
+
+# 第六章 一切皆可搜索
+* 深度优先搜索(DFS)
+ * 搜索到一个新的节点时，立即对该新节点进行遍历
+ * 使用先入后出的栈实现，也可以通过与栈等价的递归实现
+* 广度优先搜索(BFS)
+
+## [695.岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/)
+```c++
+//栈
+class Solution {
+public:
+    int *dir=new int[5]{-1,0,1,0,-1};
+    int maxAreaOfIsland(vector<vector<int>>& grid) {
+        int rows=grid.size();
+        if(rows==0) return 0;
+        int cols=grid[0].size();
+        int x,y,local_area,area=0;
+        for(int i=0;i<rows;i++)
+        {
+            for(int j=0;j<cols;j++)
+            {
+                if(1==grid[i][j])
+                {
+                    local_area=1;
+                    stack<pair<int,int>> island;
+                    grid[i][j]=0;
+                    island.push({i,j});
+                    while(!island.empty())
+                    {
+                        pair<int,int> p=island.top();
+                        island.pop();
+                        for(int k=0;k<4;k++)
+                        {
+                            x=p.first+dir[k];
+                            y=p.second+dir[k+1];
+                            if(x>=0&&x<rows&&y>=0&&y<cols&&grid[x][y]==1)
+                            {
+                                grid[x][y]=0;
+                                ++local_area;
+                                island.push({x,y});
+                            }
+                        }
+                    }
+                    area=max(area,local_area);
+                }
+            }
+        }
+        delete []dir;
+        return area;
+    }
+};
+//递归法
+class Solution {
+public:
+    const int *dir=new int[5]{-1,0,1,0,-1};
+    int dfs(vector<vector<int>>& grid,int x,int y)
+    {
+        if(grid[x][y]==0) return 0;
+        grid[x][y]=0;
+        int newX,newY,area=1;
+        for(int i=0;i<4;i++)
+        {
+            newX=x+dir[i];
+            newY=y+dir[i+1];
+            if(newX>=0&&newX<grid.size()&&newY>=0&&newY<grid[0].size())
+                area+=dfs(grid,newX,newY);
+        }
+        return area;
+    }
+    int maxAreaOfIsland(vector<vector<int>>& grid) {
+        if(grid.empty()||grid[0].empty()) return 0;
+        int max_area=0;
+        int m=grid.size(),n=grid[0].size();
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(1==grid[i][j])
+                {
+                    max_area=max(max_area,dfs(grid,i,j));
+                }
+            }
+        }
+        delete []dir;
+        return max_area;
+    }
+};
+```
+
+## [547.省份数量](https://leetcode.cn/problems/number-of-provinces/)
+```c++
+//并查集
+class Solution {
+private:
+    int father[210];
+    int n;
+
+    void init()
+    {
+        for(int i=0;i<n;++i)
+            father[i]=i;
+    }
+
+    int find(int x)
+    {
+        return father[x]==x?x:find(father[x]);
+    }
+
+    void join(int x1,int x2)
+    {
+        father[find(x1)]=find(x2);
+    }
+
+    bool same(int x1,int x2)
+    {
+        return find(x1)==find(x2);
+    }
+public:
+    int findCircleNum(vector<vector<int>>& isConnected) {
+        n=isConnected.size();
+        init();
+        for(int i=0;i<n;i++)
+        {
+            for(int j=i+1;j<n;j++)
+            {
+                if(isConnected[i][j])
+                    join(i,j);
+            }
+        }
+
+        unordered_set<int> uset;
+        for(int i=0;i<n;i++)
+        {
+            uset.insert(find(i));
+        }
+        return uset.size();
+    }
+};
+/*
+参考思路1：https://leetcode.cn/problems/number-of-provinces/solution/547-sheng-fen-shu-liang-bing-cha-ji-ji-c-qcj6/
+
+参考思路2：https://www.jianshu.com/p/fc17847b0a31
+*/
+
+//深度优先
+class Solution {
+public:
+    void dfs(vector<vector<int>>& isConnected,int i,vector<bool>& visited)
+    {
+        visited[i]=true;
+        for(int k=0;k<isConnected.size();k++)
+        {
+            if(isConnected[i][k]==1&&!visited[k])
+            {
+                dfs(isConnected,k,visited);
+            }
+        }
+    }
+    int findCircleNum(vector<vector<int>>& isConnected) {
+        int n=isConnected.size(),count=0;
+        vector<bool> visited(n,false);
+        for(int i=0;i<n;++i)
+        {
+            if(!visited[i])
+            {
+                dfs(isConnected,i,visited);
+                count++;
+            }
+        }
+        return count;
+    }
+};
+```
