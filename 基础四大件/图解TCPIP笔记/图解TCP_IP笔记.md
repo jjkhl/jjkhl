@@ -377,3 +377,113 @@ MPLS优点
   * MPLS转发，它使用固定长度的标记信息，使得处理更加简单，可以通过高速的硬件实现转发。
   * 相比互联网中的主干路由器需要保存大量路由表才能进行处理的现状，MPLS只需要设置必要的几处信息即可，所要处理的数据量也大幅度减少。
 * 利用标记生成虚拟路径，并在它上面实现IP等数据包的通信
+
+# 第八章 应用协议
+
+## 远程登录(TELNET)
+介绍：实现从自己的本地计算机登录到网络另一端计算功能的应用。
+主要使用的协议：
+* TELNET
+  * 利用TCP的一条连接，通过这一条连接向主机发送文字命令并在主机上执行。
+  * 常用于登录路由器或高性能交换机等网络设备进行相应设置
+* SSH(Secure SHell)
+
+* SSH
+SSH是加密的远程登录系统。
+
+端口转发是指将特定端口号所收到的消息转发到特定的IP地址和端口号码的一种机制。
+
+![](picture/SSH的端口转发.png)
+
+## 文件传输(FTP)
+FTP是在两个相连的计算机之间进行文件传输时使用的协议。
+
+匿名服务器(anonymous ftp)：允许任何人访问
+
+FTP工作原理：
+* 2条TCP连接
+  * 控制：常用21号端口，在FTP的控制部分使用，如登录、发送文件名称等。
+  * 数据的传输：使用20号端口，数据的传输和文件一览表的传输正是在这个新建的连接上进行。当数据传送完毕之后，传输数据的这条连接也会被断开，然后会在控制用的连接上继续进行命令或应答的处理。
+
+## 电子邮件
+提供电子邮件服务的协议叫做SMTP(Simple Mail Transfer Protocol)。SMTP为了实现高效发送邮件内容，在其传输层使用了TCP协议。
+
+邮件地址格式：`名称@通信地址`
+如`master@tcpip.kusa.ac.jp`
+* master：名称
+* tcpip.kusa.ac.jp：地址
+  * kusa.ac.jp：域名
+  * tcpip：master接收邮件的主名称或为发送邮件所用的子网名称
+
+电子邮件的发送地址由DNS进行管理，DNS中注册有邮箱地址及其作为发送地址时对应的邮件服务器域名，这些映射信息被称为MX记录。
+
+**MIME**
+MIME(Multipurpose Internet Mail Extensions)，广泛应用于互联网并极大扩展了数据格式，还可以应用于WWW和NetNews中。
+
+![](picture/MIME举例.png)
+
+**SMTP**
+SMTP是发送电子邮件的协议，使用的是TCP的25号端口。
+SMTP建立一个TCP连接以后，在这个连接上进行控制和应答以及数据的发送。客户端以文本的形式发出请求，服务端返回一个3位数字的应答。
+
+![](picture/SMTP.png)
+
+**POP**
+POP是用于接收电子邮件的协议。
+发送端的邮件根据SMTP协议将被转发给一直处于插电状态的POP服务器。客户端再根据POP协议从POP服务器接收对方发来的邮件。
+
+![](picture/POP工作机制.png)
+
+**IMAP**
+IMAP(Internet Message Access Protocol)，也是接收电子邮件的协议。POP中邮件由客户端进行管理，而IMAP邮件由服务器进行管理。
+
+使用IMAP时，可以不必从服务器上下载所有的邮件也可以阅读。
+
+## WWW
+WWW(World Wide Web，万维网)，是将互联网中信息以超文本形式展现的系统，也叫Web。
+
+WWW的基本概念：
+* URI
+访问信息的手段与位置(URI，Uniform Resource Identifier)，用于表示资源。
+如`http://www.rfc-editor.org/rfc/rfc4395.txt`
+URL常被用来表示互联网中资源的位置。
+
+* HTML
+信息表示方式(HTML，HyperText Markup Language)，是记述Web页的一种数据格式。可以置顶浏览器中显示的文字、文字大小和颜色，以及对图像和动画进行相关设置。
+
+
+
+* HTTP
+信息转发(HTTP，HyperText Transfer Protocol)，默认使用80端口。
+工作机制：首先是客户端向服务器的80端口建立一个TCP连接，然后在这个TCP连接上进行请求和应答以及数据报文的发送。
+
+![](picture/HTTP工作机制.png)
+
+* JavaScript
+JavaScript是一种嵌入在HTML中的编程语言，作为客户端程序(Web浏览器端执行的程序)可以运行于多种类型的浏览器中。
+
+* CGI(Common Gateway Interface)
+CGI是Web服务器调用外部程序时所使用的一种服务端应用的规范。
+
+利用CGI可以针对用户的操作返回给客户端有各种各样变化（动态）的信息。论坛和网上购物系统中就经常使用CGI调用外部程序或访问数据库。
+
+* Cookie
+Web应用中为了获取用户信息使用一个叫做Cookie的机制。Web服务器用Cookie在客户端保存信息（还可以设置Cookie的有效期。）
+
+Cookie常被用于保存登录信息或网络购物中放入购物车的商品信息。
+
+## 网络管理
+* SNMP(Simple Network Management Protocol)
+
+它是一款基于UDP/IP的协议，用于收集必要信息。
+
+SNMP中管理端叫做管理器（Manager，网络监控终端），被管理端叫做代理（路由器、交换机等）
+
+![](picture/SNMP工作机制.png)
+
+* MIB(Management Information Base)
+MIB是SNMP中交互的信息，是在树形结构的数据库中为每个项目附加编号的一种信息结构。
+
+* RMON(Remote Monitoring MIB)
+RMON中可监控的信息从原来的一个点扩展到了一条线上。这样可以更高效率地监控网络。可监控的内容上也增加了很多从用户角度看极为有意义的信息，如网络流量统计等。
+
