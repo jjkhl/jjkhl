@@ -1656,3 +1656,121 @@ public:
     }
 };
 ```
+
+## [417.太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)
+```c++
+class Solution {
+public:
+    int dir[5]={-1,0,1,0,-1};
+    void dfs(const vector<vector<int>>& heights,vector<vector<bool>>& can_reach,int r,int c)
+    {
+        if(can_reach[r][c]) return;
+        can_reach[r][c]=true;
+        int x,y;
+        for(int i=0;i<4;i++)
+        {
+            x=r+dir[i];
+            y=c+dir[i+1];
+            if(x>=0&&x<heights.size()&&y>=0&&y<heights[0].size()&&heights[x][y]>=heights[r][c])
+                dfs(heights,can_reach,x,y);
+        }
+    }
+    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {
+        if(heights.size()==0||heights[0].size()==0) return {};
+        int m=heights.size();
+        int n=heights[0].size();
+        vector<vector<int>> res;
+        vector<vector<bool>> toPac(m,vector<bool>(n,false));
+        vector<vector<bool>> toAtl(m,vector<bool>(n,false));
+        for(int i=0;i<m;i++)
+        {
+            dfs(heights,toPac,i,0);
+            dfs(heights,toAtl,i,n-1);
+        }
+        for(int j=0;j<n;j++)
+        {
+            dfs(heights,toPac,0,j);
+            dfs(heights,toAtl,m-1,j);
+        }
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(toPac[i][j]&&toAtl[i][j])
+                    res.push_back({i,j});
+            }
+        }
+        return res;
+    }
+};
+```
+
+## [46.全排列](https://leetcode.cn/problems/permutations/)
+```c++
+class Solution
+{
+private:
+    vector<vector<int>> ans;
+    vector<int> path;
+    int *used = new int[21]{0};
+
+public:
+    void backtrack(vector<int> &nums)
+    {
+        if (path.size() == nums.size())
+        {
+            ans.emplace_back(path);
+            return;
+        }
+        for (int i = 0; i < nums.size(); i++)
+        {
+            if (used[i])
+                continue;
+            path.emplace_back(nums[i]);
+            used[i] = 1;
+            backtrack(nums);
+            used[i] =0;
+            path.pop_back();
+        }
+    }
+    vector<vector<int>> permute(vector<int> &nums)
+    {
+        backtrack(nums);
+        delete[] used;
+        return ans;
+    }
+};
+//方式2
+class Solution
+{
+private:
+    vector<vector<int>> ans;
+    vector<int> path;
+    int *used = new int[21]{0};
+
+public:
+    // 主函数
+    vector<vector<int>> permute(vector<int> &nums)
+    {
+        vector<vector<int>> ans;
+        backtracking(nums, 0, ans);
+        return ans;
+    }
+    // 辅函数
+    void backtracking(vector<int> &nums, int level, vector<vector<int>> &ans)
+    {
+        if (level == nums.size() - 1)
+        {
+            ans.push_back(nums);
+            return;
+        }
+        for (int i = level; i < nums.size(); i++)
+        {
+            swap(nums[i], nums[level]);         // 修改当前节点状态
+            backtracking(nums, level + 1, ans); // 递归子节点
+            swap(nums[i], nums[level]);         // 回改当前节点状态
+        }
+    }
+};
+```
+
