@@ -1774,3 +1774,144 @@ public:
 };
 ```
 
+## [77.组合](https://leetcode.cn/problems/combinations/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> res;
+    vector<int> path;
+    void backtrack(int index,int n,int k)
+    {
+        if(path.size()==k)
+        {
+            res.emplace_back(path);
+            return;
+        }
+        //k-path.size()：剩余数字数量
+        //+1：从1开始
+        //n-(k-path.size())+1：表示当前索引最多能到的位置
+        for(int i=index;i<=n-(k-path.size())+1;i++)
+        {
+            path.emplace_back(i);
+            backtrack(i+1,n,k);
+            path.pop_back();
+        }
+    }
+    vector<vector<int>> combine(int n, int k) {
+        backtrack(1,n,k);
+        return res;
+    }
+};
+//固定空间解法
+class Solution {
+public:
+    vector<vector<int>> combine(int n, int k) {
+        vector<vector<int>> res;
+        vector<int> comb(k,0);
+        int count=0;
+        backtrack(res,comb,0,1,n,k);
+        return res;
+    }
+    void backtrack(vector<vector<int>>& ans,vector<int>&comb,int count,int pos,int n,int  k)
+    {
+        if(count==k)
+        {
+            ans.emplace_back(comb);
+            return;
+        }
+        for(int i=pos;i<=n;i++)
+        {
+            comb[count]=i;
+            backtrack(ans,comb,count+1,i+1,n,k);
+        }
+    }
+
+};
+```
+
+## [79.单词搜索](https://leetcode.cn/problems/word-search/)
+```c++
+class Solution {
+public:
+    int dir[5]={-1,0,1,0,-1};
+    bool dfs(vector<vector<char>>& board,string word,int index,int x,int y)
+    {
+        if(board[x][y]!=word[index]) return false;
+        if(index==word.size()-1) return true;
+        char t=board[x][y];
+        board[x][y]='0';
+        int newX,newY;
+        for(int i=0;i<4;i++)
+        {
+            newX=dir[i]+x;
+            newY=dir[i+1]+y;
+            if(newX<0||newX>=board.size()||newY<0||newY>=board[0].size()) continue;
+            if(dfs(board,word,index+1,newX,newY)) return true;
+        }   
+        board[x][y]=t;
+        return false;
+    }
+    bool exist(vector<vector<char>>& board, string word) {
+        for(int i=0;i<board.size();i++)
+        {
+            for(int j=0;j<board[0].size();j++)
+            {
+                if(word[0]==board[i][j])
+                {
+                    if(dfs(board,word,0,i,j))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+
+//方式2
+class Solution
+{
+public:
+    // 主函数
+    bool exist(vector<vector<char>> &board, string word)
+    {
+        if (board.empty())
+            return false;
+        int m = board.size(), n = board[0].size();
+        vector<vector<bool>> visited(m, vector<bool>(n, false));
+        bool find = false;
+        for (int i = 0; i < m; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                backtracking(i, j, board, word, find, visited, 0);
+            }
+        }
+        return find;
+    }
+    // 辅函数
+    void backtracking(int i, int j, vector<vector<char>> &board, string &word, bool &find, vector<vector<bool>> &visited, int pos)
+    {
+        if (i < 0 || i >= board.size() || j < 0 || j >= board[0].size())
+        {
+            return;
+        }
+        if (visited[i][j] || find || board[i][j] != word[pos])
+        {
+            return;
+        }
+        if (pos == word.size() - 1)
+        {
+            find = true;
+            return;
+        }
+        visited[i][j] = true; // 修改当前节点状态
+        // 递归子节点
+        backtracking(i + 1, j, board, word, find, visited, pos + 1);
+        backtracking(i - 1, j, board, word, find, visited, pos + 1);
+        backtracking(i, j + 1, board, word, find, visited, pos + 1);
+        backtracking(i, j - 1, board, word, find, visited, pos + 1);
+        visited[i][j] = false; // 回改当前节点状态
+    }
+};
+```
+
