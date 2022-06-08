@@ -1915,3 +1915,122 @@ public:
 };
 ```
 
+### [51.N皇后](https://leetcode-cn.com/problems/n-queens/)
+```c++
+class Solution
+{
+public:
+    vector<vector<string>> res;
+    void backTrack(int n, int row, vector<string> &chessboard)
+    {
+        if (n == row)
+        {
+            res.emplace_back(chessboard);
+            return;
+        }
+        for (int col = 0; col < n; col++)
+        {
+            if(isValid(row,col,chessboard,n))
+            {
+                chessboard[row][col]='Q';
+                backTrack(n,row+1,chessboard);
+                chessboard[row][col]='.';
+            }
+        }
+    }
+    bool isValid(int row, int col, vector<string> &chessboard, int n)
+    {
+        int count = 0;
+        //检查列
+        for (int i = 0; i < row; i++)
+            if (chessboard[i][col] == 'Q')
+                return false;
+        // 45°角
+        for (int i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--)
+            if (chessboard[i][j] == 'Q')
+                return false;
+        //135°角
+        for(int i = row - 1, j = col + 1; i >= 0 && j < n; i--, j++)
+            if(chessboard[i][j]=='Q')
+                return false;
+        return true;
+    }
+    vector<vector<string>> solveNQueens(int n)
+    {
+        vector<string> chessBoard(n,string(n,'.'));
+        backTrack(n,0,chessBoard);
+        return res;
+    }
+};
+```
+## [934.最短的桥](https://leetcode.cn/problems/shortest-bridge/)
+```c++
+class Solution {
+public:
+    int dir[5]={-1,0,1,0,-1};
+    //存储边界0的位置
+    queue<pair<int,int>> points;
+    //将1的位置变为2，将0的位置存储
+    void dfs(vector<vector<int>>& grid,int m,int n,int x,int y)
+    {
+        if(x<0||y<0||x>=m||y>=n||grid[x][y]==2)
+            return;
+        if(grid[x][y]==0)
+        {
+            points.push(make_pair(x,y));
+            return;
+        }
+        grid[x][y]=2;
+        for(int d=0;d<4;d++)
+        {
+            dfs(grid,m,n,x+dir[d],y+dir[d+1]);
+        }
+    }
+    int shortestBridge(vector<vector<int>>& grid) {
+        int m=grid.size(),n=grid[0].size();
+        //找到第一个岛屿位置并全部置2
+        int flag=false;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==1)
+                {
+                    dfs(grid,m,n,i,j);
+                    flag=true;
+                    break;
+                }
+            }
+            if(flag) break;
+        }
+
+        //找第二个岛屿，一旦找到就结束
+        int x,y,level=0;
+        while(!points.empty())
+        {
+            ++level;
+            int len=points.size();
+            while(len--)
+            {
+                auto [r,c]=points.front();
+                grid[r][c]=2;
+                points.pop();
+                for(int d=0;d<4;d++)
+                {
+                    x=r+dir[d],y=c+dir[d+1];
+                    if(x>=0&&y>=0&&x<m&&y<n)
+                    {
+                        if(2==grid[x][y])
+                            continue;
+                        if(1==grid[x][y])
+                            return level;
+                            points.push({x,y});
+                            grid[x][y]=2;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+};
+```
