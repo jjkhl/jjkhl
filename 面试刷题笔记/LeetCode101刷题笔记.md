@@ -2034,3 +2034,99 @@ public:
     }
 };
 ```
+
+## [130.被围绕的区域](https://leetcode.cn/problems/surrounded-regions/)
+```c++
+class Solution {
+public:
+    int rows, cols;
+
+    void dfs(vector<vector<char>>& board, int x, int y) {
+        if (x < 0 || x >= rows || y < 0 || y >= cols || board[x][y] != 'O') {
+            return;
+        }
+        board[x][y] = 'A';
+        dfs(board, x + 1, y);
+        dfs(board, x - 1, y);
+        dfs(board, x, y + 1);
+        dfs(board, x, y - 1);
+    }
+
+    void solve(vector<vector<char>>& board) {
+        rows = board.size();
+        if (rows == 0) {
+            return;
+        }
+        cols = board[0].size();
+        //对边上的'O'进行标记
+        for (int i = 0; i < rows; i++) {
+            dfs(board, i, 0);
+            dfs(board, i, cols - 1);
+        }
+        for (int i = 1; i < cols - 1; i++) {
+            dfs(board, 0, i);
+            dfs(board, rows - 1, i);
+        }
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (board[i][j] == 'A') {
+                    board[i][j] = 'O';
+                } else if (board[i][j] == 'O') {
+                    board[i][j] = 'X';
+                }
+            }
+        }
+    }
+};
+```
+
+## [127.单词接龙](https://leetcode.cn/problems/word-ladder/)
+```c++
+class Solution {
+public:
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        unordered_set<string> words(wordList.begin(), wordList.end());
+        if ( words.empty() || words.find(endWord) == words.end() ) return 0;
+        words.erase(beginWord);
+        queue<string> que;
+        que.push(beginWord);
+        //depth相当于树的层数
+        int depth = 1;
+        while ( !que.empty() ) {
+            // 找到没有被访问过, 而且能够由当前单词转换而成的单词
+            int n = que.size();
+            //下一层的while结束表示树的深度+1
+            while ( n-- ) {
+                string curWord = que.front();
+                que.pop();
+                // 当前单词的每个字符都替换成其他的25个字符, 然后在单词表中查询
+                for ( int i = 0; i < curWord.size(); ++i ) {
+                    char originalChar = curWord[i];
+                    for ( int j = 0; j < 26; ++j ) {
+                        if ( char('a' + j) == originalChar ) continue;
+                        curWord[i] = 'a' + j;
+                        //如果单词表中存在且未被访问过
+                        if ( words.find(curWord) != words.end()) {
+                            if ( curWord == endWord ) return depth + 1;
+                            else {
+                                que.push(curWord);
+                                //如果找到，则直接在字符表中删除
+                                words.erase(curWord);
+                            }
+                        }
+                    }
+                    curWord[i] = originalChar;
+                }
+            }
+            ++depth;
+        }
+        return 0;
+    }
+};
+//参考思路：https://leetcode-cn.com/problems/word-ladder/solution/yan-du-you-xian-bian-li-shuang-xiang-yan-du-you-2/
+```
+
+## [126.单词接龙II](https://leetcode.cn/problems/word-ladder-ii/)
+```c++
+
+```
