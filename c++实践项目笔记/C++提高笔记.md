@@ -462,3 +462,26 @@ void main(){
 	fclose(fp);
 }
 ```
+
+# stringstream的使用
+* 头文件：`sstream`
+> cin.get()能除去'\n'换行符
+```c++
+//基本使用
+stringstream ss;
+ss<<88;//输入
+int res[8];
+ss>>res;//输出
+
+//以' '或','分割字符
+string a="hello world";
+stringstream ss(a);
+//上式等价于stringstream ss;ss<<a;
+string b;
+while(getline(ss,b,' '))//默认分隔符是' '
+    cout<<b<<endl;
+
+//或者
+while(ss>>b)//默认分隔符是空格
+    cout<<b<<endl;
+```
