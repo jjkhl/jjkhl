@@ -2128,5 +2128,114 @@ public:
 
 ## [126.单词接龙II](https://leetcode.cn/problems/word-ladder-ii/)
 ```c++
+class Solution
+{
+public:
+   vector<vector<string>> findLadders(string beginWord, string endWord, vector<string> &wordList)
+   {
+      vector<vector<string>> res;
+      unordered_set<string> words{wordList.begin(), wordList.end()};
+      unordered_set<string> visited;
+      queue<vector<string>> que;
+      words.erase(beginWord);
+      que.push({beginWord});
+      while (!que.empty())
+      {
+         int n = que.size();
+         while (n--)
+         {
+            vector<string> curPath = que.front();
+            que.pop();
+            string curWord = curPath.back();
+            for (int i = 0; i < curWord.size(); i++)
+            {
+               char originChar = curWord[i];
+               for(char c='a';c<='z';c++)
+               {
+                  curWord[i]=c;
+                  //替换后成功在单词表中找到
+                  if(words.count(curWord)==1)
+                  {
+                     vector<string> newPath=curPath;
+                     newPath.push_back(curWord);
+                     //标记该单词
+                     visited.insert(curWord);
+                     if(curWord!=endWord)
+                     {
+                        que.push(newPath);
+                     }
+                     else
+                     {
+                        res.push_back(newPath);
+                     }
+                  }
+               }
+               curWord[i]=originChar;
+            }
+         }
+         for(auto &str:visited)
+          words.erase(str);
+      }
+      return res;
+   }
+};
+```
 
+## [157.二叉树的所有路径](https://leetcode.cn/problems/binary-tree-paths/)
+```c++
+//迭代法
+class Solution {
+public:
+    vector<string> binaryTreePaths(TreeNode* root) {
+        if(!root) return{};
+        stack<TreeNode*> st;
+        stack<string> pathst;
+        vector<string> res;
+        st.push(root);
+        pathst.push(to_string(root->val));
+        while(!st.empty())
+        {
+            TreeNode *node=st.top();
+            st.pop();
+            string path=pathst.top();
+            pathst.pop();
+            if(!node->left&&!node->right)
+            {
+                res.push_back(path);
+            }
+            if(node->left)
+            {
+                st.push(node->left);
+                pathst.push(path+"->"+to_string(node->left->val));
+            }
+            if(node->right)
+            {
+                st.push(node->right);
+                pathst.push(path+"->"+to_string(node->right->val));
+            }
+        }
+        return res;
+    }
+};
+//递归法
+class Solution {
+public:
+    void dfs(TreeNode* cur,string path,vector<string>& res)
+    {
+        path+=to_string(cur->val);
+        if(!cur->left&&!cur->right)
+        {
+            res.push_back(path);
+            return;
+        }
+        if(cur->left) dfs(cur->left,path+"->",res);
+        if(cur->right) dfs(cur->right,path+"->",res);
+    }
+    vector<string> binaryTreePaths(TreeNode* root) {
+        if(!root) return {};
+        vector<string> res;
+        dfs(root,"",res);
+        return res;
+    }
+};
 ```
