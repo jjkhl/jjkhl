@@ -2239,3 +2239,76 @@ public:
     }
 };
 ```
+
+## [40.组合总和II](https://leetcode.cn/problems/combination-sum-ii/)
+```c++
+class Solution
+{
+public:
+    vector<vector<int>> res;
+    vector<int> path;
+    void backTrack(vector<int> &candidates, int target, int start)
+    {
+        if(target==0)
+        {
+            res.push_back(path);
+            return;
+        }
+        for(int i=start;i<candidates.size();i++)
+        {
+            if(i>start&&candidates[i]==candidates[i-1])
+            {
+                continue;
+            }
+            if(candidates[i]>target) break;
+            path.emplace_back(candidates[i]);
+            backTrack(candidates,target-candidates[i],i+1);
+            path.pop_back();
+        }
+    }
+    vector<vector<int>> combinationSum2(vector<int> &candidates, int target)
+    {
+        sort(candidates.begin(),candidates.end());
+        backTrack(candidates,target,0);
+        return res;
+    }
+};
+```
+
+## [47.全排列II](https://leetcode.cn/problems/permutations-ii/)
+```c++
+class Solution {
+private:
+    vector<vector<int>> res;
+    vector<int> path;
+    void dfs(const vector<int>& nums,bool* used)
+    {
+        if(path.size()==nums.size())
+        {
+            res.push_back(path);
+            return;
+        }
+        for(int i=0;i<nums.size();i++)
+        {
+            if(i>0&&nums[i-1]==nums[i]&&!used[i-1])
+                continue;
+            if(!used[i])
+            {
+                used[i]=true;
+                path.push_back(nums[i]);
+                dfs(nums,used);
+                path.pop_back();
+                used[i]=false;
+            }
+        }
+    }
+public:
+    vector<vector<int>> permuteUnique(vector<int>& nums) {
+        sort(nums.begin(),nums.end(),less<int>());
+        bool *used=new bool[nums.size()]{false};
+        dfs(nums,used);
+        delete[]used;
+        return res;
+    }
+};
+```
