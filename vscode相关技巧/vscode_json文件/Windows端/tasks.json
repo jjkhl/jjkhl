@@ -10,7 +10,7 @@
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lwsock32"
+                "-fexec-charset=GBK" //解决中文乱码
             ],
             "options": {
                 "cwd": "${fileDirname}"
