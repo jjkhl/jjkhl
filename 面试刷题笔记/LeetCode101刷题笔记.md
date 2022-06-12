@@ -2312,3 +2312,123 @@ public:
     }
 };
 ```
+
+## [37.解数独](https://leetcode.cn/problems/sudoku-solver/)
+```c++
+class Solution
+{
+private:
+    bool backtracking(vector<vector<char>> &board)
+    {
+        for (int i = 0; i < board.size(); i++)
+        { // 遍历行
+            for (int j = 0; j < board[0].size(); j++)
+            { // 遍历列
+                if (board[i][j] != '.')
+                    continue;
+                for (char k = '1'; k <= '9'; k++)
+                { // (i, j) 这个位置放k是否合适
+                    if (isValid(i, j, k, board))
+                    {
+                        board[i][j] = k; // 放置k
+                        if (backtracking(board))
+                            return true;   // 如果找到合适一组立刻返回
+                        board[i][j] = '.'; // 回溯，撤销k
+                    }
+                }
+                return false; // 9个数都试完了，都不行，那么就返回false
+            }
+        }
+        return true; // 遍历完没有返回false，说明找到了合适棋盘位置了
+    }
+    bool isValid(int row, int col, char val, vector<vector<char>> &board)
+    {
+        for (int i = 0; i < 9; i++)
+        { // 判断行里是否重复
+            if (board[row][i] == val||board[i][col]==val)
+            {
+                return false;
+            }
+        }
+        int startRow = (row / 3) * 3;
+        int startCol = (col / 3) * 3;
+        for (int i = startRow; i < startRow + 3; i++)
+        { // 判断9方格里是否重复
+            for (int j = startCol; j < startCol + 3; j++)
+            {
+                if (board[i][j] == val)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+public:
+    void solveSudoku(vector<vector<char>> &board)
+    {
+        backtracking(board);
+    }
+};
+```
+
+## [310.最小高度树](https://leetcode.cn/problems/minimum-height-trees/)
+```c++
+/*
+总体思路：
+1. 找到从下往上的最外面一层的节点，这些节点度为1，将这些节点置于队列q
+2.将q中的节点自身对应的度-1，将q中节点的相邻节点对应的度-1，并将新的度为1的节点放入队列q
+3.当q中无数据时，表示ans中的节点都可以作为根标签
+*/
+class Solution {
+public:
+    vector<int> findMinHeightTrees(int n, vector<vector<int>>& edges) {
+        if (n == 1) {
+            return {0};
+        }
+        vector<int> degree(n);// 每个节点对应的度数，因为是无向图，所以出入度一起统计
+        vector<vector<int>> mp(n);// 每个节点的邻接表
+        vector<int> ans;// 返回值
+        //统计每个节点和其邻接表
+        for (int i = 0; i < edges.size(); i++) {
+            int u = edges[i][0];
+            int v = edges[i][1];
+            degree[u]++;
+            degree[v]++;
+            mp[u].emplace_back(v);
+            mp[v].emplace_back(u);
+        }
+        queue<int> q;
+        for (int i = 0; i < n; i++) {
+            //度为1，一定为从下往上看最外面一层的叶子节点
+            if (degree[i] == 1) {
+                q.push(i); // 把叶子节点（度为1）入队列
+            }
+        }
+        //只有当q为空，则表示得到头节点
+        //while循环的次数+1=最小的高度
+        while (!q.empty()) {
+            //清空为了保存新的层
+            ans.clear();
+            int sz = q.size();
+            for (int i = 0; i < sz; i++) {
+                int node = q.front();
+                q.pop();
+                ans.emplace_back(node);
+                //node节点的度-1
+                degree[node]--;
+                //node节点的相邻节点的度都-1，同时再次放入度为1的节点
+                for(int j : mp[node]) {
+                    degree[j]--;
+                    if(degree[j] == 1) {
+                        q.push(j);//新的度为1的节点加入队列
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+};
+//参考思路：https://leetcode.cn/problems/minimum-height-trees/comments/1488770
+```
