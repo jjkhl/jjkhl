@@ -2432,3 +2432,60 @@ public:
 };
 //参考思路：https://leetcode.cn/problems/minimum-height-trees/comments/1488770
 ```
+
+# 第七章 动态规划
+动态规划和其他遍历算法(如dfs、dfs)都是将原问题拆成多个子问题然后求解，但是**动态规划保存子问题的解，避免重复计算**。
+# [70.爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+```c++
+class Solution {
+public:
+    int climbStairs(int n) {
+        if(n<=2) return n;
+        int dp[3]={1,2,3};
+        for(int i=2;i<n;i++)
+        {
+            dp[2]=dp[1]+dp[0];
+            dp[0]=dp[1];
+            dp[1]=dp[2];
+        }
+        return dp[2];
+    }
+};
+```
+
+## [198.打家劫舍](https://leetcode.cn/problems/house-robber/)
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        int n=nums.size();
+        if(n==1) return nums[0];
+        //dp:最高持有金额
+        int dp[3]={nums[0],max(nums[0],nums[1]),max(nums[0],nums[1])};
+        for(int i=2;i<n;i++)
+        {
+            dp[2]=max(dp[0]+nums[i],dp[1]);
+            dp[0]=dp[1];
+            dp[1]=dp[2];
+        }
+        return dp[2];
+    }
+};
+```
+## [413.等差数列划分](https://leetcode.cn/problems/arithmetic-slices/)
+```c++
+class Solution {
+public:
+    int numberOfArithmeticSlices(vector<int>& nums) {
+        int n=nums.size();
+        if(n<3) return 0;
+        vector<int> dp(n,0);
+        for(int i=2;i<n;i++)
+        {
+            if(nums[i]-nums[i-1]==nums[i-1]-nums[i-2])
+                dp[i]=dp[i-1]+1;
+        }
+        return accumulate(dp.begin(),dp.end(),0,[](int x,int y){return x+y;});
+    }
+};
+```
