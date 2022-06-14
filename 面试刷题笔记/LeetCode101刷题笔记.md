@@ -2489,3 +2489,73 @@ public:
     }
 };
 ```
+
+## [64.最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+```c++
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int rows=grid.size(),cols=grid[0].size();
+        vector<int> dp(cols,0);
+        dp[0]=grid[0][0];
+        for(int j=1;j<cols;j++)
+        {
+            dp[j]=dp[j-1]+grid[0][j];
+        }
+        for(int i=1;i<rows;i++)
+        {
+            dp[0]+=grid[i][0];
+            for(int j=1;j<cols;j++)
+            {
+                dp[j]=min(dp[j],dp[j-1])+grid[i][j];
+            }
+        }
+        return dp.back();
+    }
+};
+```
+
+## [542.01矩阵](https://leetcode.cn/problems/01-matrix/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& mat) {
+        if(mat.empty()) return{};
+        int m=mat.size();
+        int n=mat[0].size();
+        vector<vector<int>> dp(m,vector<int>(n,INT_MAX-1));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(0==mat[i][j])
+                {
+                    dp[i][j]=0;
+                }
+                else
+                {
+                    if(j>0)
+                        dp[i][j]=min(dp[i][j],dp[i][j-1]+1);
+                    if(i>0)
+                        dp[i][j]=min(dp[i][j],dp[i-1][j]+1);
+                }
+            }
+        }
+
+        for(int i=m-1;i>=0;i--)
+        {
+            for(int j=n-1;j>=0;j--)
+            {
+                if(mat[i][j])
+                {
+                    if(j<n-1)
+                        dp[i][j]=min(dp[i][j],dp[i][j+1]+1);
+                    if(i<m-1)
+                        dp[i][j]=min(dp[i][j],dp[i+1][j]+1);
+                }
+            }
+        }
+        return dp;
+    }
+};
+```
