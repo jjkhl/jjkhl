@@ -1282,16 +1282,16 @@ int main()
 //system：系统CPU时间，也就是程序在内核态使用的CPU时间
 ```
 在上述代码中我们使用`sleep_for()`睡眠函数，根本不消耗CPU，所以尽管运行时间是100ms，但是CPU时间为0。
-### 数据序列化
+## 数据序列化
 序列化：内存里的“活的对象”转换成静止的字节序列，便于存储和网络传输
 反序列化：从静止的字节序列重新构建出内存里可用的对象
-#### JSON
+### JSON
 JSON是一种轻量级的数据交换格式，采取纯文本表示，便于人类阅读，且阅读和修改都很方便，只需要包含头文件`json.hpp`。
 JSON for Modern C++的下载方式：
 > git clone git@github.com:nlohmann/json.git
 > wget https://github.com/nlohmann/json/releases/download/v3.9.1/json.hpp
 [windows下wget的安装与使用](https://blog.csdn.net/screaming_color/article/details/79201199)
-##### 序列化
+#### 序列化
 ```c++
 #include"json.hpp"
 #include<iostream>
@@ -1316,7 +1316,7 @@ j["numbers"]=v;//输出："numbers":[1,2,3]
 map<string,int> m={{"one",1},{"two",2}};
 j["kv"]=m;//输出："kv":{"one":1,"two":2}
 ```
-##### 反序列化
+#### 反序列化
 调用静态成员函数`parse()`，即可直接从字符串得到JSON对象，而且可以用自动类型推导。
 ```c++
 string str=R"(
@@ -1338,7 +1338,7 @@ auto str=R"(
     }
 )"_json;//字面值后缀”_json“，相当于调用了parse()
 ```
-##### 高级用法
+#### 高级用法
 Json for Mordern C++的高级语法如SAX、BSON、自定义类型转换等。比如我们可以调用`to_bson()/from_bson()`实现紧凑、高效的BSON数据格式
 ```c++
 auto j=R"({"n":[0,1,2]})"_json;
@@ -1346,10 +1346,10 @@ auto data=lohmann::json::to_bson(j);
 auto obj=lohmann::json::from_dson(data);
 assert(obj["n"][0]==0);
 ```
-#### MessagePack
+### MessagePack
 MessagePack是一种轻量级的数据交换格式，但与JSON的不同之处在于它二进制的。因此MessagePack比JSON更小巧，处理起来更快，但没有JSON那么直观、易读和好修改了，应用有Redis/Pinterest等。
 [msgpack-c](https://github.com/msgpack/msgpack-c/tree/cpp_master)是c++版本头文件"msgpack.hpp"，**使用方式：** 将`include`文件夹复制到代码目录，编译条件加上`-I .\include\` 
-##### 序列化
+#### 序列化
 MessagePack只能对基本类型和标准容器进行序列化/反序列化。调用`pack()函数`将数据序列化为MessagePack格式的示例：
 ```c++
 auto serialize=[](const auto&x){
@@ -1364,7 +1364,7 @@ serialize(vector{1,2,3});
 serialize(tuple{1,"str"s,true});//元组
 ```
 `pack()`的输出目标sbuffer是个简单的缓冲区，可以把它理解为对字符串数组的封装。和vector<char>很像，也可以调用data()/size()方法获取内部的数据和长度。
-##### 反序列化
+#### 反序列化
 需要调用unpack()和两个核心类：object_handle/object：
 ```c++
 vector<int> v={1,2,3,4,5};
@@ -1379,7 +1379,7 @@ vector<int> v2;//向量容器
 obj.convert(v2);//转换反序列化的数据
 assert(std::equal(begin(v),end(v),begin(v2)));
 ```
-##### 高级用法
+#### 高级用法
 因为MessagePack不能直接打包复杂数据，所以用法比JSON麻烦一些，必须要自己把数据逐个序列化，再将其连接在一起才行。
 好在MessagePack又提供了一个`packer类`，可以实现串联的序列化操作，从而简化代码，例如：
 ```c++
@@ -1425,13 +1425,13 @@ catch(std::expection& e)
     cout<<e.what()<<endl;
 }
 ```
-#### ProtoBuffer
+### ProtoBuffer
 ProtoBuffer也是序列化格式，简称PB，由Google发布。
 PB是一种二进制的数据格式，但是相关东西比较多，要安装一个预处理器和开发库，编译时还要链接动态库(-protobuf)
 > apt-get install protobuf-compiler
 > apt-get install liprotobuf-dev
 > g++ xx.cpp -std=c++17 -lprotobuf -o a.out
-##### 接口描述文件
+#### 接口描述文件
 PB的特点是数据有模式(schema)，必须先编写一个接口描述语言(Interface Description Language, IDL)文件，在里面定义好数据结构。只有预定义了的数据结构才能被PB序列化和反序列化。优点：接口就是清晰明确的规范文档，沟通和交流简单、无歧义；缺点：接口缺乏灵活性，改接口会导致后续一连串的操作。
 下面是一个简单的PB数据定义，使用的是proto2语法：
 ```c++
@@ -1446,7 +1446,76 @@ message Vendor
 }
 ```
 有了接口定义文件，需要用命令行工具protoc生成对应的c++源码，用命令行参数"--cpp_out"指定输出路径，然后把源码文件加入自己的项目就能使用了：`protoc --cpp_out=. sample.proto//生成c++源码`
-#### 数据序列化小结
+### 数据序列化小结
 * JSON是纯文本，容易阅读，方便编辑，适用范围最广
 * MessagePack是二进制，小巧高效，在开源界接受程度比较高
 * ProtoBuffer是工业级的数据格式，注意安全和性能，多用在大公司的商业产品里。
+
+## 5.5 性能分析
+### 5.5.1 外部查看
+* top
+  * 默认：查看CPU占用
+  * M键：查看内存占用
+* pstack/strace
+  * pastack 进程号：静态查看输出进程的调用栈信息，能看到某个时刻的进程里调用的函数和他们之间的关系
+  * strace -p 进程号：动态显示进程正在运行的系统调用，实时查看进程与系统内核之间交换的信息。
+* perf
+  * perf top -K -p x:查看ID是x的进程，函数按CPU利用率排序，且只看用户空间的调用。
+
+### 5.5.2 内部查看
+Google Performance Tools：简称gperftools
+安装：
+`sudo apt-get install google-perftools`
+`sudo apt-get install libgoogle-perftools-dev`
+
+使用添加后缀：`-lprofiler`
+
+
+# 第6章 C++与设计模式
+设计原则(SOLID)：
+* 单一职责原则：设计类时，尽量缩小粒度，使功能明确、单一，使用适配器、装饰、代理来组合对象，使用外观来批量封装对象等。
+* 开闭原则：做好封装，隐藏内部的具体实现细节，开放足够的接口。
+* 里氏替换原则：子类必须能够完全替代父类，即子类不能改变、违反父类定义的行为。
+* 接口隔离原则：简化、归并给外界调用额接口。
+* 依赖反转原则：上层要避免依赖下层的实现细节，下层要反过来依赖上层的抽象定义。
+
+## 6.3 解读设计模式
+### 6.3.1 创建型模式
+* 单件模式
+要点在于控制对象的创建数量，只能由一个实例。
+```c++
+auto& instance()//生产单件对象的函数
+{
+    static T obj; //静态变量保证只有一个实例
+    return obj;//返回对象的引用
+}
+```
+* 工厂模式
+关键在于理解面对的问题和解决问题的思路，重点是如何创建对象、创建出什么样的对象。
+
+### 6.3.2 结构性模式
+* 适配器模式
+目的是转换接口，不需要修改源码，就能把一个对象转换为可以在本系统中使用的形式。比如array包装了C++原生数组，转换成了容器的形式，让裸内存数据也可以接入标准库的泛型体系。
+* 外观模式
+封装了一组对象，目的是简化这组对象的通信关系，提供一个高层次的易用接口，让外部用户更容易使用，从而降低系统的复杂度。
+特点是内部会操作很多对象，然后对外表现为一个对象。
+* 代理模式
+目的是要控制对象，不允许外部直接与内部对象进行通信。典型应用：智能指针。
+### 6.3.3 行为模式
+* 职责链和命令模式
+职责链把多个对象串成一个链条，让链条里的每个对象都有机会去处理请求。而请求通常使用命令模式，把相关数据集中打包成一个对象，解耦请求的发送方和接收方。
+* 策略模式
+封装了不同的算法，可以在运行时灵活地互相替换，从而在外部非入侵地改变系统的行为内核。
+* 访问者模式
+解耦数据的存储和访问，数据的内部结构通常保持不变，而外界的访问者可以随意变化，任意增加新的操作。
+访问者模式特别适合用来实践接口隔离原则，让对象只持有一个小而稳定的核心数据集，而把其他操作都交给相关的访问者实现，让每个访问者专注于各自的业务逻辑，自然也就实现了接口隔离。
+### 6.3.4 其他模式
+* 对象池模型
+预先创建好一些对象，将它们保存在池子里备用。如内存池、线程池等。
+* 包装外观模式
+外观模式的扩展，包装的目标是底层系统的API，而不是一组对象。
+经典应用场景就是系统编程，用统一的接口去调用不同操作系统的底层功能，如文件系统库filesystem和时间库chrono，其功能实现都是基于操作系统，但并不关心是Linux还是Windows。
+* 空对象模式
+是一种行为模式，相当于空指针的泛化、智能空指针。
+引入空对象之后，程序的处理流程机会很顺畅自然，用一致的逻辑去处理正常和异常，这里空对象起到了“哨兵”作用。
+
