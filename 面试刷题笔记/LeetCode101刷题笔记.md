@@ -2559,3 +2559,160 @@ public:
     }
 };
 ```
+
+## [221.最大正方形](https://leetcode.cn/problems/maximal-square/)
+```c++
+class Solution {
+public:
+    int maximalSquare(vector<vector<char>>& matrix) {
+        int m=matrix.size(),n=matrix[0].size();
+        vector<vector<int>> dp(m,vector<int>(n,0));
+        int maxEdge=0;
+        for(int i=0;i<m;i++)
+            if(matrix[i][0]=='1')
+                dp[i][0]=maxEdge=1;
+        for(int j=0;j<n;j++)
+            if(matrix[0][j]=='1')
+                dp[0][j]=maxEdge=1;
+        
+        for(int i=1;i<m;++i)
+        {
+            for(int j=1;j<n;++j)
+            {
+                if(matrix[i][j]=='0') continue;
+                int len1=dp[i-1][j];
+                int len2=dp[i][j-1];
+                int len3=dp[i-1][j-1];
+                dp[i][j]=min(min(len1,len2),len3)+1;
+                maxEdge=max(maxEdge,dp[i][j]);
+            }
+        }
+        return maxEdge*maxEdge;
+    }
+};
+```
+
+## [279.完全平方数](https://leetcode.cn/problems/perfect-squares/)
+```c++
+//01背包
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n+1,INT_MAX);
+        dp[0]=0;
+        for(int i=0;i<=n;i++)//背包
+        {
+            for(int j=1;j*j<=i;j++)//物品
+                dp[i]=min(dp[i],dp[i-j*j]+1);
+        }
+        return dp.back();
+    }
+};
+```
+
+## [91.解码方法](https://leetcode.cn/problems/decode-ways/)
+```c++
+//类似于跳台阶的动态规划
+class Solution {
+public:
+    int numDecodings(string s) {
+        int n=s.size();
+        if(s[0]=='0') return 0;
+        vector<int> dp(n+1,0);
+        dp[0]=1;
+        dp[1]=1;
+        for(int i=2;i<dp.size();i++)
+        {
+            if(s[i-1]!='0') dp[i]=dp[i-1];
+            int t=(s[i-2]-'0')*10+s[i-1]-'0';
+            if(t>=10&&t<=26) dp[i]+=dp[i-2];
+        }
+        return dp.back();
+    }
+};
+
+//方式二
+class Solution {
+public:
+    int numDecodings(string s) {
+        if(s[0]=='0') return 0;
+        int n=s.size();
+        //dp[i]标识s[i-1]目前状态
+        vector<int> dp(n+1,0);
+        dp[0]=dp[1]=1;
+        for(int i=2;i<=n;i++)
+        {
+            if(s[i-1]=='0')
+            {
+                if(s[i-2]=='1'||s[i-2]=='2')
+                    dp[i]=dp[i-2];
+                //如果不是20或10，其余比如30、40等拆开也是不能解码的，
+                else
+                    return 0;
+            }
+            else if(s[i-2]=='1'||(s[i-2]=='2'&&s[i-1]>='1'&&s[i-1]<='6'))
+                dp[i]=dp[i-2]+dp[i-1];
+            else
+                dp[i]=dp[i-1];
+        }
+        return dp[n];
+    }
+};
+```
+
+## [139.单词拆分](https://leetcode.cn/problems/word-break/)
+```c++
+//直接动态规划
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        int n=s.size();
+        vector<bool> dp(n+1,false);
+        dp[0]=true;
+        for(int i=1;i<=n;++i)
+        {
+            for(const string &word:wordDict)
+            {
+                int len=word.size();
+                if(i>=len&&s.substr(i-len,len)==word)
+                {
+                    dp[i]=dp[i]||dp[i-len];
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+//集合辅助动态规划
+class Solution {
+public:
+    bool wordBreak(string& s, vector<string>& wordDict) {
+        const int len = s.length();
+        vector<bool> flag(len + 1, false);
+        set<string> buf(wordDict.begin(), wordDict.end());
+        
+        int minlen = 0, maxlen = 0;
+        //找到最小的字符长度和最大的字符长度
+        for (auto& str : wordDict) {
+            const int tl = str.length();
+            maxlen = max(maxlen, tl);
+            if (minlen == 0 || tl < minlen)
+                minlen = tl;
+        }
+     
+        flag[0] = true;
+        //i不用从1开始，只要从wordDict字符串的最小长度开始
+        //j也不用从0开始，只要从i-maxWordLength开始搜索
+        for (int i = minlen; i <= len; ++i) {
+            for (int j = max(0, i - maxlen); j < i; ++j) {
+                if (flag[j] && buf.count(s.substr(j, i-j))) {
+                    flag[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        return flag[len];
+    }
+};
+```
