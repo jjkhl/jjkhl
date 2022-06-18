@@ -79,7 +79,8 @@ public:
     }
 };
 ```
-## <span id="435">[435.无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/)</span>
+## <span id="435"> [435.无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/) 
+</span>
 ```c++
 class Solution {
 public:
@@ -590,7 +591,8 @@ public:
 };
 ```
 
-## [34.在排序数组中查找元素的第一个和最后一个位置](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/)
+## <span id="34"> [34.在排序数组中查找元素的第一个和最后一个位置](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/)
+</span>
 ```c++
 //库函数
 class Solution {
@@ -2716,3 +2718,135 @@ public:
     }
 };
 ```
+
+## [300.最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+lower_bound写法参考[leetcode 34](#34)
+```c++
+//最佳写法
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        vector<int> minnums;
+        for(int v : nums)
+        {
+            //在minnums找到大于等于v的第一个数的位置
+            auto pos = lower_bound(minnums.begin(), minnums.end(), v);
+            //没找到，所以可以添加数字v
+            if(pos == minnums.end()) {
+                minnums.push_back(v);
+            } 
+            //找到了，则将minnums对应位置的数替换为v
+            else {
+                *pos = v;
+            }
+        }
+        return minnums.size();
+    }
+};
+//动态规划
+//时间复杂度O(n^2)
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n=nums.size();
+        int res=INT_MIN;
+        vector<int> dp(n,1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(nums[i]>nums[j])
+                {
+                    dp[i]=max(dp[i],dp[j]+1);
+                    res=max(dp[i],res);
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+## [1143.最长公共子序列](https://leetcode.cn/problems/longest-common-subsequence/)
+```c++
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int len1=text1.size();
+        int len2=text2.size();
+        int **dp=new int*[len1+1];
+        for(int i=0;i<=len1;i++)
+            dp[i]=new int[len2+1]{0};
+        for(int i=1;i<=len1;i++)
+        {
+            for(int j=1;j<=len2;j++)
+            {
+                if(text1[i-1]==text2[j-1])
+                {
+                    dp[i][j]=dp[i-1][j-1]+1;
+                }
+                else
+                {
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);
+                }
+            }
+        }
+        int res=dp[len1][len2];
+        for(int i=0;i<=len1;i++)
+            delete[] dp[i];
+        delete[] dp;
+        return res;
+    }
+};
+```
+
+## [416.分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/)
+```c++
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int sum=accumulate(nums.begin(),nums.end(),0);
+        if(sum&1) return false;
+        int target=sum>>1, n=nums.size();
+        int *dp=new int[target+1]{0};
+        dp[0]=true;
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=target;j>=nums[i-1];j--)
+            {
+                //或操作保证如何满足条件就一直满足条件
+                dp[j]=dp[j]||dp[j-nums[i-1]];
+            }
+        }
+        bool res=dp[target]?true:false;
+        delete[] dp;
+        return res;
+    }
+};
+```
+
+## [474.一和零](https://leetcode.cn/problems/ones-and-zeroes/)
+```c++
+class Solution {
+public:
+    int findMaxForm(vector<string>& strs, int m, int n) {
+        //2个01背包
+        //dp[i][j]：最多有i个0和j个1的strs的最大子集的大小
+        vector<vector<int>> dp(m + 1, vector<int> (n + 1, 0)); // 默认初始化0
+        for (string str : strs) { // 遍历物品
+            int oneNum = 0, zeroNum = 0;
+            for (char c : str) {
+                if (c == '0') zeroNum++;
+                else oneNum++;
+            }
+            for (int i = m; i >= zeroNum; i--) { // 遍历背包容量且从后向前遍历！
+                for (int j = n; j >= oneNum; j--) {
+                    dp[i][j] = max(dp[i][j], dp[i - zeroNum][j - oneNum] + 1);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
