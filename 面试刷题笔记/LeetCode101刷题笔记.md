@@ -2850,3 +2850,89 @@ public:
 };
 ```
 
+## [322.零钱兑换](https://leetcode.cn/problems/coin-change/)
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        if(coins.empty()) return -1;
+        vector<int> dp(amount+1,amount+1);
+        dp[0]=0;
+        for(int i=1;i<=amount;i++)
+        {
+            for(const int &coin:coins)
+            {
+                if(i>=coin)
+                {
+                    dp[i]=min(dp[i],dp[i-coin]+1);
+                }
+            }
+        }
+        return dp[amount]==amount+1?-1:dp[amount];
+        
+    }
+};
+
+//先物品后背包
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount+1,INT_MAX);
+        dp[0]=0;
+        for(int i=0;i<coins.size();i++)//物品
+            for(int j=coins[i];j<=amount;j++)//背包
+                if(dp[j-coins[i]]!=INT_MAX)
+                    dp[j]=min(dp[j],dp[j-coins[i]]+1);
+        return dp.back()==INT_MAX?-1:dp.back();
+    }
+};
+```
+
+## [72.编辑距离](https://leetcode.cn/problems/edit-distance/)
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        vector<vector<int>> dp(word1.size()+1,vector<int>(word2.size()+1,0));
+        for(int i=0;i<dp.size();i++) dp[i][0]=i;
+        for(int j=0;j<dp[0].size();j++) dp[0][j]=j;
+        for(int i=1;i<dp.size();i++)
+        {
+            for(int j=1;j<dp[0].size();j++)
+            {
+                if(word1[i-1]==word2[j-1])
+                {
+                    dp[i][j]=dp[i-1][j-1];
+                }
+                else
+                    //替换 word1删除(word2插入) word2删除(word1插入)
+                    dp[i][j]=min({dp[i-1][j-1],dp[i-1][j],dp[i][j-1]})+1;
+            }
+        }
+        return dp.back().back();
+    }
+};
+```
+
+## [650.只有两个键的键盘](https://leetcode.cn/problems/2-keys-keyboard/)
+```c++
+class Solution {
+public:
+    int minSteps(int n) {
+        vector<int> dp(n+1,0);
+        for(int i=2;i<=n;i++)
+        {
+            dp[i]=i;
+            for(int j=2;j*j<=i;j++)
+            {
+                if(i%j==0)
+                {
+                    dp[i]=dp[j]+dp[i/j];
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
