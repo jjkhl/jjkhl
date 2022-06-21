@@ -2936,3 +2936,109 @@ public:
     }
 };
 ```
+
+## [121.买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+```c++ 
+//贪心算法
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int low = INT_MAX;
+        int result = 0;
+        for (int i = 0; i < prices.size(); i++) {
+            low = min(low, prices[i]);  // 取最左最小价格
+            result = max(result, prices[i] - low); // 直接取最大区间利润
+        }
+        return result;
+    }
+};
+
+//动态规划
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int dp[2]={-prices[0],0};
+        for(int i=1;i<prices.size();i++)
+        {
+            //dp数组：持有，未持有
+            dp[1]=max(dp[1],prices[i]+dp[0]);
+            dp[0]=max(-prices[i],dp[0]);
+        }
+        return dp[1];
+    }
+};
+```
+
+## [122.买卖股票最佳时机II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)
+```c++
+//贪心算法
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int n=prices.size();
+        int res=0;
+        for(int i=1;i<n;i++)
+        {
+            if(prices[i-1]<prices[i])
+            {
+                res+=prices[i]-prices[i-1];
+            }
+        }
+        return res;
+    }
+};
+//动态规划
+```
+## [123.买卖股票最佳时机III](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iii/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        if(prices.size()<=1) return 0;
+        //第i天所持有的最大金额
+        //0：无操作，恒等于0
+        //1：第一次持有股票
+        //2：第一次未持有股票
+        //3：第二次持有股票
+        //4：第二次未持有股票
+        int dp[5]={0};
+        dp[1]=-prices[0];
+        dp[3]=-prices[0];
+        for(int i=1;i<prices.size();i++)
+        {
+            dp[4]=max(dp[4],dp[3]+prices[i]);
+            dp[3]=max(dp[3],dp[2]-prices[i]);
+            dp[2]=max(dp[2],dp[1]+prices[i]);
+            dp[1]=max(dp[1],-prices[i]);
+        }
+        return dp[4];
+    }
+};
+```
+## [188.买卖股票最佳时机IV](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/)
+```c++
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        if(prices.size()<=1) return 0;
+        //单数买入，双数卖出
+        int n=prices.size();
+        vector<int> dp(2*k+1,0);
+        for(int i=1;i<dp.size();i+=2)
+        {
+            dp[i]=-prices[0];
+        }
+        for(int i=1;i<n;i++)
+        {
+            for(int j=0;j+2<dp.size();j+=2)
+            {
+                dp[j+2]=max(dp[j+2],dp[j+1]+prices[i]);
+                dp[j+1]=max(dp[j+1],dp[j]-prices[i]);
+            }
+        }
+        return dp[2*k];
+    }
+};
+```
+## [309.买卖股票最佳时机含冷冻期](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+## [714.买卖股票最佳时机含手续费](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
