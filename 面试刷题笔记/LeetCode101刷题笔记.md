@@ -3041,4 +3041,42 @@ public:
 };
 ```
 ## [309.买卖股票最佳时机含冷冻期](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int n=prices.size();
+        if(n<=1) return 0;
+        //不持有(一直不持有+冷冻期) 持有 进入冷冻期(卖出)
+        int dp[3]={0};
+        dp[1]=-prices[0];
+        for(int i=1;i<n;i++)
+        {
+            int preDp1=dp[1];
+            dp[1]=max(dp[1],dp[0]-prices[i]);
+            dp[0]=max(dp[0],dp[2]);
+            dp[2]=preDp1+prices[i];
+        }
+        return max(dp[0],dp[2]);
+    }
+};
+```
 ## [714.买卖股票最佳时机含手续费](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices, int fee) {
+        int n=prices.size();
+        if(n<=1) return 0;
+        // 持有 未持有(一直未持有或卖出(手续费))
+        int dp[2]={-prices[0],0};
+        for(int i=1;i<n;i++)
+        {
+            int tmp=dp[0];
+            dp[0]=max(dp[0],dp[1]-prices[i]);
+            dp[1]=max(dp[1],tmp+prices[i]-fee);
+        }
+        return dp[1];
+    }
+};
+```
