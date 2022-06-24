@@ -3080,3 +3080,74 @@ public:
     }
 };
 ```
+## [213.打家劫舍II](https://leetcode.cn/problems/house-robber-ii/)
+```c++
+class Solution {
+public:
+    int maxMoney(const vector<int>& nums,int begin, int end)
+    {
+        if(begin==end) return nums[begin];
+        int dp[3]={0};
+        dp[0]=nums[begin];
+        dp[1]=max(nums[begin],nums[begin+1]);
+        for(int i=begin+2;i<=end;i++)
+        {
+            dp[2]=max(dp[0]+nums[i],dp[1]);
+            dp[0]=dp[1];
+            dp[1]=dp[2];
+        }
+        return max({dp[0],dp[1],dp[2]});
+    }
+    int rob(vector<int>& nums) {
+        if(nums.size()==1) return nums[0];
+        return max(maxMoney(nums,1,nums.size()-1),maxMoney(nums,0,nums.size()-2));
+    }
+};
+```
+
+## [53.最大子数组和](https://leetcode.cn/problems/maximum-subarray/)
+```c++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int n=nums.size();
+        if(n==0) return 0;
+        vector<int> dp(n,0);
+        dp[0]=nums[0];
+        int res=dp[0];
+        for(int i=1;i<n;i++)
+        {
+            dp[i]=max(dp[i-1]+nums[i],nums[i]);
+            res=max(res,dp[i]);
+        }
+        return res;
+    }
+};
+```
+
+## [343.整数拆分](https://leetcode.cn/problems/integer-break/)
+```c++
+class Solution {
+public:
+    int integerBreak(int n) {
+        vector<int> dp(n+1,0);
+        dp[2]=1;
+        for(int i=3;i<=n;i++)
+        {
+            for(int j=1;j<i-1;j++)
+            {
+                dp[i]=max({dp[i],(i-j)*j,dp[i-j]*j});
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+## [583.两个字符串的删除操作](https://leetcode.cn/problems/delete-operation-for-two-strings/)
+
+## [646.最长数对链](https://leetcode.cn/problems/maximum-length-of-pair-chain/)
+
+## [376.摆动序列](https://leetcode.cn/problems/wiggle-subsequence/)
+
+## [494.目标和](https://leetcode.cn/problems/target-sum/)
