@@ -3145,9 +3145,127 @@ public:
 ```
 
 ## [583.两个字符串的删除操作](https://leetcode.cn/problems/delete-operation-for-two-strings/)
-
+```c++
+//最长序列动态规划
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int len1=word1.size();
+        int len2=word2.size();
+        if(len1<len2) return minDistance(word2,word1);
+        vector<vector<int>> dp(len1+1,vector<int>(len2+1,0));
+        for(int i=1;i<=len1;i++)
+        {
+            for(int j=1;j<=len2;j++)
+            {
+                if(word1[i-1]==word2[j-1])
+                {
+                    dp[i][j]=dp[i-1][j-1]+1;
+                }
+                else
+                {
+                    dp[i][j]=max(dp[i-1][j],dp[i][j-1]);
+                }
+                if(dp[i][j]>len1) dp[i][j]=len1;
+            }
+        }
+        return len1+len2-2*dp[len1][len2];
+    }
+};
+```
 ## [646.最长数对链](https://leetcode.cn/problems/maximum-length-of-pair-chain/)
-
+```c++
+//参考思路：https://leetcode.cn/problems/maximum-length-of-pair-chain/solution/c-dong-tai-gui-hua-by-da-li-wang-35/
+//一般动规，时间复杂度有O(n^2)，但是可以通过二分法快速查找
+class Solution {
+public:
+    int findLongestChain(vector<vector<int>>& pairs) {
+        sort(pairs.begin(),pairs.end(),[](const auto& a,const auto& b)
+                        {return (a[0]<b[0])||(a[0]==b[0]&&a[1]<b[1]);});
+        int n=pairs.size();
+        //dp[i]：前i(从0开始计数)个数形成的最长数对数
+        vector<int> dp(n,0);
+        //pairs[0]加入，初始化dp[0]=1
+        dp[0]=1;
+        for(int i=1;i<n;i++)
+        {
+            dp[i]=dp[i-1];
+            int j=i-1;
+            //寻找pairs[i][0]的插入位置
+            while(j>=0&&pairs[j][1]>=pairs[i][0]) --j;
+            //此时j为满足数对i且距离i最近的一个数对下标
+            if(j>=0) dp[i]=max(dp[i],dp[j]+1);
+        }
+        return dp[n-1];
+    }
+};
+//动规+二分
+//参考思路：https://leetcode.cn/problems/maximum-length-of-pair-chain/solution/cdong-tai-gui-hua-er-fen-fa-tan-xin-fa-yi-ti-duo-j/
+class Solution {
+public:
+    int findLongestChain(vector<vector<int>>& pairs) {
+        if(pairs.empty()) return 0;
+        sort(pairs.begin(),pairs.end(),[](const vector<int>& a,const vector<int>& b)
+                                     {return (a[0]<b[0])||(a[0]==b[0]&&a[1]<b[1]);});
+        vector<vector<int>> dp;
+        for(auto &p:pairs)
+        {
+            //二分法找到大于等于p[0]的最小值dp[i][1]
+            //左闭右开
+            int left=0,right=dp.size();
+            while(left<right)
+            {
+                int mid=left+((right-left)>>1);
+                if(dp[mid][1]>=p[0]) right=mid;
+                else left=mid+1;
+            }
+            //如果dp末尾的数字都小于p，则插入新p
+            if(left>=dp.size()) dp.emplace_back(p);
+            //如果p在dp中间，则寻找最小的dp[1]
+            else if(dp[left][1]>p[1]) dp[left]=p;
+        }
+        return dp.size();
+    }
+};
+```
 ## [376.摆动序列](https://leetcode.cn/problems/wiggle-subsequence/)
-
+```c++
+//参考网站：https://leetcode.cn/problems/wiggle-subsequence/solution/tan-xin-si-lu-qing-xi-er-zheng-que-de-ti-jie-by-lg/
+class Solution {
+public:
+    int wiggleMaxLength(vector<int>& nums) {
+        int n=nums.size();
+        if(n<=1) return n;
+        int down=1,up=1;
+        for(int i=1;i<n;i++)
+        {
+            if(nums[i]-nums[i-1]>0)
+                up=down+1;
+            else if(nums[i]-nums[i-1]<0)
+                down=up+1;
+        }
+        return max(down,up);
+    }
+};
+```
 ## [494.目标和](https://leetcode.cn/problems/target-sum/)
+```c++
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        int sum=accumulate(nums.begin(),nums.end(),0);
+        if(((sum+target)&1)||abs(target)>sum) return 0;
+        int bagSize=(sum+target)>>1;
+        vector<int> dp(bagSize+1,0);
+        dp[0]=1;
+        for(int i=0;i<nums.size();i++)
+        {
+            for(int j=bagSize;j>=nums[i];j--)
+            {
+                dp[j]+=dp[j-nums[i]];
+            }
+        }
+        return dp[bagSize];
+    }
+};
+```
