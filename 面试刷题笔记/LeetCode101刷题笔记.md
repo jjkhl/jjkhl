@@ -3269,3 +3269,175 @@ public:
     }
 };
 ```
+
+# 第8章 化繁为简的分治法
+主定理：
+设T(n)表示处理一个长度为n的数组的时间复杂度，则归并排序复杂度递推公式为`T(n)=2T(n/2)+O(n)`。其中O(n)表示合并两个长度为n/2数组的时间复杂度。
+
+考虑T(n)=aT(n/b)+f(n)，定义k=log~b~a,
+如果存在c≥0满足f(n)=O(n^k^log^c^n)，那么T(n)=O(n^k^log^c+1^n)
+
+所以归并排序时间复杂度是O(nlogn)
+
+## [241.为运算表达式设计优先度](https://leetcode.cn/problems/different-ways-to-add-parentheses/)
+```c++
+/*
+动态规划算法
+链接：https://leetcode.cn/problems/different-ways-to-add-parentheses/solution/by-jjkhl-xv5a/
+*/
+class Solution
+{
+public:
+    vector<int> diffWaysToCompute(string input)
+    {
+        vector<int> data;
+        vector<char> ops;
+        int num = 0;
+        char op = ' ';
+        //“+”是为了保持ss的一致性
+        istringstream ss(input + "+");
+        while (ss >> num && ss >> op)
+        {
+            data.push_back(num);
+            ops.push_back(op);
+        }
+        int n = data.size();
+        //dp[i][j]：第i个数字到第j个数字(从0开始计数)范围内的表达式的所有解
+        vector<vector<vector<int>>> dp(n, vector<vector<int>>(n, vector<int>()));
+        //data[i]后面紧接着就是ops[i]，所以能判断i到j内的所有符号
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = i; j >= 0; --j)
+            {
+                //表示只有一个数字，即数字data[i]
+                if (i == j)
+                {
+                    dp[j][i].push_back(data[i]);
+                }
+                /*
+                [j,i]区间内的计算
+                数字有data[j]到data[i]
+                符号有ops[j]到ops[i]
+                */
+                else
+                {
+                    //k是[j,i]区间的分割点，但是k可以取0但是不能为i，相当于ops[i]符号默认省略
+                    for (int k = j; k < i; k ++)
+                    {
+                        for (auto left : dp[j][k])
+                        {
+                            for (auto right : dp[k + 1][i])
+                            {
+                                int val = 0;
+                                switch (ops[k])
+                                {
+                                case '+':
+                                    val = left + right;
+                                    break;
+                                case '-':
+                                    val = left - right;
+                                    break;
+                                case '*':
+                                    val = left * right;
+                                    break;
+                                }
+                                dp[j][i].push_back(val);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return dp[0][n - 1];
+    }
+};
+
+//归并算法
+class Solution {
+public:
+    vector<int> diffWaysToCompute(string expression) {
+        vector<int> res;
+        int len=expression.size();
+        if(2==len||1==len)
+        {
+            res.emplace_back(stoi(expression));
+            return res;
+        }
+        for(int i=0;i<len;i++)
+        {
+            char ch=expression[i];
+            if(ch=='+'||ch=='-'||ch=='*')
+            {
+                vector<int> left=diffWaysToCompute(expression.substr(0,i));
+                vector<int> right=diffWaysToCompute(expression.substr(i+1));
+                for(const int &l:left)
+                {
+                    for(const int& r:right)
+                    {
+                        switch(ch)
+                        {
+                            case '+': res.emplace_back(l+r);break;
+                            case '-': res.emplace_back(l-r);break;
+                            case '*': res.emplace_back(l*r);break;
+                        }
+                    }
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+## [932.漂亮数组](https://leetcode.cn/problems/beautiful-array/)
+```c++
+//思路链接：https://leetcode.cn/problems/beautiful-array/solution/by-jjkhl-de63/
+class Solution {
+public:
+    vector<int> beautifulArray(int n) {
+        if(n==1) return {1};
+        //1到N的奇数个数：(n+1)/2
+        //1到N的偶数个数：n/2
+        //分治
+        vector<int> left=beautifulArray((n+1)/2);
+        vector<int> right=beautifulArray(n/2);
+        vector<int> ans;
+        //合并
+        for(auto &c:left) ans.push_back(2*c-1);
+        for(auto &c:right) ans.push_back(2*c);
+        return ans;
+    }
+};
+```
+
+## [312.戳气球](https://leetcode.cn/problems/burst-balloons/)
+```c++
+class Solution {
+public:
+    int maxCoins(vector<int>& nums) {
+        int sum=0;
+        nums.insert(nums.begin(),1);
+        nums.push_back(1);
+        int len=nums.size();
+        //dp[i][j]表示开区间(i,j)之间编号的最高分数,所以dp[i][i]=0
+        //k表示只剩下i和j两个气球时的最后戳破的气球
+        vector<vector<int>> dp(len,vector<int>(len,0));
+        /*
+        i=len-1时，只有dp[len-1][len-1]=0，所以忽略从len-2开始
+        */
+        //从下往上
+        for(int i=len-2;i>=0;i--)
+        {
+            //从左往右
+            for(int j=i+1;j<len;j++)
+            {
+                //[i+1,j-1]依次遍历取最大值，
+                for(int k=i+1;k<j;k++)
+                    dp[i][j]=max(dp[i][j],dp[i][k]+dp[k][j]+nums[i]*nums[j]*nums[k]);
+            }
+        }
+        return dp[0].back();
+    }
+};
+//参考思路：https://leetcode-cn.com/problems/burst-balloons/solution/tu-jie-dong-tai-gui-hua-jie-jue-chuo-qi-cx18h/
+```
