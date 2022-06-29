@@ -568,7 +568,7 @@ public:
 //思路：https://leetcode.cn/problems/longest-word-in-dictionary-through-deleting/solution/suan-fa-xiao-ai-shuang-zhi-zhen-xiang-ji-6rey/
 ```
 
-# 二分查找
+# 第四章 二分查找
 ## [69.x的平方根](https://leetcode.cn/problems/sqrtx/)
 ```c++
 class Solution {
@@ -864,7 +864,7 @@ public:
 // 链接：https://leetcode.cn/problems/median-of-two-sorted-arrays/solution/di-gui-si-lu-zui-qing-xi-yi-dong-de-ti-j-19yt/
 ```
 
-# 排序算法系列
+# 第五章 排序算法系列
 ---
 动图参考：https://blog.csdn.net/weixin_57095511/article/details/119795137
 代码参考：https://github.com/changgyhub/leetcode_101/
@@ -1917,7 +1917,7 @@ public:
 };
 ```
 
-### [51.N皇后](https://leetcode-cn.com/problems/n-queens/)
+## [51.N皇后](https://leetcode-cn.com/problems/n-queens/)
 ```c++
 class Solution
 {
@@ -2437,7 +2437,7 @@ public:
 
 # 第七章 动态规划
 动态规划和其他遍历算法(如dfs、dfs)都是将原问题拆成多个子问题然后求解，但是**动态规划保存子问题的解，避免重复计算**。
-# [70.爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+## [70.爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
 ```c++
 class Solution {
 public:
@@ -3270,7 +3270,7 @@ public:
 };
 ```
 
-# 第8章 化繁为简的分治法
+# 第八章 化繁为简的分治法
 主定理：
 设T(n)表示处理一个长度为n的数组的时间复杂度，则归并排序复杂度递推公式为`T(n)=2T(n/2)+O(n)`。其中O(n)表示合并两个长度为n/2数组的时间复杂度。
 
@@ -3441,3 +3441,98 @@ public:
 };
 //参考思路：https://leetcode-cn.com/problems/burst-balloons/solution/tu-jie-dong-tai-gui-hua-jie-jue-chuo-qi-cx18h/
 ```
+
+# 第九章 巧解数学问题
+## [204.计数质数](https://leetcode.cn/problems/count-primes/)
+```c++
+//埃式筛选
+class Solution {
+public:
+    int countPrimes(int n) {
+        if(n<=2) return 0;
+        vector<bool> prime(n,true);
+        //去掉不是质数的1
+        int count=n-2;
+        for(int i=2;i<n;i++)
+        {
+            if(prime[i])
+            {
+                for(int j=2*i;j<n;j+=i)
+                {
+                    if(prime[j])
+                    {
+                        prime[j]=false;
+                        --count;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+};
+//优化版埃式筛选——奇数筛
+class Solution {
+public:
+    int countPrimes(int n) {
+        if(n<3) return 0;
+        vector<bool> prime(n+1,true);
+        for(int i=3;i*i<n;i+=2)//+2保证一直为奇数
+        {
+            if(prime[i])
+            {
+                for(int j=i;j*i<=n;j+=2)
+                    prime[j*i]=false;
+            }
+        }
+        int count=1;
+        for(int i=3;i<n;i+=2)
+        {
+            count+=prime[i];
+        }
+        return count;
+    }
+};
+```
+
+## [504.七进制数](https://leetcode.cn/problems/base-7/)
+```c++
+class Solution {
+public:
+    string convertToBase7(int num) {
+        if(num==0) return "0";
+        string res="";
+        bool flag=true;
+        if(num<0) flag=false,num=-num;;
+        while(num)
+        {
+            res=to_string(num%7)+res;
+            num/=7;
+        }
+        return flag==true?res:"-"+res;
+    }
+};
+```
+
+## [415.字符串相加](https://leetcode.cn/problems/add-strings/)
+
+## [326.3的幂](https://leetcode.cn/problems/power-of-three/)
+
+## [384.打乱数组](https://leetcode.cn/problems/shuffle-an-array/)
+
+## [528.按权重随机选择](https://leetcode.cn/problems/random-pick-with-weight/)
+
+## [382.链表随机节点](https://leetcode.cn/problems/linked-list-random-node/)
+
+## [168.Excel表列名称](https://leetcode.cn/problems/excel-sheet-column-title/)
+
+## [67.二进制求和](https://leetcode.cn/problems/add-binary/)
+
+## [238.除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+## [462.最少移动次数使数组元素相等II](https://leetcode.cn/problems/minimum-moves-to-equal-array-elements-ii/)
+
+## [168.多数元素](https://leetcode.cn/problems/majority-element/)
+
+## [470.用Rand7()实现Rand100()](https://leetcode.cn/problems/implement-rand10-using-rand7/)
+
+## [202.快乐数](https://leetcode.cn/problems/happy-number/)
