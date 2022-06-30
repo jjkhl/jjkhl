@@ -3512,8 +3512,40 @@ public:
     }
 };
 ```
-
+## [172.阶乘后的零](https://leetcode.cn/problems/factorial-trailing-zeroes/)
+```c++
+class Solution {
+public:
+    int trailingZeroes(int n) {
+        int count=0;
+        while(n)
+        {
+            n/=5;
+            count+=n;
+        }
+        return count;
+    }
+};
+```
 ## [415.字符串相加](https://leetcode.cn/problems/add-strings/)
+```c++
+class Solution {
+public:
+    string addStrings(string num1, string num2) {
+        string res="";
+        int cur=0,i=num1.size()-1,j=num2.size()-1;
+        while(i>=0||j>=0||cur!=0)
+        {
+            if(i>=0) cur+=num1[i--]-'0';
+            if(j>=0) cur+=num2[j--]-'0';
+            res+=to_string(cur%10);
+            cur/=10;
+        }
+        reverse(res.begin(),res.end());
+        return res;
+    }
+};
+```
 
 ## [326.3的幂](https://leetcode.cn/problems/power-of-three/)
 
