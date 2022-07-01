@@ -81,6 +81,7 @@ public:
 ```
 ## <span id="435"> [435.无重叠区间](https://leetcode.cn/problems/non-overlapping-intervals/) 
 </span>
+
 ```c++
 class Solution {
 public:
@@ -3548,9 +3549,49 @@ public:
 ```
 
 ## [326.3的幂](https://leetcode.cn/problems/power-of-three/)
+```c++
+class Solution {
+public:
+    bool isPowerOfThree(int n) {
+        int maxNum=pow(3,19);
+        return n>0&&maxNum%n==0;
+    }
+};
+```
 
 ## [384.打乱数组](https://leetcode.cn/problems/shuffle-an-array/)
+```c++
+class Solution {
+private:
+    vector<int> nums;
+    vector<int> orig;
 
+public:
+    Solution(vector<int>& nums) {
+        this->nums = nums;
+        orig=nums;
+        // orig.resize(nums.size());
+        // copy(nums.begin(), nums.end(), orig.begin());
+    }
+    
+    vector<int> reset() {
+        // copy(orig.begin(), orig.end(), nums.begin());
+
+        // return nums;
+        nums=orig;
+        return nums;
+    }
+    
+    vector<int> shuffle() {
+        for (int i = 0; i < nums.size(); ++i) {
+            int j = i + rand() % (nums.size() - i);
+            swap(nums[i], nums[j]);
+        }
+
+        return nums;
+    }
+};
+```
 ## [528.按权重随机选择](https://leetcode.cn/problems/random-pick-with-weight/)
 
 ## [382.链表随机节点](https://leetcode.cn/problems/linked-list-random-node/)
