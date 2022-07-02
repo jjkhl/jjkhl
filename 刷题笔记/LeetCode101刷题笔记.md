@@ -3593,8 +3593,68 @@ public:
 };
 ```
 ## [528.按权重随机选择](https://leetcode.cn/problems/random-pick-with-weight/)
+```c++
+class Solution {
+private:
+    vector<int> w;
+public:
+    Solution(vector<int>& W) {
+        w.push_back(W[0]);
+        for(int i=1;i<W.size();i++)
+        {
+            w.push_back(w.back()+W[i]);
+        }
+    }
+    
+    int pickIndex() {
+        int weight=rand()%w.back();
+        return upper_bound(w.begin(),w.end(),weight)-w.begin();
+    }
+};
+//参考思路：https://leetcode.cn/problems/random-pick-with-weight/solution/cer-fen-xiang-jie-by-xiaohu9527-nsns/
+```
 
 ## [382.链表随机节点](https://leetcode.cn/problems/linked-list-random-node/)
+```c++
+//模拟法
+class Solution {
+private:
+    vector<int> list;
+public:
+    Solution(ListNode* head) {
+        while(head)
+        {
+            list.push_back(head->val);
+            head=head->next;
+        }
+    }
+    
+    int getRandom() {
+        return list[rand()%list.size()];
+    }
+};
+//水塘抽样，针对数据流
+class Solution {
+    ListNode *head;
+public:
+    Solution(ListNode* head) {
+        this->head=head;
+    }
+    
+    int getRandom() {
+        int i=1,ans=0;
+        for(auto node=head;node;node=node->next)
+        {
+            if(rand()%i==0)
+            {
+                ans=node->val;
+            }
+            ++i;
+        }
+        return ans;
+    }
+};
+```
 
 ## [168.Excel表列名称](https://leetcode.cn/problems/excel-sheet-column-title/)
 
