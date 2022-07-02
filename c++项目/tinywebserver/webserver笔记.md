@@ -4,7 +4,7 @@
 [WebServer项目详解](https://www.agedcat.com/programming_language/cpp/537.html)
 
 
-# [01线程同步机制封装类](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=3&sn=5840ff698e3f963c7855d702e842ec47&scene=19#wechat_redirect)
+# [01.线程同步机制封装类](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=3&sn=5840ff698e3f963c7855d702e842ec47&scene=19#wechat_redirect)
 文件位置：`lock/locker.h`
 ## RAII
 * 全称：Resource Acquisition is Initialization,中文称为资源获取即初始化
@@ -445,7 +445,7 @@ STATE_MACHINE(){
   * 工作线程取出任务后，调用process_read函数，通过主、从状态机对请求报文进行解析。
   * 解析完之后，跳转do_request函数生成响应报文，通过process_write写入buffer，返回给浏览器端
 
-# [05 HTTP连接处理(中)](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=7&sn=d1ab62872c3ddac765d2d80bbebfb0dd&chksm=83ffbefeb48837e808caad089f23c340e1348efb94bef88be355f4d9aedb0f9784e1f9e072b1&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
+# [05.HTTP连接处理(中)](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=7&sn=d1ab62872c3ddac765d2d80bbebfb0dd&chksm=83ffbefeb48837e808caad089f23c340e1348efb94bef88be355f4d9aedb0f9784e1f9e072b1&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
 
 ## 流程图与状态机
 ![](picture/主状态机.jpg)
@@ -543,5 +543,150 @@ while((m_check_state==CHECK_STATE_CONTENT && line_status==LINE_OK)||((line_statu
 
 ---
 
+# [06.HTTP连接处理(下)](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=8&sn=a6b011ad877d865608dcec7130df0c2f&scene=19#wechat_redirect)
 
+## 基础API
+### stat
+stat函数用于取得指定文件的文件属性，并将文件属性存储在结构体stat里，这里仅对其中用到的成员进行介绍。
 
+```c++
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+//获取文件属性，存储在statbuf中
+int stat(const char *pathname, struct stat *statbuf);
+
+struct stat 
+{
+   mode_t    st_mode;        /* 文件类型和权限 */
+   off_t     st_size;        /* 文件大小，字节数*/
+};
+```
+
+### mmap
+用于将一个文件或其它对象映射到内存，提高文件的访问速度
+```c++
+void* mmap(void* start,size_t length,int prot,int flags,int fd,off_t offset);
+int munmap(void* start,size_t length);
+```
+* start：映射区的开始地址，设置为0时表示由系统决定映射区的起始地址
+* length：映射区的长度
+* prot：期望的内存保护标志，不能与文件的打开模式冲突
+  * PROT_READ 表示页内容可以被读取
+* flags：指定映射对象的类型，映射选项和映射页是否可以共享
+  * MAP_PRIVATE 建立一个写入时拷贝的私有映射，内存区域的写入不会影响到原文件
+* fd：有效的文件描述符，一般是由open()函数返回
+* off_toffset：被映射对象内容的起点
+
+### iovec
+定义了一个向量元素，通常，这个结构用作一个多元素的数组
+```c++
+struct iovec {
+    void *iov_base;      /* 指向数据的地址 */
+    size_t iov_len;      /* 数据的长度 */
+};
+```
+
+### writev
+用于一次函数调用中写多个非连续缓冲区，有时候也将这该函数成为聚集写
+```c++
+#include<sys/uio.h>
+ssize_t writev(int filedes,const struct iovec* iov,int iovcnt);
+```
+* filedes表示文件描述符
+* iov为前述io向量机制结构体iovec
+* iovcnt为结构体个数
+
+若成功则返回已写的字节数，若出错则返回-1。writev以顺序iov[0]，iov[1]至iov[iovcnt-1]从缓冲区中聚集输出数据。writev返回输出的字节总数，通常，它应等于所有缓冲区长度之和。
+
+特别注意： 循环调用writev时，需要重新处理iovec中的指针和长度，该函数不会对这两个成员做任何处理。writev的返回值为已写的字节数，但这个返回值“实用性”并不高，因为参数传入的是iovec数组，计量单位是iovcnt，而不是字节数，我们仍然需要通过遍历iovec来计算新的基址，另外写入数据的“结束点”可能位于一个iovec的中间某个位置，因此需要调整临界iovec的io_base和io_len。
+
+## 流程图
+浏览器端发出HTTP请求报文，服务器端接收该报文并调用process_read对其进行解析，根据解析结果HTTP_CODE，进入相应的逻辑和模块。
+
+其中，服务器子线程完成报文的解析与响应；主线程监测读写事件，调用read_once和http_conn::write完成数据的读取与发送。
+
+![](picture/HTTP发送流程图.jpg)
+
+## HTTP_CODE含义
+表示HTTP请求的处理结果，再头文件初始化了八种，在报文解析与响应中只用到了七种。
+* NO_REQUEST
+  * 请求不完整，需要继续读取请求报文数据
+  * 跳转主线程继续监测读事件
+* GET_REQUEST
+  * 获得了完整的HTTP请求
+  * 调用do_request完成请求资源映射
+* NO_RESOURCE
+  * 请求资源不存在
+  * 跳转process_write完成响应报文
+* BAD_REQUEST
+  * HTTP请求报文有语法错误或请求资源为目录
+  * 跳转process_write完成响应报文
+* FORBIDDEN_REQUEST
+  * 请求资源禁止访问，没有读取权限
+  * 跳转process_write完成响应报文
+* FILE_REQUEST
+  * 请求资源可以正常访问
+  * 跳转process_write完成响应报文
+* INTERNAL_ERROR
+  * 服务器内部错误，该结果在主状态机逻辑switch的default下，一般不会触发
+
+## 代码分析
+### do_request
+`process_read`函数的返回值是对请求的文件分析后的结果，一部分是语法错误导致的BAD_REQUEST，一部分是`do_request`的返回结果.
+该函数将网站根目录和url文件拼接，然后通过stat判断该文件属性。另外，为了提高访问速度，通过mmap进行映射，将普通文件映射到内存逻辑地址。
+
+为了更好的理解请求资源的访问流程，这里对各种各页面跳转机制进行简要介绍。其中，浏览器网址栏中的字符，即url，可以将其抽象成ip:port/xxx，xxx通过html文件的action属性进行设置。
+
+m_url为请求报文中解析出的请求资源，以/开头，也就是/xxx，项目中解析后的m_url有8种情况。
+
+* /
+  * GET请求，跳转到judge.html，即欢迎访问页面
+* /0
+  * POST请求，跳转到register.html，即注册页面
+* /1
+  * POST请求，跳转到log.html，即登录页面
+* /2CGISQL.cgi
+  * POST请求，进行登录校验
+  * 验证成功跳转到welcome.html，即资源请求成功页面
+  * 验证失败跳转到logError.html，即登录失败页面
+* /3CGISQL.cgi
+  * POST请求，进行注册校验
+  * 注册成功跳转到log.html，即登录页面
+  * 注册失败跳转到registerError.html，即注册失败页面
+* /5
+  * POST请求，跳转到picture.html，即图片请求页面
+* /6
+  * POST请求，跳转到video.html，即视频请求页面
+* /7
+  * POST请求，跳转到fans.html，即关注页面
+
+> 具体细节查看源代码`http_conn.cpp`
+
+### process_write
+
+根据do_request的返回状态，服务器子线程调用process_write向m_write_buf中写入响应报文。
+* add_status_line函数，添加状态行：http/1.1 状态码 状态消息
+* add_headers函数添加消息报头，内部调用add_content_length和add_linger函数
+  * content-length记录响应报文长度，用于浏览器端判断服务器是否发送完数据
+  * connection记录连接状态，用于告诉浏览器端保持长连接
+* add_blank_line添加空行
+
+响应报文分为两种，一种是请求文件的存在，通过io向量机制iovec，声明两个iovec，第一个指向写缓冲区m_write_buf，第二个指向mmap的地址m_file_address；一种是请求出错，这时候只申请一个iovec，指向m_write_buf。
+
+* iovec是一个结构体，里面有两个元素，指针成员iov_base指向一个缓冲区，这个缓冲区是存放的是writev将要发送的数据
+* 成员iov_len表示实际写入的长度
+
+### http_conn::write
+服务器子线程调用process_write完成响应报文，随后注册epollout事件。服务器主线程检测写事件，并调用http_conn::write函数将响应报文发送给浏览器端。
+
+具体逻辑如下：
+在生成响应报文时初始化byte_to_send，包括头部信息和文件数据大小。通过writev函数循环发送响应报文数据，根据返回值更新byte_have_send和iovec结构体的指针和长度，并判断响应报文整体是否发送成功。
+
+* 若writev单次发送成功，更新byte_to_send和byte_have_send的大小，若响应报文整体发送成功,则取消mmap映射,并判断是否是长连接.
+  * 长连接重置http类实例，注册读事件，不关闭连接，
+  * 短连接直接关闭连接
+* 若writev单次发送不成功，判断是否是写缓冲区满了。
+  * 若不是因为缓冲区满了而失败，取消mmap映射，关闭连接
+  * 若eagain则满了，更新iovec结构体的指针和长度，并注册写事件，等待下一次写事件触发（当写缓冲区从不可写变为可写，触发epollout），因此在此期间无法立即接收到同一用户的下一请求，但可以保证连接的完整性。
