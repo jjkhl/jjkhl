@@ -1,34 +1,49 @@
 **参考网址：**
-[官方项目详解](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzAxNzU2MzcwMw==&action=getalbum&album_id=1339230165934882817&scene=173&from_msgid=2649274278&from_itemidx=3&count=3&nolastread=1#wechat_redirect)
-[Web服务器](https://blog.csdn.net/qq_38872537/article/details/113184114)
-[WebServer项目详解](https://www.agedcat.com/programming_language/cpp/537.html)
 
+* [官方项目详解](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzAxNzU2MzcwMw==&action=getalbum&album_id=1339230165934882817&scene=173&from_msgid=2649274278&from_itemidx=3&count=3&nolastread=1#wechat_redirect)
+* [Web服务器](https://blog.csdn.net/qq_38872537/article/details/113184114)
+* [WebServer项目详解](https://www.agedcat.com/programming_language/cpp/537.html)
 
 # [01.线程同步机制封装类](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=3&sn=5840ff698e3f963c7855d702e842ec47&scene=19#wechat_redirect)
+
 文件位置：`lock/locker.h`
+
 ## RAII
+
 * 全称：Resource Acquisition is Initialization,中文称为资源获取即初始化
 * 在构造函数中申请分配资源，在析构函数中释放资源。因为C++的语言机制保证了，当一个对象创建的时候，自动调用构造函数，当对象超出作用域的时候会自动调用析构函数。所以，在RAII的指导下，我们应该使用类来管理资源，将资源和对象的生命周期绑定
 * 核心思想：将资源或者状态与对象的生命周期绑定，通过C++的语言机制，实现资源和状态的安全管理，智能指针就是RAII最好的例子。
 
 ## 信号量(sem)
+
 信号量：特殊的变量，只能取自然数值并且只支持等待(P)和信号(V)
 假设有信号量SV，对其的P、V操作如下：
+
 * P，如果SV的值大于0，则将其减一；若SV=0，则挂起执行
+
 * V，如果有其它进行因为等待SV而被挂起，则唤醒；若没有，则将SV值加1
 
-sem_init()函数用于初始化一个未命名的信号量
-sem_destory()函数用于销毁信号量
-sem_wait()函数将以原子操作方式将信号量减一，信号量为0时，sem_wait阻塞
-sem_post函数以原子操作方式将信号量加一,信号量大于0时,唤醒调用sem_post的线程
-以上，成功返回0，失败返回errno
+
+  sem_init()函数用于初始化一个未命名的信号量
+
+  sem_destory()函数用于销毁信号量
+
+  sem_wait()函数将以原子操作方式将信号量减一，信号量为0时，sem_wait阻塞
+
+  sem_post函数以原子操作方式将信号量加一,信号量大于0时,唤醒调用sem_post的线程
+
+  以上，成功返回0，失败返回errno
 
 ## 互斥锁(locker)
+
 互斥锁也叫互斥量，用于保护关键代码段，以确保独占式访问。
 
 pthread_mutex_init函数用于初始化互斥锁
+
 pthread_mutex_destory函数用于销毁互斥锁
+
 pthread_mutex_lock函数以原子操作方式给互斥锁加锁
+
 pthread_mutex_unlock函数以原子操作方式给互斥锁解锁
 
 成功返回0，失败返回errno
@@ -42,9 +57,13 @@ cond参考网址：http://t.csdn.cn/qOqgb
 2. 另外一个线程使“条件成立”，给出信号，从而唤醒正在等待的线程
 
 pthread_cond_init函数用于初始化条件变量
+
 pthread_cond_destory函数销毁条件变量
+
 [pthread_cond_broadcast函数](https://www.cnblogs.com/zhouzhuo/p/3781511.html)以广播的方式唤醒所有等待目标条件变量的线程
+
 pthread_cond_wait函数用于等待目标条件变量.该函数调用时需要传入 mutex参数(加锁的互斥锁) ,函数执行时,先把调用线程放入条件变量的请求队列,然后将互斥锁mutex解锁,当函数成功返回为0时,互斥锁会再次被锁上. 也就是说函数内部会有一次解锁。加锁操作.
+
 pthread_cond_timedwait比pthread_cond_wait多个时间结构`struct timespec t`
 
 ## [时间结构](https://blog.csdn.net/weixin_44880138/article/details/102605681)
@@ -78,6 +97,7 @@ id2--请求队列---id3(网络存储单元)
 ```
 
 ## 五种I/O模型
+
 * **阻塞IO**:调用者调用了某个函数，等待这个函数返回，期间什么也不做，不停的去检查这个函数有没有返回，必须等这个函数返回才能进行下一步动作
 * **非阻塞IO**:非阻塞等待，每隔一段时间就去检测IO事件是否就绪。没有就绪就可以做其他事。非阻塞I/O执行系统调用总是立即返回，不管时间是否已经发生，若时间没有发生，则返回-1，此时可以根据errno区分这两种情况，对于accept，recv和send，事件未发生时，errno通常被设置成eagain
 * **信号驱动IO**:linux用套接口进行信号驱动IO，安装一个信号处理函数，进程继续运行并不阻塞，当IO时间就绪，进程收到SIGIO信号。然后处理IO事件。
@@ -457,6 +477,7 @@ STATE_MACHINE(){
 * CHECK_STATE_CONTENT，解析消息体，仅用于解析POST请求
 
 ## 从状态机
+
 三种状态，标识解析一行的读取状态
 * LINE_OK，完整读取一行
 * LINE_BAD，报文语法有误
@@ -528,7 +549,6 @@ while((m_check_state==CHECK_STATE_CONTENT && line_status==LINE_OK)||((line_statu
 1. 那么，这里的判断条件为什么要写成这样呢？
 
 在GET请求报文中，每一行都是\r\n作为结束，所以对报文进行拆解时，仅用从状态机的状态line_status=parse_line())==LINE_OK语句即可。
-
 但，在POST请求报文中，消息体的末尾没有任何字符，所以不能使用从状态机的状态，这里转而使用主状态机的状态作为循环入口条件。
 
 2. 后面的`&& line_status==LINE_OK`又是为什么
@@ -633,6 +653,7 @@ ssize_t writev(int filedes,const struct iovec* iov,int iovcnt);
   * 服务器内部错误，该结果在主状态机逻辑switch的default下，一般不会触发
 
 ## 代码分析
+
 ### do_request
 `process_read`函数的返回值是对请求的文件分析后的结果，一部分是语法错误导致的BAD_REQUEST，一部分是`do_request`的返回结果.
 该函数将网站根目录和url文件拼接，然后通过stat判断该文件属性。另外，为了提高访问速度，通过mmap进行映射，将普通文件映射到内存逻辑地址。
@@ -679,6 +700,7 @@ m_url为请求报文中解析出的请求资源，以/开头，也就是/xxx，�
 * 成员iov_len表示实际写入的长度
 
 ### http_conn::write
+
 服务器子线程调用process_write完成响应报文，随后注册epollout事件。服务器主线程检测写事件，并调用http_conn::write函数将响应报文发送给浏览器端。
 
 具体逻辑如下：
@@ -690,3 +712,216 @@ m_url为请求报文中解析出的请求资源，以/开头，也就是/xxx，�
 * 若writev单次发送不成功，判断是否是写缓冲区满了。
   * 若不是因为缓冲区满了而失败，取消mmap映射，关闭连接
   * 若eagain则满了，更新iovec结构体的指针和长度，并注册写事件，等待下一次写事件触发（当写缓冲区从不可写变为可写，触发epollout），因此在此期间无法立即接收到同一用户的下一请求，但可以保证连接的完整性。
+
+# [07.定时器处理非活动连接(上)](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274288&idx=4&sn=87a870ca755a02ab8590e4ef64d6d129&chksm=83ffbee8b48837fe0ee58255d398f82b4de34b04846d47fdb7e59809b4d37f4dd764b35638c4&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
+
+本片将介绍定时方法与信号通知流程，包括以下几个部分：
+1. 基础API：描述`sigaction`结构体、`sigaction`函数、`sigfillset`函数、`SIGALRM`信号、`SIGTERM`信号、`alarm`函数、`socketpair`函数、`send`函数。
+2. 信号通知结构：介绍同一事件源和信号处理机制
+3. 代码实现：结合代码对信号处理函数的设计与使用进行详解
+
+## 基础知识
+非活跃，是指客户端（这里是浏览器）与服务器端建立连接后，长时间不交换数据，一直占用服务器端的文件描述符，导致连接资源的浪费。
+
+定时事件，是指固定一段时间之后触发某段代码，由该段代码处理一个事件，如从内核事件表删除事件，并关闭文件描述符，释放连接资源。
+
+定时器，是指利用结构体或其他形式，将多种定时事件进行封装起来。具体的，这里只涉及一种定时事件，即定期检测非活跃连接，这里将该定时事件与连接资源封装为一个结构体定时器。
+
+定时器容器，是指使用某种容器类数据结构，将上述多个定时器组合起来，便于对定时事件统一管理。具体的，项目中使用升序链表将所有定时器串联组织起来。
+
+## 整体概述
+
+本项目中，服务器主循环为每一个连接创建一个定时器，并对每个连接进行定时。另外，利用升序时间链表容器将所有定时器串联起来，若主循环接收到定时通知，则在链表中依次执行定时任务。
+
+Linux下提供了三种定时的方法:
+* socket选项SO_RECVTIMEO和SO_SNDTIMEO
+* SIGALRM信号
+* I/O复用系统调用的超时参数
+
+三种方法没有一劳永逸的应用场景，也没有绝对的优劣。由于项目中使用的是SIGALRM信号，这里仅对其进行介绍，另外两种方法可以查阅游双的Linux高性能服务器编程 第11章 定时器。
+
+具体的，利用alarm函数周期性地触发SIGALRM信号，信号处理函数利用管道通知主循环，主循环接收到该信号后对升序链表上所有定时器进行处理，若该段时间内没有交换数据，则将该连接关闭，释放所占用的资源。
+
+从上面的简要描述中，可以看出定时器处理非活动连接模块，主要分为两部分，其一为定时方法与信号通知流程，其二为定时器及其容器设计与定时任务的处理。
+
+## 基础API
+
+### sigaction结构体
+
+```c++
+struct sigaction {
+    void (*sa_handler)(int);
+    void (*sa_sigaction)(int, siginfo_t *, void *);
+    sigset_t sa_mask;
+    int sa_flags;
+    void (*sa_restorer)(void);
+}
+```
+
+* sa_handler是一个函数指针，指向信号处理函数
+
+* sa_sigaction同样是信号处理函数，有三个参数，可以获得关于信号更详细的信息
+
+* sa_mask用来指定在信号处理函数执行期间需要被屏蔽的信号
+
+* sa_flags用于指定信号处理的行为
+
+  * SA_RESTART，使被信号打断的系统调用自动重新发起
+  * SA_NOCLDSTOP，使父进程在它的子进程暂停或继续运行时不会收到 SIGCHLD 信号
+  * SA_NOCLDWAIT，使父进程在它的子进程退出时不会收到 SIGCHLD 信号，这时子进程如果退出也不会成为僵尸进程
+  * SA_NODEFER，使对信号的屏蔽无效，即在信号处理函数执行期间仍能发出这个信号
+  * SA_RESETHAND，信号处理之后重新设置为默认的处理方式
+  * SA_SIGINFO，使用 sa_sigaction 成员而不是 sa_handler 作为信号处理函数
+
+* sa_restorer一般不使用
+
+### sigaction函数
+
+```c++
+#include <signal.h>
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+```
+
+* signum表示操作的信号。
+* act表示对信号设置新的处理方式。
+* oldact表示信号原来的处理方式。
+* 返回值，0 表示成功，-1 表示有错误发生。
+
+### sigfillset函数
+
+```c++
+#include<signal.h>
+int sigfillset(sigset_t *set);
+```
+
+原来将参数set信号集初始化，然后把所有的信号加入到此信号集里。
+
+### SIGALRM、SIGTERM信号
+
+```c++
+#define SIGALRM  14 	//由alarm系统调用产生timer时钟信号
+#define SIGTERM  15     //终端发送的终止信号
+```
+
+### alarm函数
+
+```c++
+#include <unistd.h>;
+unsigned int alarm(unsigned int seconds);
+```
+
+设置信号传送闹钟，即用来设置信号SIGALRM在经过参数seconds秒数后发送给目前的进程。如果未设置信号信号SIGALRM的处理函数，那么alarm()默认处理终止进程。
+
+### alarm函数
+
+```c++
+#include <unistd.h>;
+unsigned int alarm(unsigned int seconds);
+```
+
+设置信号传送闹钟，即用来设置信号SIGALRM在经过参数seconds秒数后发送给目前的进程。如果未设置信号SIGALRM的处理函数，那么alarm()默认处理终止进程.
+
+### socketpair函数
+
+在linux下使用socketpair函数能够创建一对套接字进行通信，项目中使用管道通信。
+
+```c++
+#include<sys/types.h>
+#include<sys/socket.h>
+int socketpair(int domain,int type,int protocol,int sv[2]);
+```
+
+* domain表示协议族，PF_UNIX或者AF_UNIX
+* type表示协议，可以是SOCK_STREAM或者SOCK_DGRAM，SOCK_STREAM基于TCP，SOCK_DGRAM基于UDP
+* protocol表示类型，只能为0
+* sv[2]表示套节字柄对，该两个句柄作用相同，均能进行读写双向操作
+* 返回结果， 0为创建成功，-1为创建失败
+
+### send函数
+
+```c++
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+```
+
+当套接字发送缓冲区变满时，send通常会阻塞，除非套接字设置为非阻塞模式，当缓冲区变满时，返回EAGAIN或者EWOULDBLOCK错误，此时可以调用select函数来监视何时可以发送数据。
+
+## 信号通知流程
+
+Linux下的信号采用的是异步处理机制，信号处理函数和当前进程是两条不同的执行路线。
+
+具体的，当进程收到信号时，操作系统会中断当前的正常流程，转而进入信号处理函数执行操作，完成后再返回中断的地方继续执行，这也就是同步处理机制。
+
+但为了避免信号竞态现象发生，信号处理期间系统不会再次触发它。所以，为确保该信号不被屏蔽太久，信号处理函数需要尽量快地执行完毕。
+
+一般的信号处理函数需要处理该信号对应的逻辑，当该逻辑比较复杂时，信号处理函数执行事件过长，会导致信号屏蔽太久。
+
+解决方案：信号处理函数仅仅发送信号通知程序主循环，将信号对应的处理逻辑放在程序主循环中，由主循环执行信号对应的逻辑代码。
+
+### 统一事件源
+
+统一事件源，是指将信号事件与其它事件一样被处理。
+
+具体的，信号处理函数使用管道将信号传递给主循环，信号处理函数往管道的写端写入信号值，主循环则从管道的读端(0端)读出信号值，使用I/O复用系统调用来监听管道读端的可读事件，这样信号事件与其它文件描述符都可以通过epoll来监测，从而实现统一处理。
+
+### 信号处理机制
+
+每个进程之中，都存有一个表，里面存在每种信号所代表的含义，内核通过设置表项中的每一个位来表示对应的信号类型。
+
+![图片](./picture/信号处理机制流程.jpeg)
+
+* 信号的接收
+
+  * 接收信号的任务是由内核代理的，当内核接收到信号后，会将其放到对应进程的信号队列中，同时向进程发送一个中断，使其陷入内核态。注意，此时信号还只是在队列中，对进程来说暂时是不知道有信号到来的。
+
+* 信号的检测
+
+  * 进程从内核态返回到用户态前进行信号检测
+  * 进程在内核态中，从睡眠状态被唤醒的时候进行信号检测
+  * 进程陷入内核态后，有两种场景会对信号进行检测
+  * 当发现有新信号时，便会进入下一步，信号的处理
+
+* 信号的处理
+
+  * ( **内核** )信号处理函数是运行在用户态的，调用处理函数前，内核会将当前内核栈的内容备份拷贝到用户栈上，并且修改指令寄存器（eip）将其指向信号处理函数。
+  * ( **用户** )接下来进程返回到用户态中，执行相应的信号处理函数。
+  * ( **内核** )信号处理函数执行完成后，还需要返回内核态，检查是否还有其它信号未处理。
+  * ( **用户** )如果所有信号都处理完成，就会将内核栈恢复（从用户栈的备份拷贝回来），同时恢复指令寄存器（eip）将其指向中断前的运行位置，最后回到用户态继续执行进程。
+
+至此，一个完整的==异步==信号处理流程便结束了，如果同时有多个信号到达，上面的处理流程会在第2步和第3步骤间重复进行。
+
+> 异步是指内核向用户通知已完成的事件，用户空间完成相应逻辑，内核空间只负责进行通知。
+
+项目中设置信号函数，只关注SIGTERM和SIGALRM两个信号
+
+### 信号通知逻辑
+
+* 创建管道，其中管道写端(pipefd[1])写入信号值，管道读端(pipefd[0])通过I/O复用系统监测读事件
+* 设置信号处理函数SIGALRM(时间到了触发)和SIGTERM(kill触发，Ctrl+C
+  * 通过struct sigaction结构体和sigaction函数注册信号捕捉函数
+  * 在结构体的handler参数设置信号处理函数，具体的，从管道写端写入信号的名字
+* 利用I/O复用系统监听管道读端文件描述符的可读事件
+* 信息值传递给主循环，主循环再根据接收到的信号值执行目标信号对应的逻辑代码
+
+代码分析在`webserver.cpp`的`void eventListen()`成员函数。
+
+### 问题与解答
+
+* 为什么管道写端和读端都要使用非阻塞？
+
+在管道文件为阻塞读和阻塞写的时候，无论是先读还是先写都要等到另一个操作才能离开阻塞，也就是:如果先读，陷入阻塞，等待写操作；如果先写，陷入阻塞，等待读操作。
+
+而非阻塞读和非阻塞写，是无须等待另一个操作的，直接执行read()或者write()能读就读，能写就写，不能就返回-1,非阻塞读写主要是用于自己循环读取，去判断读写的长度
+
+send是将信息发送给套接字缓冲区，如果缓冲区满了，则会阻塞，这时候会进一步增加信号处理函数的执行事件。为此，将写端该位非阻塞。
+
+* 没有对非阻塞返回值处理，如果阻塞是不是意味着这一次定时事件失效了？
+
+是的，当定时事件是非必须立即处理的事件，可以允许这样的情况发生。
+
+* 管道传递的是什么类型？switch-case的变量冲突？
+
+信号本身是整型数值，管道中传递的是ASCII码表中整型数值对应的字符。
+
+switch的变量一般为字符或整型，当switch的变量为字符时，case中可以是字符，也可以是字符对应的ASCII码。
