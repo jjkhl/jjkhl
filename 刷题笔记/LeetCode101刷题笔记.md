@@ -3657,8 +3657,47 @@ public:
 ```
 
 ## [168.Excel表列名称](https://leetcode.cn/problems/excel-sheet-column-title/)
+```c++
+class Solution {
+public:
+    string convertToTitle(int columnNumber) {
+        string res="";
+        while(columnNumber>0)
+        {
+            int curNum=(columnNumber-1)%26;
+            columnNumber=(columnNumber-1)/26;
+            char ch='A'+curNum;
+            res+=ch;
+        }
+        reverse(res.begin(),res.end());
+        return res;
+    }
+};
+```
 
 ## [67.二进制求和](https://leetcode.cn/problems/add-binary/)
+```c++
+class Solution {
+public:
+    string addBinary(string a, string b) {
+        if(a.size()<b.size()) return addBinary(b,a);
+        int carry=0;
+        int lenA=a.size(),lenB=b.size();
+        string tmp(lenA-lenB,'0');
+        b.insert(0,tmp);
+        for(int i=lenA-1;i>=0;i--)
+        {
+            int sum=a[i]-'0'+b[i]-'0'+carry;
+            a[i]=(sum)%2+'0';
+            carry=sum>>1;
+        }
+        if(carry>0)
+            a.insert(0,"1");
+        return a;
+    }
+};
+```
+
 
 ## [238.除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
 
