@@ -3700,8 +3700,44 @@ public:
 
 
 ## [238.除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
-
+```c++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int n=nums.size();
+        vector<int> res(n,1);
+        for(int i=1;i<n;i++)
+        {
+            res[i]=res[i-1]*nums[i-1];
+        }
+        int R=nums[n-1];
+        for(int i=n-2;i>=0;i--)
+        {
+            res[i]=res[i]*R;
+            R*=nums[i];
+        }
+        return res;
+    }
+};
+```
 ## [462.最少移动次数使数组元素相等II](https://leetcode.cn/problems/minimum-moves-to-equal-array-elements-ii/)
+```c++
+//参考思路：https://leetcode.cn/problems/minimum-moves-to-equal-array-elements-ii/solution/by-fuxuemingzhu-13z3/
+class Solution {
+public:
+    int minMoves2(vector<int>& nums) {
+        sort(nums.begin(),nums.end());
+        const int n=nums.size();
+        int mid=nums[n>>1];
+        int res=0;
+        for(int i:nums)
+        {
+            res+=abs(i-mid);
+        }
+        return res;
+    }
+};
+```
 
 ## [168.多数元素](https://leetcode.cn/problems/majority-element/)
 
