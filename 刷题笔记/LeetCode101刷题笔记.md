@@ -3740,7 +3740,68 @@ public:
 ```
 
 ## [168.多数元素](https://leetcode.cn/problems/majority-element/)
-
+```c++
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int res=0,count=0;
+        for(int num:nums)
+        {
+            if(0==count)
+            {
+                count++;
+                res=num;
+            }
+            else if(count>0)
+            {
+                if(num==res) count++;
+                else count--;
+            }
+        }
+        return res;
+    }
+};
+```
 ## [470.用Rand7()实现Rand100()](https://leetcode.cn/problems/implement-rand10-using-rand7/)
+```c++
+class Solution {
+public:
+    int rand10() {
+        int a=rand7(),b=rand7();
+        while(a==7) a=rand7();//a不能为7，必须为[1,6]才能保证奇偶各一半
+        while(b>5) b=rand7();//b不为5及其以上，保证a取最大值6时，a+b还在10范围内
+        return ((a&1)==0?0:5)+b;
+    }
+};
+```
 
 ## [202.快乐数](https://leetcode.cn/problems/happy-number/)
+```c++
+class Solution {
+public:
+    int squareSum(int m)
+{
+	int res = 0;
+	while (m > 0)
+	{
+		res += (m % 10) * (m % 10);
+		m /= 10;
+	}
+	return res;
+}
+bool isHappy(int n)
+{
+	int fast = n;
+	int slow = n;
+	do
+	{
+		slow = squareSum(slow);
+		fast = squareSum(fast);
+		fast = squareSum(fast);
+	} while (slow != fast);
+	if (fast == 1)
+		return true;
+	return false;
+}
+};
+```
