@@ -1,4 +1,4 @@
-CFLAGS?=	-Wall -ggdb -W -O
+CFLAGS?=	-Wall -ggdb -W -O -fPIE
 CC?=		gcc
 LIBS?=
 LDFLAGS?=
