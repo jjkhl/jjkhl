@@ -1374,3 +1374,421 @@ write_log函数完成写入日志文件中的具体内容，主要实现日志�
   * 若行数超过最大行限制，在当前日志的末尾加count/max_lines为后缀创建新log
 
 将系统信息格式化后输出，具体为：格式化时间 + 格式化内容
+
+# [11 数据库连接池](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274326&idx=1&sn=5af78e2bf6552c46ae9ab2aa22faf839&chksm=83ffbe8eb4883798c3abb82ddd124c8100a39ef41ab8d04abe42d344067d5e1ac1b0cac9d9a3&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
+
+## 本章内容
+
+本篇将介绍数据库连接池的定义，具体的涉及到单例模式创建、连接池代码实现、RAII机制释放数据库连接。
+
+**单例模式创建**，结合代码描述连接池的单例实现。
+
+**连接池代码实现**，结合代码对连接池的外部访问接口进行详解。
+
+**RAII机制释放数据库连接**，描述连接释放的封装逻辑。
+
+## 基础知识
+
+1. 什么是数据库连接池
+
+池是一组资源的集合，这组资源在服务器启动之初就被完全创建好并初始化。通俗来说，池是资源的容器，本质上是对资源的复用。
+
+顾名思义，连接池中的资源为一组数据库连接，由程序动态地对池中的连接进行使用，释放。
+
+当系统开始处理客户请求的时候，如果它需要相关的资源，可以直接从池中获取，无需动态分配；当服务器处理完一个客户连接后,可以把相关的资源放回池中，无需执行系统调用释放资源。
+
+2. 数据库访问的一般流程
+
+当系统需要访问数据库时，先系统创建数据库连接，完成数据库操作，然后系统断开数据库连接。
+
+3. 为什么要创建连接池
+
+从一般流程中可以看出，若系统需要频繁访问数据库，则需要频繁创建和断开数据库连接，而创建数据库连接是一个很耗时的操作，也容易对数据库造成安全隐患。
+
+在程序初始化的时候，集中创建多个数据库连接，并把他们集中管理，供程序使用，可以保证较快的数据库读写速度，更加安全可靠。
+
+## 整体概述
+
+池可以看做资源的容器，所以多种实现方法，比如数组、链表、队列等。这里，使用单例模式和链表创建数据库连接池，实现对数据库连接资源的复用。
+
+项目中的数据库模块分为两部分，其一是数据库连接池的定义，其二是利用连接池完成登录和注册的校验功能。具体的，工作线程从数据库连接池取得一个连接，访问数据库中的数据，访问完毕后将连接交还连接池。
+
+## 单例模式创建
+
+使用局部静态变量懒汉模式创建连接池
+
+```c++
+class connection_pool
+{
+public:
+    //局部静态变量单例模式
+    static connection_pool *GetInstance();
+
+private:
+    connection_pool();
+    ~connection_pool();
+}
+
+connection_pool *connection_pool::GetInstance()
+{
+    static connection_pool connPool;
+    return &connPool;
+}
+```
+
+## 连接池代码实现
+
+连接池的功能主要有：初始化，获取连接、释放连接，销毁连接池。
+
+### 初始化
+
+值得注意的是，销毁连接池没有直接被外部调用，而是通过RAII机制来完成自动释放；使用信号量实现多线程争夺连接的同步机制，这里将信号量初始化为数据库的连接总数。 
+
+### 获取、释放连接
+
+当线程数量大于数据库连接数量时，使用信号量进行同步，每次取出连接，信号量原子减1，释放连接原子加1，若连接池内没有连接了，则阻塞等待。
+
+另外，由于多线程操作连接池，会造成竞争，这里使用互斥锁完成同步，具体的同步机制均使用lock.h中封装好的类。
+
+### 销毁连接池
+
+通过遍历迭代器遍历连接池链表，关闭对应数据库连接，清空链表并重置空闲连接和现有连接数量
+
+## RAII机制释放数据库连接
+
+将数据库连接的获取与释放通过RAII机制封装，避免手动释放
+
+### 定义
+
+在获取连接时，通过有参构造对传入的参数进行修改。其中数据库连接本身是指针类型，所以参数需要通过双指针才能对其进行修改
+
+### 实现
+
+不直接调用获取和释放连接的接口，将其封装起来，通过RAII机制进行获取和释放。
+
+# [12 注册登录](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274431&idx=4&sn=7595a70f06a79cb7abaebcd939e0cbee&chksm=83ffb167b4883871ce110aeb23e04acf835ef41016517247263a2c3ab6f8e615607858127ea6&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
+
+## 本章内容
+
+本篇将介绍同步实现注册登录功能，具体的涉及到流程图，载入数据库表，提取用户名和密码，注册登录流程与页面跳转的的代码实现。
+
+**流程图**，描述服务器从报文中提取出用户名密码，并完成注册和登录校验后，实现页面跳转的逻辑。
+
+**载入数据库表**，结合代码将数据库中的数据载入到服务器中。
+
+**提取用户名和密码**，结合代码对报文进行解析，提取用户名和密码。
+
+**注册登录流程**，结合代码对描述服务器进行注册和登录校验的流程。
+
+**页面跳转**，结合代码对页面跳转机制进行详解。
+
+## 流程图
+
+GET和POST请求下的页面跳转流程
+
+![图片](picture/页面跳转流程图.jpeg)
+
+## 转入数据库表
+
+将数据库中的用户名和密码载入到服务器的map中来，map中的key为用户名，value为密码。
+
+```c++
+//用户名和密码
+map<string, string> users;
+
+void http_conn::initmysql_result(connection_pool *connPool)
+{
+    //先从连接池中取一个连接
+    MYSQL *mysql = NULL;
+    connectionRAII mysqlcon(&mysql, connPool);
+
+    //在user表中检索username，passwd数据，浏览器端输入
+    if (mysql_query(mysql, "SELECT username,passwd FROM user"))
+    {
+        LOG_ERROR("SELECT error:%s\n", mysql_error(mysql));
+    }
+
+    //从表中检索完整的结果集
+    MYSQL_RES *result = mysql_store_result(mysql);
+
+    //返回结果集中的列数
+    int num_fields = mysql_num_fields(result);
+
+    //返回所有字段结构的数组
+    MYSQL_FIELD *fields = mysql_fetch_fields(result);
+
+    //从结果集中获取下一行，将对应的用户名和密码，存入map中
+    while (MYSQL_ROW row = mysql_fetch_row(result))
+    {
+        string temp1(row[0]);
+        string temp2(row[1]);
+        users[temp1] = temp2;
+    }
+}
+```
+
+## 提取用户名和密码
+
+服务器端解析浏览器的请求报文，当解析为POST请求时，cgi标志位设置为1，并将请求报文的消息体赋值给m_string，进而提取出用户名和密码
+
+```c++
+//判断http请求是否被完整读入
+http_conn::HTTP_CODE http_conn::parse_content(char *text)
+{
+    if (m_read_idx >= (m_content_length + m_checked_idx))
+    {
+        text[m_content_length] = '\0';
+
+        //POST请求中最后为输入的用户名和密码
+        m_string = text;
+        return GET_REQUEST;
+    }
+    return NO_REQUEST;
+}
+
+//根据标志判断是登录检测还是注册检测
+char flag = m_url[1];
+
+char *m_url_real = (char *)malloc(sizeof(char) * 200);
+strcpy(m_url_real, "/");
+strcat(m_url_real, m_url + 2);
+strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
+free(m_url_real);
+
+//将用户名和密码提取出来
+//user=123&password=123
+char name[100], password[100];
+int i;
+
+//以&为分隔符，前面的为用户名
+for (i = 5; m_string[i] != '&'; ++i)
+    name[i - 5] = m_string[i];
+name[i - 5] = '\0';
+
+//以&为分隔符，后面的是密码
+int j = 0;
+for (i = i + 10; m_string[i] != '\0'; ++i, ++j)
+    password[j] = m_string[i];
+password[j] = '\0';
+```
+
+## 同步线程登录注册
+
+通过m_url定位/所在位置，根据/后的第一个字符判断是登录还是注册校验。
+
+* 2
+
+  * 登录校验
+
+* 3
+
+  * 注册校验
+
+根据校验结果，跳转对应页面。另外，对数据库进行操作时，需要通过锁来同步。
+
+## 页面跳转
+
+通过m_url定位/所在位置，根据/后的第一个字符，使用分支语句实现页面跳转。具体的，
+
+* 0：跳转注册页面，GET
+
+* 1：跳转登录页面，GET
+
+* 5：显示图片页面，POST
+
+* 6： 显示视频页面，POST
+
+* 7： 显示关注页面，POST
+
+# [13 踩坑和面试题](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274431&idx=1&sn=2dd28c92f5d9704a57c001a3d2630b69&chksm=83ffb167b48838715810b27b8f8b9a576023ee5c08a8e5d91df5baf396732de51268d1bf2a4e&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
+
+## 踩坑
+
+### 大文件传输
+
+游双代码发送数据只调用了writev行数，并对其返回值是否异常做了处理。
+
+```c++
+bool http_conn::write()
+{
+    int temp=0;
+    int bytes_have_send=0;
+    int bytes_to_send=m_write_idx;
+    if(bytes_to_send==0)
+    {
+        modfd(m_epollfd,m_sockfd,EPOLLIN);
+        init();
+        return true;
+    }
+    while(1)
+    {
+        temp=writev(m_sockfd,m_iv,m_iv_count);
+        if(temp<=-1)
+        {
+            if(errno==EAGAIN)
+            {
+                modfd(m_epollfd,m_sockfd,EPOLLOUT);
+                return true;
+            }
+            unmap();
+            return false;
+        }
+        bytes_to_send-=temp;
+        bytes_have_send+=temp;
+        if(bytes_to_send<=bytes_have_send)
+        {
+            unmap();
+            if(m_linger)
+            {
+                init();
+                modfd(m_epollfd,m_sockfd,EPOLLIN);
+                return true;
+            }
+            else
+            {
+                modfd(m_epollfd,m_sockfd,EPOLLIN);
+                return false;
+            }
+        }
+    }
+}
+```
+
+在实际测试中发现，当请求小文件，也就是调用一次writev函数就可以将数据全部发送出去的时候，不会报错，此时不会再次进入while循环。
+
+一旦请求服务器文件较大文件时，需要多次调用writev函数，便会出现问题，不是文件显示不全，就是无法显示。
+
+对数据传输过程分析后，定位到writev的m_iv结构体成员有问题，每次传输后不会自动偏移文件指针和传输长度，还会按照原有指针和原有长度发送数据。
+
+根据前面的基础API分析，我们知道writev以顺序iov[0]，iov[1]至iov[iovcnt-1]从缓冲区中聚集输出数据。项目中，申请了2个iov，其中iov[0]为存储报文状态行的缓冲区，iov[1]指向资源文件指针。
+
+对上述代码做了修改如下：
+
+* 由于报文消息报头较小，第一次传输后，需要更新m_iv[1].iov_base和iov_len，m_iv[0].iov_len置成0，只传输文件，不用传输响应消息头
+* 每次传输后都要更新下次传输的文件起始位置和长度
+
+更新后，大文件传输得到了解决。
+
+```c++
+bool http_conn::write()
+{
+    int temp = 0;
+    int newadd = 0;
+    if (bytes_to_send == 0)
+    {
+        modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+        init();
+        return true;
+    }
+    while (1)
+    {
+        temp = writev(m_sockfd, m_iv, m_iv_count);
+        if (temp >= 0)
+        {
+            bytes_have_send += temp;
+            newadd = bytes_have_send - m_write_idx;
+        }
+        else
+        {
+            if (errno == EAGAIN)
+            {
+                if (bytes_have_send >= m_iv[0].iov_len)
+                {
+                    m_iv[0].iov_len = 0;
+                    m_iv[1].iov_base = m_file_address + newadd;
+                    m_iv[1].iov_len = bytes_to_send;
+                }
+                else
+                {
+                    m_iv[0].iov_base = m_write_buf + bytes_have_send;
+                    m_iv[0].iov_len = m_iv[0].iov_len - bytes_have_send;
+                }
+                modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
+                return true;
+            }
+            unmap();
+            return false;
+        }
+        bytes_to_send -= temp;
+        if (bytes_to_send <= 0)
+
+        {
+            unmap();
+            modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+
+            if (m_linger)
+            {
+                init();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+}
+```
+
+## 面试题
+
+包括项目介绍，线程池相关，并发模型相关，HTTP报文解析相关，定时器相关，日志相关，压测相关，综合能力等。
+
+### **项目介绍**
+
+* 为什么要做这样一个项目？
+* 介绍下你的项目
+
+### **线程池相关**
+
+* 手写线程池
+* 线程的同步机制有哪些？
+* 线程池中的工作线程是一直等待吗？
+* 你的线程池工作线程处理完一个任务后的状态是什么？
+* 如果同时1000个客户端进行访问请求，线程数不多，怎么能及时响应处理每一个呢？
+* 如果一个客户请求需要占用线程很久的时间，会不会影响接下来的客户请求呢，有什么好的策略呢?
+
+### **并发模型相关**
+
+* 简单说一下服务器使用的并发模型？
+* reactor、proactor、主从reactor模型的区别？
+* 你用了epoll，说一下为什么用epoll，还有其他复用方式吗？区别是什么？
+
+### **HTTP报文解析相关**
+
+* 用了状态机啊，为什么要用状态机？
+* 状态机的转移图画一下
+* https协议为什么安全？
+* https的ssl连接过程
+* GET和POST的区别
+
+### **数据库登录注册相关**
+
+* 登录说一下？
+* 你这个保存状态了吗？如果要保存，你会怎么做？（cookie和session）
+* 登录中的用户名和密码你是load到本地，然后使用map匹配的，如果有10亿数据，即使load到本地后hash，也是很耗时的，你要怎么优化？
+* 用的mysql啊，redis了解吗？用过吗？
+
+### **定时器相关**
+
+* 为什么要用定时器？
+* 说一下定时器的工作原理
+* 双向链表啊，删除和添加的时间复杂度说一下？还可以优化吗？
+* 最小堆优化？说一下时间复杂度和工作原理
+
+### **日志相关**
+
+* 说下你的日志系统的运行机制？
+* 为什么要异步？和同步的区别是什么？
+* 现在你要监控一台服务器的状态，输出监控日志，请问如何将该日志分发到不同的机器上？（消息队列）
+
+### **压测相关**
+
+* 服务器并发量测试过吗？怎么测试的？
+* webbench是什么？介绍一下原理
+* 测试的时候有没有遇到问题？
+
+### **综合能力**
+
+* 你的项目解决了哪些其他同类项目没有解决的问题？
+* 说一下前端发送请求后，服务器处理的过程，中间涉及哪些协议？
