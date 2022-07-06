@@ -1,8 +1,14 @@
 **参考网址：**
 
+* [源项目地址](https://github.com/qinguoyi/TinyWebServer)
+
 * [官方项目详解](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzAxNzU2MzcwMw==&action=getalbum&album_id=1339230165934882817&scene=173&from_msgid=2649274278&from_itemidx=3&count=3&nolastread=1#wechat_redirect)
 * [Web服务器](https://blog.csdn.net/qq_38872537/article/details/113184114)
 * [WebServer项目详解](https://www.agedcat.com/programming_language/cpp/537.html)
+
+**整体项目框架**
+
+![img](picture/整体项目框架.jpeg)
 
 # [01.线程同步机制封装类](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=3&sn=5840ff698e3f963c7855d702e842ec47&scene=19#wechat_redirect)
 
@@ -49,6 +55,7 @@ pthread_mutex_unlock函数以原子操作方式给互斥锁解锁
 成功返回0，失败返回errno
 
 ## 条件变量(cond)
+
 cond参考网址：http://t.csdn.cn/qOqgb
 
 条件变量：提供了一种线程间的通知机制,当某个共享数据达到某个值时,唤醒等待这个共享数据的线程.
@@ -1792,3 +1799,119 @@ bool http_conn::write()
 
 * 你的项目解决了哪些其他同类项目没有解决的问题？
 * 说一下前端发送请求后，服务器处理的过程，中间涉及哪些协议？
+
+# 项目运行
+
+## makefile
+
+```cmake
+# ?=相当于如果CXX没有被定义过，则其值为g++；被定义过就什么都不做
+CXX ?= g++
+
+DEBUG ?= 1
+ifeq ($(DEBUG), 1)
+    CXXFLAGS += -g
+else
+    CXXFLAGS += -O2
+
+endif
+
+server: main.cpp  ./timer/lst_timer.cpp ./http/http_conn.cpp ./log/log.cpp ./CGImysql/sql_connection_pool.cpp  webserver.cpp config.cpp
+	$(CXX) -o server  $^ $(CXXFLAGS) -lpthread -lmysqlclient
+
+.PHONY:clean
+clean:
+	rm  -r server
+```
+
+## 创建Mysql数据库
+
+```mysql
+#创建数据库testdb并使用该数据库
+create database testdb;
+use testdb;
+#创建user表
+create table user(
+    username char(50) NULL,
+    passwd char(50) NULL
+)ENGINE=InnoDB;
+#添加用户数据
+insert into user(username,passwd) values('jhl','199871');
+```
+
+修改main.cpp中的数据库初始化信息
+
+```c++
+//数据库登录名,密码,库名
+string user = "root";
+string passwd = "root";
+string databasename = "yourdb";
+```
+
+## 生成服务器执行文件
+
+shell端移动到makefile文件所在目录并执行指令：`make`
+
+## 启动服务器
+
+shell端输入`./server`，默认端口号9006
+
+个性化启动：`./server [-p port] [-l LOGWrite] [-m TRIGMode] [-o OPT_LINGER] [-s sql_num] [-t thread_num] [-c close_log] [-a actor_model]`
+
+* -p，自定义端口号
+    * 默认9006
+* -l，选择日志写入方式，默认同步写入
+    * 0，同步写入
+    * 1，异步写入
+* -m，listenfd和connfd的模式组合，默认使用LT + LT
+    * 0，表示使用LT + LT
+    * 1，表示使用LT + ET
+    * 2，表示使用ET + LT
+    * 3，表示使用ET + ET
+* -o，优雅关闭连接，默认不使用
+    * 0，不使用
+    * 1，使用
+* -s，数据库连接数量
+    * 默认为8
+* -t，线程数量
+    * 默认为8
+* -c，关闭日志，默认打开
+    * 0，打开日志
+    * 1，关闭日志
+* -a，选择反应堆模型，默认Proactor
+    * 0，Proactor模型
+    * 1，Reactor模型
+
+## 浏览器访问服务器
+
+浏览器输入`服务器ip地址:9006`即可
+
+# 压力测试
+
+在关闭日志后，使用Webbench对服务器进行压力测试，对listenfd和connfd分别采用ET和LT模式，均可实现上万的并发连接，下面列出的是两者组合后的测试结果. 
+
+> * Proactor，LT + LT，93251 QPS(每秒请求数)=5595108(pages/min)/60
+
+<div align=center><img src="./picture/Proactor_LT+LT.jpg" height="201"/> </div>
+
+> * Proactor，LT + ET，97459 QPS
+
+<div align=center><img src="./picture/Proactor_LT+ET.jpg" height="201"/> </div>
+
+> * Proactor，ET + LT，80498 QPS
+
+<div align=center><img src="./picture/Proactor_ET+LT.jpg" height="201"/> </div>
+
+> * Proactor，ET + ET，92167 QPS
+
+<div align=center><img src="./picture/Proactor_ET+ET.jpg" height="201"/> </div>
+
+> * Reactor，LT + ET，69175 QPS
+
+<div align=center><img src="./picture/Reactor_LT+ET.jpg" height="201"/> </div>
+
+> * 并发连接总数：10500
+> * 访问服务器时间：5s
+> * 所有访问均成功
+
+**注意：** 使用本项目的webbench进行压测时，若报错显示webbench命令找不到，将可执行文件webbench删除后，重新编译即可。
