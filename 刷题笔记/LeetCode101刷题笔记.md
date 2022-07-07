@@ -1,7 +1,9 @@
 github地址：https://github.com/changgyhub/leetcode_101/
 
 **算法部分**
+
 # 第二章 贪心算法
+
 ## [455.分发饼干](https://leetcode.cn/problems/assign-cookies/)
 ```c++
 class Solution {
@@ -3805,3 +3807,139 @@ bool isHappy(int n)
 }
 };
 ```
+
+# 第十章 位运算
+
+常用的位运算符号包括：“∧”按位异或、“&”按位与、“|”按位或、“∼”取反、“<<”
+算术左移和“>>”算术右移。以下是一些常见的位运算特性，其中 0s 和 1s 分别表示只由 0 或 1
+构成的二进制数字。
+
+```
+x ^ 0s = x 			x & 0s = 0 			x | 0s = x
+x ^ 1s = ~x 		x & 1s = x 			x | 1s = 1s
+x ^ x = 0 			x & x = x 			x | x = x
+```
+
+* n & (n - 1)为0表示是2得n次方；可以找到最低位
+* n & (-n) 可以得到 n 的位级表示中最低的那一位
+
+## [461.汉明距离](https://leetcode.cn/problems/hamming-distance/)
+
+```c++
+class Solution {
+public:
+    int hammingDistance(int x, int y) {
+        int res=0;
+        int diff=x^y;
+        while(diff)
+        {
+            res+=diff&1;
+            diff>>=1;
+        }
+        return res;
+    }
+};
+```
+## [190.颠倒二进制位](https://leetcode.cn/problems/reverse-bits/)
+
+```c++
+class Solution {
+public:
+    uint32_t reverseBits(uint32_t n) {
+        uint32_t res=0;
+        for(int i=0;i<32;i++)
+        {
+            res=(res<<1)+(n&1);
+            n>>=1;
+        }
+        return res;
+    }
+};
+```
+## [136.只出现一次的数字](https://leetcode.cn/problems/single-number/)
+```c++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int res=0;
+        for(int num:nums)
+        {
+            res^=num;
+        }
+        return res;
+    }
+};
+```
+## [342.4的幂](https://leetcode.cn/problems/power-of-four/)
+```c++
+//递归模拟
+class Solution {
+public:
+    bool isPowerOfFour(int n) {
+        while(n!=1&&n%4==0&&n!=0)
+        {
+            n>>=2;
+        }
+        return n==1;
+    }
+};
+//位运算
+class Solution {
+public:
+    //0x5 = 0101b
+    bool isPowerOfFour(int num) {
+        //num&(num-1)=0，表示是2的次方
+        if (num < 0 || num & (num-1)){//check(is or not) a power of 2.
+            return false;
+        }
+        return num & 0x55555555;//check 1 on odd bits
+    }
+};
+```
+## [318.最大单词长度乘积](https://leetcode.cn/problems/maximum-product-of-word-lengths/)
+```c++
+// 链接：https://leetcode.cn/problems/maximum-product-of-word-lengths/solution/acmjin-pai-ti-jie-zhuang-tai-ya-suo-bian-biqp/
+class Solution {
+public:
+    int mask[1000];
+    int maxProduct(vector<string>& words) {
+        for (int i = 0; i < words.size(); i++) {
+            for (int j = 0; j < words[i].size(); j++) {
+                mask[i] |= (1 << (words[i][j] - 'a'));
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < words.size(); i++) {
+            for (int j = i + 1; j < words.size(); j++) {
+                if (!(mask[i] & mask[j])) {
+                    ans = max(ans, int(words[i].size() * words[j].size()));
+                }
+            }
+        }
+        return ans;
+    }
+};
+
+```
+## [338.比特位计数](https://leetcode.cn/problems/counting-bits/)
+```c++
+class Solution {
+public:
+    vector<int> countBits(int n) {
+        vector<int> res(n+1,0);
+        for(int i=1;i<=n;i++)
+        {
+            // res[i]=i&1?res[i-1]+1:res[i>>1];
+            res[i]=res[i&(i-1)]+1;
+        }
+        return res;
+    }
+};
+```
+## [268.丢失的数字](https://leetcode.cn/problems/missing-number/)
+
+## [693.交替位二进制数](https://leetcode.cn/problems/binary-number-with-alternating-bits/)
+
+## [476.数字的补数](https://leetcode.cn/problems/number-complement/)
+
+## [260.只出现一次的数字III](https://leetcode.cn/problems/single-number-iii/)
