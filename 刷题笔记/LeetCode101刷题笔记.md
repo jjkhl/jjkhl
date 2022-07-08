@@ -3922,6 +3922,7 @@ public:
 
 ```
 ## [338.比特位计数](https://leetcode.cn/problems/counting-bits/)
+
 ```c++
 class Solution {
 public:
@@ -3938,8 +3939,103 @@ public:
 ```
 ## [268.丢失的数字](https://leetcode.cn/problems/missing-number/)
 
+```c++
+//相当于两个数组异或，相同的数异或为0，任何数字异或0=原数。
+//异或法
+class Solution {
+public:
+    int missingNumber(vector<int>& nums) {
+        int n=nums.size();
+        int res=n;
+        for(int i=0;i<n;i++) res^=i^nums[i];
+        return res;
+    }
+};
+```
+
 ## [693.交替位二进制数](https://leetcode.cn/problems/binary-number-with-alternating-bits/)
+
+```c++
+class Solution {
+public:
+    bool hasAlternatingBits(int n) {
+        int pre=n&1;
+        int cur;
+        while(n)
+        {
+            n>>=1;
+            cur=n&1;
+            if(cur==pre) return false;
+            pre=cur;
+        }
+        return true;
+    }
+};
+//异或位运算
+class Solution {
+public:
+    bool hasAlternatingBits(int n) {
+        // 如 010101 右移一位得到 001010
+        // 二者异或之后得到011111  (这一步是关键,只有交替出现01，异或后才能得到结果0111111...11)
+        // 为了判断 异或后的结果是否满足(0111111...11)类型的结果
+        // 可以用如下方法，比如
+        // 011111 加上1 为100000
+        // 011111 与 100000按位相与 结果为000000 ， 也就是0;
+        long m = n ^ (n >> 1);
+        return (m & (m + 1)) == 0;
+    }
+};
+```
+
+
 
 ## [476.数字的补数](https://leetcode.cn/problems/number-complement/)
 
+```c++
+class Solution {
+public:
+    int findComplement(int num) {
+        int tmp=num,c=0;
+        while(tmp>0)
+        {
+            tmp>>=1;
+            c=(c<<1)+1;
+        }
+        return num^c;
+    }
+};
+```
+
+
+
 ## [260.只出现一次的数字III](https://leetcode.cn/problems/single-number-iii/)
+
+```c++
+//参考思路：https://leetcode.cn/problems/single-number-iii/solution/gong-shui-san-xie-yi-ti-shuang-jie-ha-xi-zgi4/
+/*
+主要思路：
+1. 对所有数字进行异或，最后肯定是2个只出现一次的元素异或的结果
+2. 以异或值最后一个二进制位为1作为分界线mask，如果是0则为一个数组，是1则为另外一个数组。
+3. 上面的两个数组一定是只出现一次的元素各在一个，所以再取异或即可
+*/
+class Solution
+{
+public:
+    vector<int> singleNumber(vector<int> &nums)
+    {
+        int aux = 0;
+        for (auto num : nums)
+            aux ^= num;
+
+        int ans = 0, tmp = aux;
+        //找到异或为1的最近一位
+        aux = aux & (~(unsigned)aux + 1);
+        for (auto num : nums)
+            if (num & aux)
+                ans ^= num;
+
+        return {ans, ans ^ tmp};
+    }
+};
+```
+
