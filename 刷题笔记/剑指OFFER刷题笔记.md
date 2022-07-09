@@ -110,8 +110,7 @@ public:
     }
     Singleton(Singleton&)=delete;
     Singleton& operator=(const Singleton&)=delete;
-    static Ptr get_instance(){
-
+    static Singleton* get_instance(){
         // "double checked lock"
         if(m_instance_ptr==nullptr){
             std::lock_guard<std::mutex> lk(m_mutex);
@@ -121,13 +120,11 @@ public:
         }
         return m_instance_ptr;
     }
-
-
 private:
     Singleton(){
         std::cout<<"constructor called!"<<std::endl;
     }
-    static Ptr m_instance_ptr;
+    static Singleton* m_instance_ptr;
     static std::mutex m_mutex;
 };
 
