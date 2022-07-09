@@ -4039,3 +4039,123 @@ public:
 };
 ```
 
+# 第十一章 妙用数据结构
+
+## [448.找到所有数组中消失的数字](https://leetcode.cn/problems/find-all-numbers-disappeared-in-an-array/)
+
+```c++
+class Solution {
+public:
+    vector<int> findDisappearedNumbers(vector<int>& nums) {
+        int n=nums.size();
+        if(n==0) return nums;
+        vector<int> res;
+        for(const int& num:nums)
+        {
+            int index=abs(num)-1;
+            if(nums[index]>0)
+                nums[index]=-nums[index];
+        }
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]>0)
+                res.emplace_back(i+1);
+        }
+        return res;
+    }
+};
+```
+
+## [48.旋转图像](https://leetcode.cn/problems/rotate-image/)
+```c++
+//翻转法
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n=matrix.size();
+        for(int i=0;i<n/2;i++)
+        {
+            for(int j=0;j<(n+1)/2;j++)
+            {
+                int temp=matrix[i][j];
+                matrix[i][j]=matrix[n-j-1][i];
+                matrix[n-j-1][i]=matrix[n-i-1][n-j-1];
+                matrix[n-i-1][n-j-1]=matrix[j][n-i-1];
+                matrix[j][n-i-1]=temp;
+            }
+        }
+    }   
+};
+//替换法
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n=matrix.size();
+        for(int i=0;i<n/2;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                swap(matrix[i][j],matrix[n-1-i][j]);
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                swap(matrix[i][j],matrix[j][i]);
+            }
+        }
+    }
+};
+```
+## [240.搜索二维矩阵II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
+
+## [769.最多能完成排序的快](https://leetcode.cn/problems/max-chunks-to-make-sorted/)
+
+## [232.用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/)
+
+## [155.最小栈](https://leetcode.cn/problems/min-stack/)
+
+## [20.有效队列](https://leetcode.cn/problems/valid-parentheses/)
+
+## [739.每日温度](https://leetcode.cn/problems/daily-temperatures/)
+
+## [23.合并K个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/)
+
+## [218.天际线问题](https://leetcode.cn/problems/the-skyline-problem/)
+
+## [239.滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
+
+## [1.两数之和](https://leetcode.cn/problems/two-sum/solution/)
+
+## [128.最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+## [149.直线上最多的点数](https://leetcode.cn/problems/max-points-on-a-line/)
+
+## [332.重新安排行程](https://leetcode.cn/problems/reconstruct-itinerary/)
+
+## [303.区域和检索-数组不变](https://leetcode.cn/problems/range-sum-query-immutable/)
+
+## [304.二维区域和检索-矩阵不变](https://leetcode.cn/problems/range-sum-query-2d-immutable/)
+
+## [560.和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
+
+## [566.重塑矩阵](https://leetcode.cn/problems/reshape-the-matrix/)
+
+## [225.用队列实现栈](https://leetcode.cn/problems/implement-stack-using-queues/)
+
+## [503.下一个更大元素II](https://leetcode.cn/problems/next-greater-element-ii/)
+
+## [217.存在重复元素](https://leetcode.cn/problems/contains-duplicate/)
+
+## [697.数组的度](https://leetcode.cn/problems/degree-of-an-array/)
+
+## [594.最长和谐子序列](https://leetcode.cn/problems/longest-harmonious-subsequence/)
+
+## [287.寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
+
+## [313.超级丑数](https://leetcode.cn/problems/super-ugly-number/)
+
+## [870.优势洗牌](https://leetcode.cn/problems/advantage-shuffle/)
+
+## [307.区域和检索-数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/)
