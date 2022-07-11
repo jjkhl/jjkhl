@@ -4109,9 +4109,52 @@ public:
 };
 ```
 ## [240.搜索二维矩阵II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
-
+```c++
+//右上角搜索类比搜索树
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int m=matrix.size(),n=matrix[0].size();
+        if(m==0||n==0) return false;
+        int i=0,j=n-1;
+        while(i<m&&j>=0)
+        {
+            if(target>matrix[i][j]) i++;
+            else if(target<matrix[i][j]) j--;
+            else return true;
+        }
+        return false;
+    }
+};
+```
 ## [769.最多能完成排序的快](https://leetcode.cn/problems/max-chunks-to-make-sorted/)
-
+```c++
+/*
+    通过cur_max找到数组位置，通过循环找到左侧比它小的数组，这时说明这一块数组需要进行排序。
+    通俗来说，有3个规律
+    1：若区间内有升有降，则找拐点，以拐点为分界线升序排序左侧数组
+    2.若区间内只有升序，则每个数字都可以单独作为分区
+    3.若区间内只有降序，则只存在一个分区
+    比如{1,0,2,3,4}
+    当i=0，得到cur_max=1，i!=cur_max，所以继续循环
+    当i=1,得到cur_max=1,i==cur_max，此时说明左侧数组需要排序，且{arr[0],arr[1]}需要进行升序排序
+    当i=2，cur_max=2=i，说明其左侧数组需要排序，但因为上一步已将{arr[0],arr[1]}进行了升序排序，则只需要进行{arr[2]}的排序就行
+    同理，对i=3和i=4进行相同顺序的排序
+*/
+class Solution {
+public:
+    int maxChunksToSorted(vector<int>& arr) {
+        int chunks=0,cur_max=0;
+        for(int i=0;i<arr.size();i++)
+        {
+            cur_max=max(cur_max,arr[i]);
+            if(cur_max==i)
+                chunks++;
+        }
+        return chunks;
+    }
+};
+```
 ## [232.用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/)
 
 ## [155.最小栈](https://leetcode.cn/problems/min-stack/)
