@@ -4156,8 +4156,79 @@ public:
 };
 ```
 ## [232.用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/)
+```c++
+class MyQueue {
+private:
+    stack<int> in,out;
+public:
+    MyQueue() {
 
+    }
+    
+    void push(int x) {
+        in.push(x);
+    }
+    
+    int pop() {
+        in2out();
+        int res=out.top();
+        out.pop();
+        return res;
+    }
+    
+    int peek() {
+        in2out();
+        return out.top();
+    }
+    
+    bool empty() {
+        return in.empty()&&out.empty();
+    }
+    void in2out()
+    {
+        if(out.empty())
+        {
+            while(!in.empty())
+            {
+                out.push(in.top());
+                in.pop();
+            }
+        }
+    }
+};
+```
 ## [155.最小栈](https://leetcode.cn/problems/min-stack/)
+```c++
+//辅助栈
+class MinStack {
+private:
+    stack<int> st;
+    stack<int> minst;
+public:
+    MinStack() {
+
+    }
+    
+    void push(int val) {
+        st.push(val);
+        if(minst.empty()||minst.top()>=val) minst.push(val);
+    }
+    
+    void pop() {
+        int val=st.top();
+        st.pop();
+        if(minst.top()==val) minst.pop();
+    }
+    
+    int top() {
+        return st.top();
+    }
+    
+    int getMin() {
+        return minst.top();
+    }
+};
+```
 
 ## [20.有效队列](https://leetcode.cn/problems/valid-parentheses/)
 
