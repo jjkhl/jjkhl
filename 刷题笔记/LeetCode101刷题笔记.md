@@ -4231,9 +4231,49 @@ public:
 ```
 
 ## [20.有效队列](https://leetcode.cn/problems/valid-parentheses/)
-
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> st;
+        for(const char& ch:s)
+        {
+            if(ch=='(') st.push(')');
+            else if(ch=='[') st.push(']');
+            else if(ch=='{') st.push('}');
+            else if(st.empty()||st.top()!=ch) return false;
+            else st.pop();
+        }
+        return st.empty();
+    }
+};
+```
 ## [739.每日温度](https://leetcode.cn/problems/daily-temperatures/)
-
+```c++
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        stack<int> st;
+        int n=temperatures.size();
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            if(st.empty())
+            {
+                st.push(i);
+                continue;
+            }
+            while(!st.empty()&&temperatures[st.top()]<temperatures[i])
+            {
+                res[st.top()]=i-st.top();
+                st.pop();
+            }
+            st.push(i);
+        }
+        return res;
+    }
+};
+```
 ## [23.合并K个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/)
 
 ## [218.天际线问题](https://leetcode.cn/problems/the-skyline-problem/)
