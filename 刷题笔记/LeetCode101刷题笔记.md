@@ -4275,13 +4275,135 @@ public:
 };
 ```
 ## [23.合并K个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/)
-
+```c++
+ struct cmp{
+     bool operator()(ListNode* l1,ListNode* l2)
+     {
+         return l1->val>l2->val;
+     }
+ };
+class Solution {
+public:
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        if(lists.empty()) return NULL;
+        int k=lists.size();
+        priority_queue<ListNode*,vector<ListNode*>,cmp> que;
+        for(ListNode* list:lists)
+        {
+            if(list)
+                que.push(list);
+        }
+        ListNode* dummy=new ListNode(0);
+        ListNode* cur=dummy;
+        while(!que.empty())
+        {
+            cur->next=que.top();
+            que.pop();
+            cur=cur->next;
+            if(cur->next)//如果合并的结点还有其余顺序结点，则继续合并
+            {
+                que.push(cur->next);
+            }
+        }
+        return dummy->next;
+    }
+};
+```
 ## [218.天际线问题](https://leetcode.cn/problems/the-skyline-problem/)
+```c++
+class Solution {
+public:
+    vector<vector<int>> getSkyline(vector<vector<int>>& buildings)
+    {
+        vector<pair<int,long>> sortedBuildings;
+        for(auto & building: buildings)
+        {
+            int left = building[0];
+            int right = building[1];
+            long height = building[2];
+            sortedBuildings.push_back(make_pair(left,-height));
+            sortedBuildings.push_back(make_pair(right,height));
+        }
 
+        std::sort(sortedBuildings.begin(),sortedBuildings.end(),[](auto &left,auto &right){return left.first < right.first || (left.first == right.first && left.second < right.second);});
+       
+        multiset<int,greater<int>> pq;//降序排序
+        pq.insert(0);
+        vector<vector<int>> ans;
+        for(auto & build: sortedBuildings)
+        {
+            int x = build.first;
+            long y = build.second;
+            int top = *(pq.begin());//取第一个元素，即最大元素
+            if(y < 0)//左边界,只需要找到最高的边
+            {
+                y = -y;
+                if(y > top)
+                {
+                    ans.push_back({x,(int)y});
+                }
+                pq.insert(y);
+            }
+            else //右边界，只找最低的边
+            {
+                pq.erase(pq.find(y));//表示高度y已到右边界，所以删除转折点
+                int tmp = *(pq.begin());
+                if(top > tmp)
+                {
+                    ans.push_back({x,tmp});
+                }
+            }
+        }
+        return ans;
+    }
+};
+//参考思路：https://leetcode.cn/problems/the-skyline-problem/solution/gong-shui-san-xie-sao-miao-xian-suan-fa-0z6xc/
+```
 ## [239.滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
-
-## [1.两数之和](https://leetcode.cn/problems/two-sum/solution/)
-
+```c++
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+	int n=nums.size();
+	deque<int> q;
+	for (int i = 0; i < k; i++)
+	{
+		while (!q.empty() && nums[i] >= nums[q.back()])
+			q.pop_back();
+		q.push_back(i);
+	}
+	vector<int> ans = { nums[q.front()] };
+	for (int i = k; i < n; ++i) {
+		while (!q.empty() && nums[i] >= nums[q.back()]) {
+			q.pop_back();
+		}
+		q.push_back(i);
+		while (q.front() <= i - k) {
+			q.pop_front();
+		}
+		ans.push_back(nums[q.front()]);
+	}
+	return ans;
+    }
+};
+```
+## [1.两数之和](https://leetcode.cn/problems/two-sum/)
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        std::unordered_map <int,int> map;
+        for(int i = 0; i < nums.size(); i++) {
+            auto iter = map.find(target - nums[i]);
+            if(iter != map.end()) {
+                return {iter->second, i};
+            }
+            map[nums[i]]=i;
+        }
+        return {};
+    }
+};
+```
 ## [128.最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
 
 ## [149.直线上最多的点数](https://leetcode.cn/problems/max-points-on-a-line/)
