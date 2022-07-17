@@ -4406,7 +4406,76 @@ public:
 ```
 ## [128.最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
 
+```c++
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> hash;
+        for(const int& num:nums) hash.insert(num);
+        int ans=0;
+        while(!hash.empty())
+        {
+            int cur=*(hash.begin());
+            hash.erase(cur);
+            int next=cur+1,pre=cur-1;
+            while(hash.count(next))
+            {
+                hash.erase(next++);
+            }
+            while(hash.count(pre))
+            {
+                hash.erase(pre--);
+            }
+            ans=max(ans,next-pre-1);
+        }
+        return ans;
+    }
+};
+```
+
+
+
 ## [149.直线上最多的点数](https://leetcode.cn/problems/max-points-on-a-line/)
+
+```c++
+class Solution {
+public:
+    int maxPoints(vector<vector<int>>& points) {
+        unordered_map<double,int> hash;
+        int max_count=0,same_y=1;
+        int n=points.size();
+        for(int i=0;i<n;i++)
+        {
+            same_y=1;
+            for(int j=i+1;j<n;j++)
+            {
+				//因为斜率dy!=0，所以需要单独提出
+                if(points[i][1]==points[j][1])
+				{
+					//表示与i点水平
+					++same_y;
+				}
+				else
+				{
+					double dx=points[i][0]-points[j][0];
+					double dy=points[i][1]-points[j][1];
+					++hash[dx/dy];				
+				}
+            }
+			max_count=max(max_count,same_y);
+			for(auto item:hash)
+			{
+                //item.second表示当前斜率下的除i点以外的点，所以计算数量时要+1
+				max_count=max(max_count,1+item.second);
+			}
+			hash.clear();
+        }
+		return max_count;
+    }
+};
+```
+
+
 
 ## [332.重新安排行程](https://leetcode.cn/problems/reconstruct-itinerary/)
 
