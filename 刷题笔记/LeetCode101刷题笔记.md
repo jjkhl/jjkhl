@@ -4478,11 +4478,77 @@ public:
 
 
 ## [332.重新安排行程](https://leetcode.cn/problems/reconstruct-itinerary/)
-
+```c++
+class Solution
+{
+private:
+    //unordered_map<出发机场, map<到达机场,航班次数>> targets;
+    unordered_map<string, map<string, int>> targets;
+    bool backtrack(int tickeNum,vector<string>& res)
+    {
+        if(res.size()>tickeNum)
+            return true;
+        for(pair<const string,int>& target:targets[res.back()])
+        {
+            //如果还没有飞过
+            if(target.second>0)
+            {
+                res.push_back(target.first);
+                target.second--;
+                if(backtrack(tickeNum,res)) return true;
+                res.pop_back();
+                target.second++;
+            }
+        }
+        return false;
+    }
+public:
+    vector<string> findItinerary(vector<vector<string>> &tickets)
+    {
+        vector<string> res;
+        for(const vector<string>& t:tickets)
+            targets[t[0]][t[1]]++;//记录映射关系
+        res.push_back("JFK");
+        backtrack(tickets.size(),res);
+        return res;
+    }
+};
+```
 ## [303.区域和检索-数组不变](https://leetcode.cn/problems/range-sum-query-immutable/)
-
+```c++
+class NumArray {
+    vector<int> psum;
+public:
+    NumArray(vector<int>& nums):psum(nums.size()+1,0) {
+        partial_sum(nums.begin(),nums.end(),psum.begin()+1);
+    }
+    
+    int sumRange(int left, int right) {
+        return psum[right+1]-psum[left];
+    }
+};
+```
 ## [304.二维区域和检索-矩阵不变](https://leetcode.cn/problems/range-sum-query-2d-immutable/)
-
+```c++
+class NumMatrix {
+    vector<vector<int>> integral;
+public:
+    NumMatrix(vector<vector<int>>& matrix) {
+        int m=matrix.size(),n=m>0?matrix[0].size() : 0;
+        integral=vector<vector<int>>(m+1,vector<int>(n+1,0));
+        for(int i=1;i<=m;i++)
+        {
+            for(int j=1;j<=n;j++)
+            {
+                integral[i][j]=matrix[i-1][j-1]+integral[i-1][j]+integral[i][j-1]-integral[i-1][j-1];            
+            }
+        }
+    }
+    int sumRegion(int row1, int col1, int row2, int col2) {
+        return integral[row2+1][col2+1] - integral[row2+1][col1]-integral[row1][col2+1] + integral[row1][col1];
+    }
+};
+```
 ## [560.和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
 
 ## [566.重塑矩阵](https://leetcode.cn/problems/reshape-the-matrix/)
