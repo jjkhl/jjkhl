@@ -4550,9 +4550,48 @@ public:
 };
 ```
 ## [560.和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
-
+```c++
+class Solution {
+public:
+    int subarraySum(vector<int>& nums, int k) {
+        int count=0,psum=0;
+        unordered_map<int,int> hashmap;
+        hashmap[0]=1;//表示psum==k，此时count+1
+        for(const int& i:nums)
+        {
+            psum+=i;
+            count+=hashmap[psum-k];
+            ++hashmap[psum];
+        }
+        return count;
+    }
+};
+```
 ## [566.重塑矩阵](https://leetcode.cn/problems/reshape-the-matrix/)
-
+```c++
+class Solution {
+public:
+    vector<vector<int>> matrixReshape(vector<vector<int>>& mat, int r, int c) {
+        int m=mat.size(),n=mat[0].size();
+        if(m*n!=r*c) return mat;
+        vector<vector<int>> res(r,vector<int>(c,0));
+        int x=0,y=0;
+        for(int i=0;i<r;i++)
+        {
+            for(int j=0;j<c;j++)
+            {
+                res[i][j]=mat[x][y];
+                if(y++==n-1)
+                {
+                    x++;
+                    y=0;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
 ## [225.用队列实现栈](https://leetcode.cn/problems/implement-stack-using-queues/)
 
 ## [503.下一个更大元素II](https://leetcode.cn/problems/next-greater-element-ii/)
