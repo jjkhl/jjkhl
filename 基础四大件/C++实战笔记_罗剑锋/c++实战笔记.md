@@ -486,7 +486,7 @@ my_make_unique(Arg&&... args)//可变参数模板的入口参数
 |reset(T* ptr)|销毁由该智能指针当前管理的任何可能存在的对象。该智能指针继续控制由裸指针 ptr 指向的对象|
 |get()|返回该智能指针管理的由裸指针指向的对象。如果某个指针需要传递给函数，但是 该函数并不知道该如何操作智能指针，则 get() 函数非常有用|
 |release|放弃对它所指对象的控制权，并返回保存的指针，将指针置为空，不会释放内存|
-* release会返回直线的指针，但不会释放内存；reset会释放内存
+* release会返回之前的指针，但不会释放内存；reset会释放内存
 ```c++
 // 将所有权从p1转移给p2
 unique_ptr<string> p1(new string("abc"));
@@ -501,23 +501,23 @@ p2.reset(p3.release());
 ```
 * 值传递需要使用move()，引用传递不需要
 ```c++
-    //函数使用通过值传递的形参
-    void fun1(unique_ptr<int> uptrParam)
-    {
-        cout << *uptrParam << endl;
-    }
-    //函数使用通过引用传递的值
-    void fun2(unique_ptr<int>& up)
-    {
-        cout<<*up<<endl;
-    }
-    int main()
-    {
-        unique_ptr<int> uptr(new int);
-        *uptr = 10;
-        fun1(move (uptr)); // 在调用中使用 move
-        fun2(uptr);
-    }
+//函数使用通过值传递的形参
+void fun1(unique_ptr<int> uptrParam)
+{
+    cout << *uptrParam << endl;
+}
+//函数使用通过引用传递的值
+void fun2(unique_ptr<int>& up)
+{
+    cout<<*up<<endl;
+}
+int main()
+{
+    unique_ptr<int> uptr(new int);
+    *uptr = 10;
+    fun1(move (uptr)); // 在调用中使用 move
+    fun2(uptr);
+}
 ```
 ## 共享指针(shared_ptr)
 头文件：`memory`
