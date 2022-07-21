@@ -4593,9 +4593,65 @@ public:
 };
 ```
 ## [225.用队列实现栈](https://leetcode.cn/problems/implement-stack-using-queues/)
+```c++
+class MyStack {
+    queue<int> que1,que2;
+public:
+    MyStack() {
 
+    }
+    
+    void push(int x) {
+        que1.push(x);
+    }
+    
+    int pop() {
+        int size=que1.size();
+        --size;
+        while(size--)//将que1导入que2，但需要留下最后一个元素
+        {
+            que2.push(que1.front());
+            que1.pop();
+        }
+
+        int res=que1.front();
+        que1.pop();
+        que1=que2;
+        while(!que2.empty())
+            que2.pop();
+        return res;
+    }
+    
+    int top() {
+        return que1.back();
+    }
+    
+    bool empty() {
+        return que1.empty();
+    }
+};
+```
 ## [503.下一个更大元素II](https://leetcode.cn/problems/next-greater-element-ii/)
-
+```c++
+class Solution {
+public:
+    vector<int> nextGreaterElements(vector<int>& nums) {
+        int n=nums.size();
+		stack<int> st;
+		vector<int> res(n,-1);
+		for(int i=0;i<2*n;i++)
+		{
+			while(!st.empty()&&nums[i%n]>nums[st.top()])
+			{
+				res[st.top()]=nums[i%n];
+				st.pop();
+			}
+			st.push(i%n);
+		}
+		return res;
+    }
+};
+```
 ## [217.存在重复元素](https://leetcode.cn/problems/contains-duplicate/)
 
 ## [697.数组的度](https://leetcode.cn/problems/degree-of-an-array/)
