@@ -4653,9 +4653,49 @@ public:
 };
 ```
 ## [217.存在重复元素](https://leetcode.cn/problems/contains-duplicate/)
-
+```c++
+class Solution {
+public:
+    bool containsDuplicate(vector<int>& nums) {
+        unordered_map<int,int> hash;
+        for(auto &num:nums)
+        {
+            hash[num]++;
+            if(hash[num]>=2) return true;
+        }
+        return false;
+    }
+};
+```
 ## [697.数组的度](https://leetcode.cn/problems/degree-of-an-array/)
-
+```c++
+class Solution {
+public:
+    int findShortestSubArray(vector<int>& nums) {
+        /*
+        left：保存每个元素在数组中第一次出现的位置
+        right：保存每个元素在数组中最后一次出现的位置
+        counter：保存每个元素出现的位置次数
+        */
+        unordered_map<int,int> left,right,counter;
+        int degree=0;
+        for(int i=0;i<nums.size();i++)
+        {
+            if(!left.count(nums[i])) left[nums[i]]=i;
+            right[nums[i]]=i;
+            counter[nums[i]]++;
+            degree=max(degree,counter[nums[i]]);
+        }
+        int res=nums.size();
+        for(auto& kv:counter)
+        {
+            if(kv.second==degree)
+                res=min(res,right[kv.first]-left[kv.first]+1);
+        }
+        return res;
+    }
+};
+```
 ## [594.最长和谐子序列](https://leetcode.cn/problems/longest-harmonious-subsequence/)
 
 ## [287.寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
