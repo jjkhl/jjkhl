@@ -4697,11 +4697,113 @@ public:
 };
 ```
 ## [594.最长和谐子序列](https://leetcode.cn/problems/longest-harmonious-subsequence/)
-
+```c++
+class Solution {
+public:
+    int findLHS(vector<int>& nums) {
+        unordered_map<int,int> hash;
+        for(const auto &num:nums)
+            hash[num]++;
+        int res=0;
+        for(auto &tmp:hash)
+        {
+            if(hash.count(tmp.first+1))
+            {
+                res=max(res,tmp.second+hash[tmp.first+1]);
+            }
+        }
+        return res;
+    }
+};
+```
 ## [287.寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
-
+```c++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int n=nums.size();
+        int slow=0,fast=0;
+        while(1)
+        {
+            fast=nums[nums[fast]];
+            slow=nums[slow];
+            if(slow==fast)
+            {
+                fast=0;
+                while(nums[slow]!=nums[fast])
+                {
+                    fast=nums[fast];
+                    slow=nums[slow];
+                }
+                return nums[slow];
+            }
+        }
+        return -1;
+    }
+};
+```
+## [263.丑数](https://leetcode.cn/problems/ugly-number/)
+```c++
+class Solution {
+public:
+    bool isUgly(int num) {
+        if(num<1) return false;
+        while(num%2==0) num>>=1;
+        while(num%3==0) num/=3;
+        while(num%5==0) num/=5;
+        return 1==num;
+    }
+};
+```
 ## [313.超级丑数](https://leetcode.cn/problems/super-ugly-number/)
+```c++
+//动态规划
+//链接：https://leetcode.cn/problems/super-ugly-number/solution/313-chao-ji-chou-shu-dong-tai-gui-hua-by-1cfu/
+class Solution {
+public:
+    typedef long long ll;
+    int nthSuperUglyNumber(int n, vector<int>& primes) {
+        vector<ll> dp(n + 1);  //用来存储丑数序列
+        dp[1] = 1;          //第一个丑数是1
+        int m = primes.size();
+        vector<ll> nums(m);     //记录新丑数序列
+        vector<ll> pointers(m, 1); //记录质数该与哪一位丑数做乘积
+        for (int i = 2; i <= n; i++) {
+            ll minn = INT_MAX;
+            for (int j = 0; j < m; j++) {
+                nums[j] = dp[pointers[j]] * primes[j]; //旧丑数 * 质数序列 = 新丑数序列
+                minn = std::min(minn, nums[j]);  //寻找所有新丑数中最小的丑数
+            }
+            dp[i] = minn;
+            for (int j = 0; j < m; j++)
+                if (minn == nums[j])        //如果此位置已经诞生过最小丑数
+                    pointers[j]++;          //让此位置所取旧丑数向后推一位
+        }
+        return dp[n];
+    }
+};
 
+//最小堆求法
+class Solution {
+public:
+	typedef long long ll;
+    int nthSuperUglyNumber(int n, vector<int>& primes) {
+        priority_queue<ll,vector<ll>,greater<ll>> que;
+		ll res=1;
+		for(int i=1;i<n;i++)
+		{
+			for(int prime:primes)
+			{
+				que.push(prime*res);
+			}
+			res=que.top();
+			que.pop();
+			while(!que.empty()&&res==que.top()) que.pop();
+		}
+		return (int)res;
+    }
+};
+```
 ## [870.优势洗牌](https://leetcode.cn/problems/advantage-shuffle/)
 
 ## [307.区域和检索-数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/)
