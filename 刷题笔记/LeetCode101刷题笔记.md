@@ -4805,5 +4805,101 @@ public:
 };
 ```
 ## [870.优势洗牌](https://leetcode.cn/problems/advantage-shuffle/)
+```c++
+class Solution {
+	typedef pair<int,int> pii;
+	struct cmp
+	{
+		bool operator()(pii& a, pii& b)
+		{
+			return a.second<b.second;
+		}
+	};
+	
+public:
+    vector<int> advantageCount(vector<int>& nums1, vector<int>& nums2) {
+        int n=nums1.size();
+        priority_queue<pii,vector<pii>,cmp> que;
+        for(int i=0;i<n;i++)
+        {
+            // que.push(make_pair(i,nums2[i]));
+			que.push({i,nums2[i]});
+        }
+		sort(nums1.begin(),nums1.end());
+		vector<int> res(n,-1);
+		int left=0,right=n-1;
+		while(!que.empty())
+		{
+			int index=que.top().first;
+			int maxVal=que.top().second;
+			que.pop();
+			//如果nums1最大值大于nums2[index]
+			if(nums1[right]>maxVal)
+				res[index]=nums1[right--];
+			else
+				res[index]=nums1[left++];
+		}
+		return res;
+        
+    }
+};
+```
+<!-- ## [307.区域和检索-数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/) 
+线段树的方式，待做
+-->
 
-## [307.区域和检索-数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/)
+# 第十二章 字符串
+## [242.有效的字母异位词](https://leetcode.cn/problems/valid-anagram/)
+```c++
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+		int hash[26]={0};
+		for(const char& ch:s)
+			hash[ch]++;
+		for(const char& ch:t)
+			hash[ch]--;
+		for(int i=0;i<26;i++)
+		{
+			if(hash[i]!=0) return false;
+		}
+		return true;
+    }
+};
+```
+
+## [205.同构字符串](https://leetcode.cn/problems/isomorphic-strings/)
+```c++
+class Solution {
+public:
+    bool isIsomorphic(string s, string t) {
+        int s_firstIndex[256]={0};
+        int t_firstIndex[256]={0};
+        for(int i=0;i<s.size();i++)
+        {
+            if(s_firstIndex[s[i]]!=t_firstIndex[t[i]]) return false;
+            s_firstIndex[s[i]]=t_firstIndex[t[i]]=i+1;
+        }
+        return true;
+    }
+};
+```
+
+## [647.回文子串](https://leetcode.cn/problems/isomorphic-strings/)
+
+## [696.计数二进制子串](https://leetcode.cn/problems/count-binary-substrings/)
+
+## [227.基本计算器II](https://leetcode.cn/problems/basic-calculator-ii/)
+
+## [28.实现strStr()](https://leetcode.cn/problems/implement-strstr/)
+
+## [409.最长回文串](https://leetcode.cn/problems/longest-palindrome/)
+
+## [3.无重复字符的最长字串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+
+<!-- ## [772.基本计算器III](https://leetcode.cn/problems/
+basic-calculator-iii/) 
+会员题目
+-->
+
+## [5.最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
