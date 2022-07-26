@@ -4885,9 +4885,65 @@ public:
 };
 ```
 
-## [647.回文子串](https://leetcode.cn/problems/isomorphic-strings/)
+## [647.回文子串](https://leetcode.cn/problems/palindromic-substrings/)
+```c++
+class Solution {
+public:
+	int extend(const string& s, int i,int j,int n)
+	{
+		int res=0;
+		while(i>=0&&j<n&&s[i]==s[j])
+		{
+			i--,j++;
+			res++;
+		}		
+		return res;
+	}
+    int countSubstrings(string s) {
+		int res=0;
+		int n=s.size();
+		for(int i=0;i<n;i++)
+		{
+			res+=extend(s,i,i,n);
+			res+=extend(s,i,i+1,n);
+		}
+		return res;
+    }
+};
+```
 
 ## [696.计数二进制子串](https://leetcode.cn/problems/count-binary-substrings/)
+```c++
+class Solution {
+public:
+    int countBinarySubstrings(string s) {
+        /*
+        pre：记录之前连续0或1
+        cur：记录现在的连续1或0
+
+        */
+        int pre=0,cur=1,count=0;
+        int n=s.size();
+        for(int i=1;i<n;i++)
+        {
+            if(s[i]==s[i-1]) ++cur;
+            else
+            {
+                pre=cur;
+                cur=1;
+            }
+            //当pre>=cur，表示一定有01的组合出现，所以count++
+            //而当继续pre>=cur，表示一定有0011组合出现，所以count++
+            //相当于0011表示2个具有相同数量的连续1和0
+            if(pre>=cur)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+};
+```
 
 ## [227.基本计算器II](https://leetcode.cn/problems/basic-calculator-ii/)
 
