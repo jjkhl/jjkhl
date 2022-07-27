@@ -4946,9 +4946,110 @@ public:
 ```
 
 ## [227.基本计算器II](https://leetcode.cn/problems/basic-calculator-ii/)
+```c++
+//无栈表示
+class Solution {
+public:
+    int i=0;
+    long toNum(const string& s)
+    {
+        long num=0;
+        while(s[i]!=' '&&isdigit(s[i]))
+            num=num*10+(s[i++]-'0');
+        return num;
+    }
+    int calculate(string s) {
+        char op='+';
+        long left=0,right=0;
+        int n=s.size();
+        while(i<n)
+        {
+            if(s[i]!=' ')
+            {
+                long num=toNum(s);
+                switch(op)
+                {
+                    //left存放乘除号左侧所有数之和，right存放第一个乘数或除数
+                    case '+': left+=right;right=num;break;
+                    case '-': left+=right;right=-num;break;
+                    case '*': right*=num;break;
+                    case '/': right/=num;break;
+                }  
+                //记录下一个数的运算方式  
+                op=s[i];
+            }
+            ++i;
+        }
+        return left+right;
+    }
+};
+//stack表示
+class Solution {
+public:
+    int calculate(string s) {
+        int res = 0, d = 0;
+        char sign = '+';
+        stack<int> nums;
+        for (int i = 0; i < s.size(); ++i) {
+            if (s[i] >= '0') {//加减乘除和空格ASCII码都小于'0'
+                d = d * 10 - '0' + s[i];//进位(先减法)
+            }
+            if ((s[i] < '0' && s[i] != ' ') || i == s.size() - 1) {
+                if (sign == '+') {
+                    nums.push(d);
+                } else if (sign == '-') {
+                    nums.push(-d);
+                } else if (sign == '*' || sign == '/') {
+                    int tmp = sign == '*' ? nums.top() * d : nums.top() / d;
+                    nums.pop();
+                    nums.push(tmp);
+                }
+                sign = s[i]; //保存当前符号
+                d = 0;
+            }
+        }
+        for (; !nums.empty(); nums.pop()) {
+            res += nums.top();
+        }
+        return res;
+    }
+};
 
+```
 ## [28.实现strStr()](https://leetcode.cn/problems/implement-strstr/)
-
+```c++
+//kmp算法
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int k=-1,m=haystack.size(),n=needle.size();
+        if(n==0) return 0;
+        vector<int> next(n,-1);//-1表示不存在相同的最大前缀和后缀
+        calNext(needle,next);//计算next数组
+        for(int i=0;i<m;++i)
+        {
+            while(k>-1&&needle[k+1]!=haystack[i])
+                k=next[k];//有部分匹配，往前回溯
+            if(needle[k+1]==haystack[i])
+                ++k;
+            if(k==n-1)
+                return i-n+1;//说明k移动到needle的最末端，返回相应的位置
+        }
+        return -1;
+    }
+    void calNext(const string& needle,vector<int>& next)
+    {
+        for(int j=1,p=-1;j<needle.size();++j)
+        {
+            while(p>-1&&needle[p+1]!=needle[j])
+                p=next[p];//如果下一位不同，往前回溯
+            if(needle[p+1]==needle[j])
+                ++p;//如果下一位相同，更新相同的最大前缀和最大后最
+            next[j]=p;
+        }
+    }
+};
+```
 ## [409.最长回文串](https://leetcode.cn/problems/longest-palindrome/)
 
 ## [3.无重复字符的最长字串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
