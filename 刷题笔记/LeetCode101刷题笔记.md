@@ -5051,12 +5051,87 @@ public:
 };
 ```
 ## [409.最长回文串](https://leetcode.cn/problems/longest-palindrome/)
-
+```c++
+class Solution {
+public:
+    int longestPalindrome(string s) {
+        int hash[60]={0};
+        for(auto ch:s)
+            hash[ch-'A']++;
+        int res=0;
+        int odd=0;
+        for(int i=0;i<60;i++)
+        {
+            int tmp=hash[i];
+            res+=tmp%2==0?tmp:(odd=1,tmp-1);
+        }
+        return res+odd;
+    }
+};
+```
 ## [3.无重复字符的最长字串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
-
+```c++
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        int n=s.size();
+        int left=0,right=0;
+        int res=0,len=0;
+        while(right<n)
+        {
+            char tmp=s[right];
+            for(int i=left;i<right;i++)
+            {
+                if(s[i]==tmp)
+                {
+                    left=i+1;
+                    len=right-left;
+                    break;
+                }
+            }
+            ++right;
+            ++len;
+            res=max(res,len);
+        }
+        return res;
+    }
+};
+```
 <!-- ## [772.基本计算器III](https://leetcode.cn/problems/
 basic-calculator-iii/) 
 会员题目
 -->
 
 ## [5.最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+```c++
+class Solution {
+public:
+    int begin=0;
+    int end=0;
+    int maxLen=0;
+    string longestPalindrome(string s) {
+        int res=0;
+        int n=s.size();
+        for(int i=0;i<n;i++)
+        {
+            extend(s,i,i,n);
+            extend(s,i,i+1,n);
+        }
+        return s.substr(begin,maxLen);
+    }
+    void extend(const string& s,int left,int right,int n)
+    {
+        while(left>=0&&right<n&&s[left]==s[right])
+        {
+            if(right-left+1>maxLen)
+            {
+                begin=left;
+                end=right;
+                maxLen=end-begin+1;
+            }
+            --left;
+            ++right;
+        }
+    }
+};
+```
