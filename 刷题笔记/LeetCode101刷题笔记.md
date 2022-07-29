@@ -5135,3 +5135,78 @@ public:
     }
 };
 ```
+
+# 第十三章 链表
+链表结构
+```c++
+struct ListNode {
+   int val;
+   ListNode *next;
+   ListNode(int x) : val(x), next(nullptr) {}
+};
+```
+## [206.反转链表](https://leetcode.cn/problems/reverse-linked-list/)
+```c++
+//双指针
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode *pre=NULL,*cur=head;
+        while(cur)
+        {
+            ListNode* node=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=node;
+        }
+        return pre;
+    }
+};
+//递归法
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head,ListNode* pre=NULL) {
+        if(head==NULL)
+            return pre;
+        ListNode* node=head->next;
+        head->next=pre;
+        return reverseList(node,head);
+    }
+};
+```
+## [21.合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/)
+```c++
+//递归
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        if(!list1) return list2;
+        if(!list2) return list1;
+        if(list1->val>list2->val)
+        {
+            list2->next=mergeTwoLists(list1,list2->next);
+            return list2;
+        }
+        else
+        {
+            list1->next=mergeTwoLists(list1->next,list2);
+            return list1;
+        }
+    }
+};
+```
+
+## [24.两两交换链表中的节点](https://leetcode.cn/problems/swap-nodes-in-pairs/)
+
+## [160.相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/)
+
+## [234.回文链表](https://leetcode.cn/problems/palindrome-linked-list/)
+
+## [83.删除排序链表中的重复元素](https://leetcode.cn/problems/remove-duplicates-from-sorted-list/)
+
+## [328.奇偶链表](https://leetcode.cn/problems/odd-even-linked-list/)
+
+## [19.删除链表的倒数第N个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+## [148.排序链表](https://leetcode.cn/problems/sort-list/)
+
