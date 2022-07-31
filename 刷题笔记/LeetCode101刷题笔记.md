@@ -5197,13 +5197,113 @@ public:
 ```
 
 ## [24.两两交换链表中的节点](https://leetcode.cn/problems/swap-nodes-in-pairs/)
+```c++
+//递归法
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        if(!head||!head->next) return head;
+        ListNode* nextone=head->next;
+        head->next=swapPairs(nextone->next);
+        nextone->next=head;
+        return nextone;
+    }
+};
+//指针法
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        ListNode *dummy=new ListNode(0);
+        dummy->next=head;
+        ListNode *cur=dummy;
+        while(cur->next&&cur->next->next)
+        {
+            ListNode *tmp=cur->next;
+            ListNode *tmp1=cur->next->next->next;
+
+            cur->next=cur->next->next;
+            cur->next->next=tmp;
+            cur->next->next->next=tmp1;
+
+            cur=cur->next->next;
+        }
+        return dummy->next;
+    }
+};
+```
 
 ## [160.相交链表](https://leetcode.cn/problems/intersection-of-two-linked-lists/)
+```c++
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        ListNode* node1=headA;
+        ListNode* node2=headB;
+        while(node1!=node2)
+        {
+            node1=node1?node1->next:headB;
+            node2=node2?node2->next:headA;
+        }
+        return node1;
+    }
+};
+```
 
 ## [234.回文链表](https://leetcode.cn/problems/palindrome-linked-list/)
+```c++
+class Solution {
+public:
+    bool isPalindrome(ListNode* head) {
+        ListNode* slow=head;
+        ListNode* fast=head;
+        ListNode* pre=head;//记录分割点前一个节点
+        while(fast&&fast->next)
+        {
+            pre=slow;
+            fast=fast->next->next;
+            slow=slow->next;
+        }
+        pre->next=NULL;
 
+        ListNode *cur1=head;
+        ListNode *cur2=reverseList(slow);
+
+        while(cur1)
+        {
+            if(cur1->val!=cur2->val) return false;
+            cur1=cur1->next;
+            cur2=cur2->next;
+        }
+        return true;
+    }
+    ListNode *reverseList(ListNode *head)
+    {
+        ListNode *pre=NULL;
+        ListNode *cur=head;
+        while(cur)
+        {
+            ListNode *temp=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=temp;
+        }
+        return pre;
+    }
+};
+```
 ## [83.删除排序链表中的重复元素](https://leetcode.cn/problems/remove-duplicates-from-sorted-list/)
-
+```c++
+//递归：https://lyl0724.github.io/2020/01/25/1/
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if(!head||!head->next) return head;
+        head->next=deleteDuplicates(head->next);
+        if(head->val==head->next->val) head=head->next;
+        return head;
+    }
+};
+```
 ## [328.奇偶链表](https://leetcode.cn/problems/odd-even-linked-list/)
 
 ## [19.删除链表的倒数第N个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
