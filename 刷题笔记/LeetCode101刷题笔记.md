@@ -5144,6 +5144,8 @@ struct ListNode {
    ListNode *next;
    ListNode(int x) : val(x), next(nullptr) {}
 };
+
+//创建链表
 ```
 ## [206.反转链表](https://leetcode.cn/problems/reverse-linked-list/)
 ```c++
@@ -5305,8 +5307,130 @@ public:
 };
 ```
 ## [328.奇偶链表](https://leetcode.cn/problems/odd-even-linked-list/)
-
+```c++
+class Solution {
+public:
+    ListNode* oddEvenList(ListNode* head) {
+        if(!head||!head->next||!head->next->next) return head;
+        ListNode *odd=head;
+        ListNode *even=head->next;
+        ListNode *dummyEven=even;
+        ListNode* cur=head->next->next;
+        int index=1;
+        while(cur)
+        {
+            if(index&1)
+            {
+                odd->next=cur;
+                odd=odd->next;
+            }
+            else
+            {
+                even->next=cur;
+                even=even->next;
+            }
+            index++;
+            cur=cur->next;
+        }
+        even->next=NULL;
+        odd->next=dummyEven;
+        return head;
+    }
+};
+```
 ## [19.删除链表的倒数第N个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
-
+```c++
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode *node1=head;
+        ListNode *node2=head;
+        ListNode *pre=NULL;
+        while(n--)
+        {
+            node2=node2->next;
+        }
+        while(node2)
+        {
+            pre=node1;
+            node1=node1->next;
+            node2=node2->next;
+        }
+        if(pre) pre->next=node1->next;
+        else head=head->next;
+        return head;
+    }
+};
+```
 ## [148.排序链表](https://leetcode.cn/problems/sort-list/)
-
+```c++
+//参考网址：https://leetcode.cn/problems/sort-list/solution/148-pai-xu-lian-biao-bottom-to-up-o1-kong-jian-by-/
+class Solution {
+public:
+    ListNode* sortList(ListNode* head) {
+        ListNode *dummy=new ListNode(0);
+        dummy->next=head;
+        ListNode *cur=head;
+        int lenList=0;
+        while(cur)
+        {
+            ++lenList;
+            cur=cur->next;
+        }
+        for(int i=1;i<lenList;i<<=1)
+        {
+            cur=dummy->next;
+            ListNode *nextNode=dummy;
+            while(cur)
+            {
+                //left表示第一块需要排序的链表
+                ListNode *left=cur;
+                //right表示第二块需要排序的链表
+                ListNode *right=cut(left,i);
+                //cur表示下一个需要排序的起始节点
+                cur=cut(right,i);
+                //left，right为分割出来的节点
+                nextNode->next=merge(left,right);
+                while(nextNode->next)
+                {
+                    nextNode=nextNode->next;
+                }
+            }
+        }
+        return dummy->next;
+    }
+    //返回head后第n个节点，同时删除原head的第n个位置后的链表。
+    ListNode* cut(ListNode* head,int n)
+    {
+        ListNode *p=head;
+        while(--n&&p) p=p->next;
+        if(!p) return NULL;
+        ListNode *node=p->next;
+        p->next=NULL;
+        return node;
+    }
+    //合并链表
+    ListNode *merge(ListNode *l1,ListNode *l2)
+    {
+        ListNode *dummy=new ListNode(0);
+        ListNode *cur=dummy;
+        while(l1&&l2)
+        {
+            if(l1->val<l2->val)
+            {
+                cur->next=l1;
+                cur=cur->next;
+                l1=l1->next;
+            }
+            else
+            {
+                cur->next=l2;
+                cur=cur->next;
+                l2=l2->next;
+            }
+        }
+        cur->next=(l1)?l1:l2;
+        return dummy->next;
+    }
+};
+```
