@@ -5434,3 +5434,151 @@ public:
     }
 };
 ```
+
+# 树
+```c++
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+};
+
+TreeNode *createTree(vector<int> data, int i)
+{
+    if(data.empty()) return NULL;
+    TreeNode *root=new TreeNode(data[i++]);
+    queue<TreeNode*> que;
+    que.push(root);
+    int leftNode,rightNode;
+    int n=data.size();
+    while(i<n){
+        TreeNode *node=que.front();
+        que.pop();
+        if(!node) continue;
+        if(i<n) leftNode=data[i++];
+        else if(i>=n) break;
+        if(leftNode==INT_MAX) node->left=NULL;
+        else node->left=new TreeNode(leftNode);
+        que.push(node->left);
+        if(i<n) rightNode=data[i++];
+        else if(i>=n) break;
+        if(rightNode==INT_MAX) node->right=NULL;
+        else node->right=new TreeNode(rightNode);
+        que.push(node->right);
+    }
+    return root;
+}
+```
+## [104.二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+```c++
+//递归法
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(!root) return 0;
+        return 1+max(maxDepth(root->left),maxDepth(root->right));
+    }
+};
+//层序遍历
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        int depth=0;
+        queue<TreeNode*> que;
+        if(root) que.push(root);
+        else return 0;
+        while(!que.empty())
+        {
+            int n=que.size();
+            for(int i=0;i<n;i++)
+            {
+                TreeNode *node=que.front();
+                que.pop();
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right);
+            }
+            ++depth;
+        }
+        return depth;
+    }
+};
+```
+
+## [110.平衡二叉树](https://leetcode.cn/problems/balanced-binary-tree/)
+```c++
+class Solution {
+public:
+    bool isBalanced(TreeNode* root) {
+        return dfs(root)!=-1;
+    }
+    int dfs(TreeNode *root)
+    {
+        if(!root) return 0;
+        int left=dfs(root->left);
+        int right=dfs(root->right);
+        if(left==-1||right==-1||abs(right-left)>1)
+        {
+            return -1;
+        }
+        return 1+max(left,right);
+    }
+};
+```
+
+## [543.]()
+
+## [437.]()
+
+## [101.]()
+
+## [1110.]()
+
+## [637.]()
+
+## [105.]()
+
+## [144.]()
+
+## [99.]()
+
+## [669.]()
+
+## [208.]()
+
+## [226.]()
+
+## [617.]()
+
+## [572.]()
+
+## [404.]()
+
+## [513.]()
+
+## [538.]()
+
+## [235.]()
+
+## [104.]()
+
+## [530.]()
+
+## [889.]()
+
+## [106.]()
+
+## [94.]()
+
+## [145.]()
+
+## [236.]()
+
+## [109.]()
+
+## [897.]()
+
+## [653.]()
+
+## [450.]()
+
