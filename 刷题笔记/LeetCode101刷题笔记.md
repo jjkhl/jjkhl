@@ -5526,10 +5526,54 @@ public:
 };
 ```
 
-## [543.]()
-
-## [437.]()
-
+## [543.二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/)
+```c++
+class Solution {
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        int diameter=0;
+        helper(root,diameter);
+        return diameter;
+    }
+    int helper(TreeNode *node,int &diameter)
+    {
+        if(!node) return 0;
+        int left=helper(node->left,diameter);
+        int right=helper(node->right,diameter);
+        diameter=max(left+right,diameter);
+        return max(left,right)+1;
+    }
+};
+```
+## [437.路径总和 III](https://leetcode.cn/problems/path-sum-iii/)
+```c++
+class Solution
+{
+public:
+    int target = 0;
+    int ans = 0;
+    void dfs1(TreeNode *root)
+    {
+        if (root == NULL)
+            return;
+        dfs2(root,root->val);
+        dfs1(root->left);
+        dfs1(root->right);
+    }
+    void dfs2(TreeNode *root, long long val)
+    {
+        if(target==val) ans++;
+        if(root->left) dfs2(root->left,val+root->left->val);
+        if(root->right) dfs2(root->right,val+root->right->val);
+    }
+    int pathSum(TreeNode *root, int targetSum)
+    {
+        target = targetSum;
+        dfs1(root);
+        return ans;
+    }
+};
+```
 ## [101.]()
 
 ## [1110.]()
