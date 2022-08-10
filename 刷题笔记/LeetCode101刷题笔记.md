@@ -5574,11 +5574,107 @@ public:
     }
 };
 ```
-## [101.]()
+## [101对称二叉树.](https://leetcode.cn/problems/symmetric-tree/)
+```c++
+//递归
+class Solution {
+public:
+    bool helper(TreeNode *ld,TreeNode *rd)
+    {
+        if(!ld&&!rd) return true;
+        if(!ld||!rd||ld->val!=rd->val) return false;
+        bool out=helper(ld->left,rd->right);
+        bool in=helper(ld->right,rd->left);
+        return out&&in;
+    }
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return false;
+        return helper(root->left,root->right);
+    }
+};
+//迭代
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return false;
+        queue<TreeNode*> que;
+        que.push(root->left);
+        que.push(root->right);
+        while(!que.empty())
+        {
+            TreeNode *lnode=que.front();
+            que.pop();
+            TreeNode *rnode=que.front();
+            que.pop();
+            if(!lnode&&!rnode) continue;
+            if(!lnode||!rnode||lnode->val!=rnode->val) return false;
+            que.push(lnode->left);
+            que.push(rnode->right);
+            que.push(lnode->right);
+            que.push(rnode->left);
+        }
+        return true;
+    }
+};
+```
 
-## [1110.]()
+## [1110.删点成林](https://leetcode.cn/problems/delete-nodes-and-return-forest/)
+```c++
+//https://leetcode.cn/problems/delete-nodes-and-return-forest/solution/shi-yong-di-gui-jie-ti-by-reconcile-c2uh/
+class Solution {
+public:
+    vector<TreeNode*> delNodes(TreeNode* root, vector<int>& to_delete) {
+        vector<TreeNode*> forest;
+        unordered_set<int> dict(to_delete.begin(),to_delete.end());
+        root=helper(root,dict,forest);
+        if(root) forest.push_back(root);
+        return forest;
+    }
+    TreeNode* helper(TreeNode* root,unordered_set<int>& dict,vector<TreeNode*>& forest)
+    {
+        if(!root) return root;
+        root->left=helper(root->left,dict,forest);
+        root->right=helper(root->right,dict,forest);
+        if(dict.count(root->val))
+        {
+            if(root->left)
+                forest.push_back(root->left);
+            if(root->right)
+                forest.push_back(root->right);
+            root=NULL;
+        }
+        return root;
+    }
+};
+```
 
-## [637.]()
+## [637.二叉树的层平均值](https://leetcode.cn/problems/average-of-levels-in-binary-tree/)
+```c++
+class Solution {
+public:
+    vector<double> averageOfLevels(TreeNode* root) {
+       vector<double> res;
+       queue<TreeNode*> que;
+       if(root!=NULL)
+       que.push(root);
+       while(!que.empty())
+       {
+           int n=que.size();
+           double sum=0;
+           for(int i=0;i<n;i++)
+           {
+               TreeNode *node=que.front();
+               que.pop();
+            sum+=node->val;
+            if(node->left) que.push(node->left);
+            if(node->right) que.push(node->right);
+           }
+           res.push_back(sum/n);
+       }
+    return res;
+    }
+};
+```
 
 ## [105.]()
 
