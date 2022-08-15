@@ -5676,15 +5676,276 @@ public:
 };
 ```
 
-## [105.]()
+## [105.从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+```c++
+//迭代法
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        if(inorder.size()==0) return NULL;
+        TreeNode* root=new TreeNode(preorder[0]);
+        if(preorder.size()==1) return root;
+        stack<TreeNode*> st;
+        st.push(root);
+        int index=0;
+        for(int i=1;i<preorder.size();++i)
+        {
+            TreeNode *node=st.top();
+            if(node->val!=inorder[index])
+            {
+                node->left=new TreeNode(preorder[i]);
+                st.push(node->left);
+            }
+            else
+            {
+                while(!st.empty()&&st.top()->val==inorder[index])
+                {
+                    node=st.top();
+                    st.pop();
+                    ++index;
+                }
+                node->right=new TreeNode(preorder[i]);
+                st.push(node->right);
+            }
+        }
+        return root;
+    }
+};
+//递归法
+class Solution {
+public:
+    TreeNode* help(vector<int>& preorder,int pBegin,int pEnd,vector<int>& inorder,int iBegin,int iEnd)
+    {
+        //左闭右闭
+        if(pBegin>pEnd||iBegin>iEnd) return NULL;
+        TreeNode *root=new TreeNode(preorder[pBegin]);
+        int rootVal=root->val;
+        int index=iBegin;
+        while(inorder[index]!=rootVal) ++index;
 
-## [144.]()
+        //分割中序区间,[ilBegin,ilEnd]
+        int ilBegin=iBegin;
+        int ilEnd=index-1;
+        //[irBegin,irEnd]
+        int irBegin=index+1;
+        int irEnd=iEnd;
+        //得到左子树和右子树节点个数
+        int leftSize=ilBegin-ilEnd+1;
+        int rightSize=irBegin-irEnd+1;
 
-## [99.]()
+        //分割前序区间,[plBegin,plEnd]
+        int plBegin=pBegin+1;
+        int plEnd=plBegin+leftSize-1;
+        //[prBegin,prEnd]
+        int prBegin=plEnd+1;
+        int prEnd=pEnd;
 
-## [669.]()
+        root->left=help(preorder,plBegin,plEnd,inorder,ilBegin,ilEnd);
+        root->right=help(preorder,prBegin,prEnd,inorder,irBegin,irEnd);
+        return root;
+    }
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        return help(preorder,0,preorder.size()-1,inorder,0,inorder.size()-1);
+    }
+};
+```
+## [144.二叉树的前序遍历](https://leetcode.cn/problems/binary-tree-preorder-traversal/)
+```c++
+//递归
+class Solution {
+public:
+    vector<int> res;
+    void preorder(TreeNode *root)
+    {
+        if(!root) return;
+        else res.push_back(root->val);
+        preorder(root->left);
+        preorder(root->right);
+    }
+    vector<int> preorderTraversal(TreeNode* root) {
+        preorder(root);
+        return res;
+    }
+};
+//迭代法
 
-## [208.]()
+```
+## [99.恢复二叉搜索树](https://leetcode.cn/problems/recover-binary-search-tree/)
+```c++
+//双指针法
+class Solution {
+public:
+    void recoverTree(TreeNode* root) {
+        TreeNode *m1=NULL,*m2=NULL,*pre=NULL;
+        inorder(root,m1,m2,pre);
+        if(m1&&m2)
+        {
+            int tmp=m1->val;
+            m1->val=m2->val;
+            m2->val=tmp;
+        }
+    }
+    void inorder(TreeNode* root,TreeNode*& m1,TreeNode*& m2,TreeNode*& pre)
+    {
+        if(!root) return;
+        if(root->left)
+            inorder(root->left,m1,m2,pre);
+        if(pre&&root->val<pre->val)
+        {
+            if(!m1)
+            {
+                m1=pre,m2=root;
+            }
+            else
+            {
+                m2=root;
+            }
+        }
+        pre=root;
+        if(root->right)
+            inorder(root->right,m1,m2,pre);
+    }
+};
+//数组法
+class Solution {
+public:
+    vector<TreeNode*> nums;
+    void dfs(TreeNode* root)
+    {
+        if(!root) return;
+        dfs(root->left);
+        nums.push_back(root);
+        dfs(root->right);
+    }
+    void recoverTree(TreeNode* root) {
+        dfs(root);
+        TreeNode* fir=NULL;
+        TreeNode* sec=NULL;
+        for(int i=0;i<nums.size()-1;++i)
+        {
+            if(nums[i]->val>nums[i+1]->val)
+            {
+                sec=nums[i+1];
+                if(!fir)
+                {
+                    fir=nums[i];
+                }
+            }
+        }
+        if(fir&&sec)
+        {
+            int tmp=fir->val;
+            fir->val=sec->val;
+            sec->val=tmp;
+        }
+    }
+};
+```
+
+## [669.修剪二叉树搜索树](https://leetcode.cn/problems/trim-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* trimBST(TreeNode* root, int low, int high) {
+        if(!root) return NULL;
+        //找到头结点，满足条件
+        while(root->val<low||root->val>high)
+        {
+            //头结点小于范围，往大于头结点位置找
+            if(root->val<low) root=root->right;
+            //头结点大于范围，往下雨头结点位置找
+            else root=root->left;
+            if(!root) break;
+        }
+        TreeNode *cur=root;
+        while(cur)
+        {
+            //如果有左结点且左结点不满足范围，则替换掉所有左结点为左结点的右结点
+            while(cur->left&&cur->left->val<low)
+                cur->left=cur->left->right;
+            //表示当前左结点满足条件，继续寻找不满足条件左结点
+            cur=cur->left;
+        }
+        cur=root;
+        while(cur)
+        {
+            //如果有右结点且右结点不满足范围，则替换掉所有右结点为右结点的左结点
+            while(cur->right&&cur->right->val>high)
+                cur->right=cur->right->left;
+            //表示当前右结点满足条件，继续寻找不满足条件右结点
+            cur=cur->right;
+        }
+        return root;
+    }
+};
+```
+
+## [208.实现前缀树](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+```c++
+class Trie {
+public:
+    Trie() {
+        isWord=false;
+        for(int i=0;i<26;i++)
+            son[i]=NULL;
+    }
+    ~Trie()
+    {
+        for(int i=0;i<26;i++)
+            if(son[i])
+                delete son[i];
+    }
+    void insert(string word) {
+        Trie* root=this;
+        for(const char& ch:word)
+        {
+            int index=ch-'a';
+            if(!root->son[index])
+                root->son[index]=new Trie;
+            root=root->son[index];
+        }
+        root->isWord=true;
+    }
+    
+    bool search(string word) {
+        Trie *root=this;
+        for(const char& ch:word)
+        {
+            int index=ch-'a';
+            if(!root->son[index])
+                return false;
+            root=root->son[index];
+        }
+        return root->isWord;
+    }
+    
+    bool startsWith(string prefix) {
+        Trie *root=this;
+        for(const char& ch:prefix)
+        {
+            int index=ch-'a';
+            if(!root->son[index])
+                return false;
+            root=root->son[index];
+        }
+        return true;
+    }
+private:
+    bool isWord;
+    Trie *son[26];
+};
+
+/**
+ * Your Trie object will be instantiated and called as such:
+ * Trie* obj = new Trie();
+ * obj->insert(word);
+ * bool param_2 = obj->search(word);
+ * bool param_3 = obj->startsWith(prefix);
+ */
+```
+
+
 
 ## [226.]()
 
