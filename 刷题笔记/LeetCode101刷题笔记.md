@@ -5935,25 +5935,98 @@ private:
     bool isWord;
     Trie *son[26];
 };
-
-/**
- * Your Trie object will be instantiated and called as such:
- * Trie* obj = new Trie();
- * obj->insert(word);
- * bool param_2 = obj->search(word);
- * bool param_3 = obj->startsWith(prefix);
- */
 ```
 
+## [226.翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/)
 
+```c++
+//递归法
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if(!root) return NULL;
+        swap(root->left,root->right);
+        invertTree(root->left);
+        invertTree(root->right);
+        return root;
+    }
+};
+```
 
-## [226.]()
+## [617.合并二叉树](https://leetcode.cn/problems/merge-two-binary-trees/)
+```c++
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* root1, TreeNode* root2) {
+    if (root1 == NULL) return root2;
+	if (root2 == NULL) return root1;
+	TreeNode* root = new TreeNode(root1->val+root2->val);
+	root->left = mergeTrees(root1->left, root2->left);
+	root->right = mergeTrees(root1->right, root2->right);
+	return root;
+    }
+};
+```
 
-## [617.]()
+## [572.另一颗树的子树](https://leetcode.cn/problems/subtree-of-another-tree/)
+```c++
+class Solution {
+public:
+bool compare(TreeNode* root,TreeNode* subRoot)
+{
+    if(root==NULL&&subRoot==NULL)
+        return true;
+    if(root==NULL||subRoot==NULL)
+        return false;
+    if(root->val!=subRoot->val)
+        return false;
+    return compare(root->left,subRoot->left)&&compare(root->right,subRoot->right);
+}
+    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+    if(!root)  return false;
+    if(!subRoot) return true;
+    return compare(root,subRoot)||isSubtree(root->left,subRoot)||isSubtree(root->right,subRoot);
+    }
+};
+```
 
-## [572.]()
-
-## [404.]()
+## [404.左叶子之和](https://leetcode.cn/problems/sum-of-left-leaves/)
+```c++
+class Solution {
+public:
+    int sumOfLeftLeaves(TreeNode* root) {
+        if(!root) return 0;
+        int midVal=0;
+        if(root->left&&!root->left->left&&!root->left->right)
+            midVal=root->left->val;
+        return midVal+sumOfLeftLeaves(root->left)+sumOfLeftLeaves(root->right);
+    }
+};
+//层序遍历
+class Solution {
+public:
+    int sumOfLeftLeaves(TreeNode* root) {
+        int res=0;
+        if(!root) return res;
+        queue<TreeNode*> que;
+        que.push(root);
+        while(!que.empty())
+        {
+            int n=que.size();
+            for(int i=0;i<n;i++)
+            {
+                TreeNode *node=que.front();
+                que.pop();
+                if(node->left&&!node->left->left&&!node->left->right)
+                    res+=node->left->val;
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right);
+            }
+        }
+        return res;
+    }
+};
+```
 
 ## [513.]()
 
