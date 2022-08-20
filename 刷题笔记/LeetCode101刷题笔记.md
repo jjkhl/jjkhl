@@ -6028,7 +6028,32 @@ public:
 };
 ```
 
-## [513.]()
+## [513.找树左下角的值](https://leetcode.cn/problems/find-bottom-left-tree-value/)
+```c++
+class Solution {
+public:
+    int findBottomLeftValue(TreeNode* root) {
+        int res=0;
+        if(root==nullptr) return res;
+        queue<TreeNode*> que;
+        que.push(root);
+        res=root->val;
+        while(!que.empty())
+        {
+            int n=que.size();
+            for(int i=0;i<n;i++)
+            {
+                TreeNode *node=que.front();
+                que.pop();
+                if(i==0) res=node->val;
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right);
+            }
+        }
+        return res;
+    }
+};
+```
 
 ## [538.]()
 
