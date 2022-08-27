@@ -6055,17 +6055,122 @@ public:
 };
 ```
 
-## [538.]()
+## [538.二叉搜索树转换为累加树](https://leetcode.cn/problems/convert-bst-to-greater-tree/)
+```c++
+class Solution {
+public:
+    int sum=0;
+    void dfs(TreeNode* root)
+    {
+        if(!root) return;
+        dfs(root->right);
+        sum+=root->val;
+        root->val=sum;
+        dfs(root->left);
+    }
+    TreeNode* convertBST(TreeNode* root) {
+        dfs(root);
+        return root;
+    }
+};
+```
 
-## [235.]()
+## [235.二叉搜索树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-search-tree/)
+```c++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root->val>p->val&&root->val>q->val)
+            return lowestCommonAncestor(root->left,p,q);
+        else if(root->val<p->val&&root->val<q->val)
+            return lowestCommonAncestor(root->right,p,q);
+        else
+            return root;
+    }
+};
+```
 
-## [104.]()
-
-## [530.]()
-
-## [889.]()
-
-## [106.]()
+## [104.二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+```c++
+class Solution {
+public:
+    int getDepth(TreeNode* node)
+    {
+        if(!node) return 0;
+        int leftDeep=getDepth(node->left);
+        int rightDeep=getDepth(node->right);
+        return 1+max(leftDeep,rightDeep);
+    }
+    int maxDepth(TreeNode* root) {
+        return getDepth(root);
+    }
+};
+```
+## [530.二叉搜索树的最小绝对差](https://leetcode.cn/problems/minimum-absolute-difference-in-bst/)
+```c++
+class Solution {
+public:
+    TreeNode *pre;
+    int res=INT_MAX;
+    void traversal(TreeNode *cur)
+    {
+        if(cur==nullptr) return;
+        traversal(cur->left);
+        if(pre)
+            res=min(res,abs(pre->val-cur->val));
+        pre=cur;
+        traversal(cur->right);
+    }
+    int getMinimumDifference(TreeNode* root) {
+        traversal(root);
+        return res;
+    }
+};
+```
+## [889.根据前序和后续遍历构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-postorder-traversal/)
+```c++
+class Solution {
+public:
+    TreeNode *help(vector<int>& preorder,int prebegin,int preend,vector<int>& postorder,int postbegin,int postend)
+    {
+        if(prebegin==preend||postbegin==postend) return new TreeNode(preorder[prebegin]);
+        else if(prebegin>preend||postbegin>postend) return NULL;
+        TreeNode *root=new TreeNode(preorder[prebegin++]);
+        int index=postbegin;
+        while(index<postend&&postorder[index]!=preorder[prebegin]) index++;
+        int len=index-postbegin;
+        root->left=help(preorder,prebegin,prebegin+len,postorder,postbegin,postbegin+len);
+        root->right=help(preorder,prebegin+len+1,preend,postorder,postbegin+len+1,postend-1);
+        return root;
+    }
+    TreeNode* constructFromPrePost(vector<int>& preorder, vector<int>& postorder) {
+        return help(preorder,0,preorder.size()-1,postorder,0,postorder.size()-1);
+    }
+};
+```
+## [106.从中序和后序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
+```c++
+class Solution {
+public:
+    //[ibegin,iend]
+    TreeNode* help(vector<int>& inorder,int ibegin,int iend,vector<int>& postorder,int pbegin,int pend)
+    {
+        if(ibegin>iend||pbegin>pend) return NULL;
+        TreeNode *root=new TreeNode(postorder[pend]);
+        if(ibegin==iend||pbegin==pend) return root;
+        int index=0;
+        while(inorder[index]!=root->val) ++index;
+        int leftlen=index-ibegin;
+        int rightlen=iend-index;
+        root->left=help(inorder,ibegin,index-1,postorder,pbegin,pbegin+leftlen-1);
+        root->right=help(inorder,index+1,iend,postorder,pbegin+leftlen,pend-1);
+        return root;
+    }
+    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+        return help(inorder,0,inorder.size()-1,postorder,0,postorder.size()-1);
+    }
+};
+```
 
 ## [94.]()
 
