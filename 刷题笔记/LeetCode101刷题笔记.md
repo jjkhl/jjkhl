@@ -6191,10 +6191,86 @@ public:
 第一种表示方法是临界矩阵：建立一个nxn的矩阵G，如果第i个节点连接第j个节点，则G[i][j]=1，反之为0；如果图是无向的，则这个矩阵一定是对称矩阵，则G[i][j]=G[j][i]。
 第二种表示方法是邻接链表：建立一个大小为n的数组，每个位置i存储一个数组或链表，表示第i个节点连向的其它节点。
 邻接矩阵空间开销比邻接链表大，但是邻接链表不支持快速查找i和j是否相连。
-## [785.]()
+## [785.判断二分图](https://leetcode.cn/problems/is-graph-bipartite/)
+```c++
+class Solution {
+public:
+    bool isBipartite(vector<vector<int>>& graph) {
+        int n=graph.size();
+        if(n==0) return true;
+        vector<int> color(n,0);
+        queue<int> q;
+        for(int i=0;i<n;++i)
+        {
+            if(!color[i])
+            {
+                q.push(i);
+                color[i]=1;
+            }
+            while(!q.empty())
+            {
+                int node=q.front();
+                q.pop();
+                for(const int& j:graph[node])
+                {
+                    if(color[j]==0)
+                    {
+                        q.push(j);
+                        color[j]=color[node]==2?1:2;
+                    }
+                    else if(color[node]==color[j])
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+};
+```
 
-## [210.]()
+## [210.课程表II](https://leetcode.cn/problems/course-schedule-ii/)
 
+## [207.课程表](https://leetcode.cn/problems/course-schedule/)
+```c++
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        vector<vector<int>> graph(numCourses,vector<int>());
+        vector<int> indegree(numCourses,0),res;
+        for(const auto& pre:prerequisites)
+        {
+            //graph[后置]：前置条件
+            graph[pre[1]].push_back(pre[0]);
+            ++indegree[pre[0]];
+        }
+        queue<int> q;
+        for(int i=0;i<indegree.size();i++)
+        {
+            if(!indegree[i]) q.push(i);//找到入度为0的点
+        }
+        while(!q.empty())
+        {
+            int u=q.front();
+            res.push_back(u);
+            q.pop();
+            for(auto v:graph[u])
+            {
+                if(!--indegree[v])
+                    q.push(v);
+            }
+        }
+        for(int i=0;i<indegree.size();i++)
+        {
+            if(indegree[i])
+                return false;
+        }
+        return true;
+    }
+
+};
+```
 ## [1059.]()
 
 ## [1135.]()
