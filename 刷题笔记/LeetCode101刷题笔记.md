@@ -6230,8 +6230,6 @@ public:
 };
 ```
 
-## [210.课程表II](https://leetcode.cn/problems/course-schedule-ii/)
-
 ## [207.课程表](https://leetcode.cn/problems/course-schedule/)
 ```c++
 class Solution {
@@ -6270,6 +6268,11 @@ public:
     }
 
 };
+```
+
+## [210.课程表II](https://leetcode.cn/problems/course-schedule-ii/)
+```c++
+
 ```
 ## [1059.]()
 
