@@ -262,8 +262,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     QMenuBar *bar=menuBar();
+<<<<<<< HEAD
     //QMenuBar *bar=new QMenuBar();
     setMenuBar(bar);//设置到ui界面
+=======
+    setMenuBar(bar);
+>>>>>>> 8636b014e2adeee1ac6b3344269658ba30b8c652
     //创建菜单
     QMenu *fileMenu=bar->addMenu("文件");
 //    QMenu *editMenu=bar->addMenu("编辑");
