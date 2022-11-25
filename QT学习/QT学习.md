@@ -134,7 +134,7 @@ public:
 
 signals:
     void hungry();//只需要声明信号，不需要任何定义
-
+	void hungry(QString foog);//函数重载
 };
 
 #endif // TEACHER_H
@@ -162,6 +162,7 @@ class Student : public QObject
 public:
     explicit Student(QObject *parent = nullptr);
     void treat();
+    void treat(QString food);
 signals:
 
 };
@@ -179,9 +180,44 @@ void Student::treat()
 {
     qDebug()<<"请老师吃饭";
 }
+void Student::treat(QString food)
+{
+    qDebug()<<"请老师吃"<<food;//输出带引号的food；解决方式：food.toUtf8().data();
+}
 ```
 
 ```c++
+//widget.h
+#ifndef WIDGET_H
+#define WIDGET_H
+#include"teacher.h"
+#include"student.h"
+#include <QWidget>
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class Widget; }
+QT_END_NAMESPACE
+
+class Widget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    Widget(QWidget *parent = nullptr);
+    ~Widget();
+
+private:
+    Ui::Widget *ui;
+    Teacher *zt;
+    Student *st;
+
+    void classIsOver()
+    {
+        emit zt->hungry("宫保鸡丁");
+    }
+};
+#endif // WIDGET_H
+//widget.cpp
 #include "widget.h"
 #include "./ui_widget.h"
 
@@ -193,12 +229,71 @@ Widget::Widget(QWidget *parent)
     //创建一个老师和学生对象
     this->zt=new Teacher(this);
     this->st=new Student(this);
-
-    connect(zt,&Teacher::hungry,st,&Student::treat);
+	/*
+    connect(zt,&Teacher::hungry,st,&Student::treat);//无函数重载的连接版本
     this->classIsOver();
+    */
+    //函数重载的解决办法——函数指针：函数返回值 (*变量名) (参数列表)=&函数地址
+    void(Teacher::*teacherSignal) (QString)=&Teacher::hungry;
+    void(Student::*studentSlot) (QString)=&Student::treat;
+    connect(zt,teacherSignal,st,studentSlot);
+    /* 断开连接
+    disconnect(zt,teacherSigbal,st,studentSlot);
+    */
 }
 
 Widget::~Widget()
+{
+    delete ui;
+}
+```
+
+## 菜单栏和工具栏
+
+```c++
+#include "mainwindow.h"
+#include "./ui_mainwindow.h"
+#include<QMenuBar>
+#include<QToolBar>
+#include<QPushButton>
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    QMenuBar *bar=menuBar();
+    setMenuBar(bar);
+    //创建菜单
+    QMenu *fileMenu=bar->addMenu("文件");
+//    QMenu *editMenu=bar->addMenu("编辑");
+    // 创建菜单项
+    fileMenu->addAction("新建");
+    //添加分割线
+    fileMenu->addSeparator();
+    fileMenu->addAction("打开");
+
+    //工具栏，可以有多个
+    QToolBar *toolBar=new QToolBar(this);
+    addToolBar(Qt::LeftToolBarArea,toolBar);
+
+    //只允许左右停靠
+    toolBar->setAllowedAreas(Qt::LeftToolBarArea|Qt::RightToolBarArea);
+
+    //设置不允许浮动
+    toolBar->setFloatable(false);
+    //设置不允许移动
+    toolBar->setMovable(false);
+    //工具栏中设置内容
+    toolBar->addAction("新建");
+    toolBar->addSeparator();
+    toolBar->addAction("打开");
+
+    //工具栏设置按钮
+    QPushButton *btn=new QPushButton("aa",this);
+    toolBar->addWidget(btn);
+}
+
+MainWindow::~MainWindow()
 {
     delete ui;
 }
