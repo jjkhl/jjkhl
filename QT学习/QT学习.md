@@ -262,12 +262,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     QMenuBar *bar=menuBar();
-<<<<<<< HEAD
     //QMenuBar *bar=new QMenuBar();
     setMenuBar(bar);//设置到ui界面
-=======
-    setMenuBar(bar);
->>>>>>> 8636b014e2adeee1ac6b3344269658ba30b8c652
     //创建菜单
     QMenu *fileMenu=bar->addMenu("文件");
 //    QMenu *editMenu=bar->addMenu("编辑");
@@ -296,7 +292,58 @@ MainWindow::MainWindow(QWidget *parent)
     //工具栏设置按钮
     QPushButton *btn=new QPushButton("aa",this);
     toolBar->addWidget(btn);
+        
+    //状态栏：最多只有一个
+    QStatusBar *stBar=new QStatusBar();
+    setStatusBar(stBar);
+    //放标签控件
+    QLabel *label=new QLabel("提示信息",this);
+    stBar->addWidget(label);
+    //stBar->addPermanetWidget(label);
+    //浮动窗口可以有多个
+    
+        
 }
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+```
+
+## 状态栏、浮动窗口、核心窗口
+
+```c++
+#include "mainwindow.h"
+#include "./ui_mainwindow.h"
+#include<QStatusBar>
+#include<QLabel>
+#include<QDockWidget>
+#include<QTextEdit>
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    //状态栏最多一个
+    QStatusBar *stBar=new QStatusBar;
+    setStatusBar(stBar);
+    QLabel *label=new QLabel("提示信息",this);
+    stBar->addWidget(label);
+    QLabel *label2=new QLabel("右侧提示信息",this);
+    stBar->addPermanentWidget(label2);//设置永久状态栏
+
+    //铆接部件(浮动窗口)可以有多个
+    QDockWidget *dw=new QDockWidget("浮动窗口",this);
+    addDockWidget(Qt::TopDockWidgetArea,dw);
+
+    //设置后期停靠区域，如只允许上下区域
+    dw->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
+    //设置核心窗口，只能一个
+    QTextEdit *edit=new QTextEdit(this);
+    setCentralWidget(edit);
+
+};
 
 MainWindow::~MainWindow()
 {
