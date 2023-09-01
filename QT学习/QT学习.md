@@ -94,10 +94,20 @@ Widget::Widget(QWidget *parent)
     btn->setParent(this);//设置父类
     btn->setText("hello");//设置按钮文字
     btn->move(100,100);//移动位置
+    btn->setFixedSize(50,50);//设置a
     setWindowTitle("hello");//设置窗口标题
     setFixedSize(600,400);//设置固定窗口大小
 }
 ```
+
+```c++
+//分开文件写法
+// mypushbtn.h
+
+//mypushbtn.cpp
+```
+
+
 
 ## 信号与槽
 
@@ -349,5 +359,71 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+```
+
+# QT进阶
+
+## 文字转语音
+
+```c++
+//库链接
+//CMakeLists.txt
+find_package(Qt5 COMPONENTS Widgets Core Gui TextToSpeech REQUIRED)
+target_link_libraries(jjkhl PRIVATE Qt5::Widgets Qt5::Core Qt5::Gui Qt5::TextToSpeech)
+//.pro
+QT+=core gui texttospeech
+
+//mainwindow.h
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+#include<QTextToSpeech>
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class MainWindow; }
+QT_END_NAMESPACE
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
+
+private slots:
+    void on_pushButton_clicked();
+
+private:
+    Ui::MainWindow *ui;
+    QTextToSpeech *x;
+};
+#endif // MAINWINDOW_H
+
+//mainwindow.cpp
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    x=new QTextToSpeech;
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    x->say("吃饭了吗");
+}
+
+
 ```
 
