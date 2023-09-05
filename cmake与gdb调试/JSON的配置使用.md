@@ -1,6 +1,6 @@
 <h1 align="center">JSON的配置使用</h1>
 
-[单文件和多文件的调试]:https://blog.csdn.net/qq_42429142/article/details/113274450
+[单文件和多文件的调试](https://blog.csdn.net/qq_42429142/article/details/113274450)
 
 * 多文件下直接修改launch.json
 
