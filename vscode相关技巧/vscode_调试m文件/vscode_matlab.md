@@ -9,7 +9,7 @@
 "matlab.linterEncoding": "gb2312",
 ```
 
-表示vscode嗲用matlab插件，运行matlab/查看补全/纠错验错时，去上述路径中寻找matlab的引擎
+表示vscode调用matlab插件，运行matlab/查看补全/纠错验错时，去上述路径中寻找matlab的引擎
 
 
 
