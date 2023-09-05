@@ -101,10 +101,25 @@ Widget::Widget(QWidget *parent)
 ```
 
 ```c++
-//分开文件写法
-// mypushbtn.h
+    //普通按钮示例
+    bt_test = new QPushButton("ok");
+    bt_test->setMinimumSize(200, 100);      //设置最小尺寸
+    bt_test->setFlat(true);                 //设置无边框
+    bt_test->setIconSize(QSize(80, 80));    //设置按钮图标大小
+    bt_test->setIcon(QIcon("car.png"));     //设置按钮图标
 
-//mypushbtn.cpp
+    //工具按钮示例
+    bt_tool = new QToolButton;
+    bt_tool->setIcon(QIcon("car.png"));     //设置按钮图标
+    bt_tool->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));//绑定快捷键
+
+    //单选按钮示例
+    bt_radio2 = new QRadioButton("可以左转");
+    bt_radio1 = new QRadioButton("可以右转");
+
+    //多选按钮示例
+    bt_check1 = new QCheckBox("显示密码");
+    bt_check2 = new QCheckBox("自动登录");
 ```
 
 
@@ -116,13 +131,19 @@ Widget::Widget(QWidget *parent)
 ```qt
 等效写法：
 connect(ui->pushButton,&QPushButton::clicked, this, &Qwidget::close);
-connect(ui->pushButton,SIGNAL(clicked, this, SLOT(close);
+connect(ui->pushButton,SIGNAL(clicked), this, SLOT(close);
 connect(ui->pushButton_2,QOverload<bool>::of(&QPushButton::clicked),[=](){
         std::cout<<"good"<<std::endl;});
         
 connect(btn, &QPushButton::clicked, /* this, */ [&]() {
         this->close();
     });
+```
+
+### 绑定多个按钮的一个槽函数调用
+
+```c++
+QPushButton *b=qobject_cast<QPushButton *>(sender());
 ```
 
 ### 自定义信号与槽
