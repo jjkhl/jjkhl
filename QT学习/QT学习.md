@@ -1,7 +1,7 @@
 # 学习资料
 
 1. [最新QT从入门到实战完整版|传智教育](https://www.bilibili.com/video/BV1g4411H78N/?vd_source=8b01e16d821495c639dbc02ca4104dce)
-2. 《QT5开发及实例》
+2. 《QT5开发及实例第四版》
 
 # QT基础
 
