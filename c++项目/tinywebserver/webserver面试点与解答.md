@@ -120,6 +120,52 @@ private :
 
 Singleton Singleton::m_data; 
 ```
+## 生产者消费者模型
+
+本项目中主要是针对条件变量的，提供了一种线程间的通知机制，当某个共享数据达到某个值，唤醒等待这个共享数据的线程。
+
+生产者产生一定量的数据放入缓冲区，消费者从缓冲区读取数据处理。
+
+```c++
+#include <pthread.h>
+struct msg {
+  struct msg *m_next;
+  /* value...*/
+};
+//缓冲队列
+struct msg* workq;
+pthread_cond_t qready = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER;
+
+//消费者
+void process_msg() {
+  struct msg* mp;
+  for (;;) {
+    pthread_mutex_lock(&qlock);
+    //这里需要用while，而不是if
+    while (workq == NULL) {
+      pthread_cond_wait(&qread, &qlock);
+    }
+    mq = workq;
+    workq = mp->m_next;
+    pthread_mutex_unlock(&qlock);
+    /* now process the message mp */
+  }
+}
+
+//生产者
+void enqueue_msg(struct msg* mp) {
+    pthread_mutex_lock(&qlock);
+    mp->m_next = workq;
+    workq = mp;
+    pthread_mutex_unlock(&qlock);
+    /** 此时另外一个线程在signal之前，执行了process_msg，刚好把mp元素拿走*/
+    pthread_cond_signal(&qready);
+    /** 此时执行signal, 在pthread_cond_wait等待的线程被唤醒，
+        但是mp元素已经被另外一个线程拿走，所以，workq还是NULL ,因此需要继续等待*/
+}
+```
+
 ## 大端序小端序
 
 网路序是大端字节序，数据低位存在内存高位。
@@ -420,6 +466,8 @@ TLS/SSL协议位于应用层协议和TCP之间，构建在TCP之上，由TCP协�
 
 ## 事件处理模式：Proactor模式和Reactor模式区别
 
+Reactor是非阻塞同步网络模式，感知的是就绪可读写事件，Proactor是异步网络模式，感知的是已完成的读写事件。
+
 主要区别在于：Reator模式基于待完成的I/O事件，Proactor模式基于已完成的I/O事件
 
 Reactor模式：主线程(I/O处理单元)只负责监听文件描述符上是否有事件发生，有的话立即通知工作线程(逻辑单元 )，读写数据、接受新连接及处理客户请求均在工作线程中完成，但**注册的epoll内核需要一直等待读写操作都完成，但注意主线程此时不发生阻塞等待**。通常由**同步I/O**实现。
@@ -476,6 +524,14 @@ Proactor模式：主线程和内核负责处理读写数据、接受新连接等
 读完成事件：有事件来了，主线程往内核注册这个读时间（就是告诉内核注意了一会要读数据）。注册了之后，主线程就去干其他事情，内核就自动会负责将数据从内核缓冲区放到用户缓冲区。不用用户程序管。
 
 ------
+
+## Reactor模式中，各个模式的区别
+
+Reactor模式是一个针对同步I/O的网络模型，主要是使用一个reactor负责监听和分配事件，将I/O事件分派给对应的Handler。新的事件包含连接建立就绪、读就绪、写就绪等。细分如下：
+
+* 单reactor单线程：使用I/O多路复用技术，当获取到活动的事件列表，就在reactor中进行读取请求、业务处理、返回响应。好处是整个模型都是用一个线程，不存在资源争夺问题。坏处是一个事件如果耗时长，将导致后续所有事件得不到处理。
+* 单reactor多线程：reactor只负责数据的接收和发送，它将业务分给线程池中的线程进行处理，完成后将数据返回给reactor进行发送。但是牵扯到了共享数据的互斥和保护机制。
+* 主从reactor：主reactor只负责连接的建立和分配，从reactor只负责读取请求、业务处理、返回响应等耗时操作，能够有效应对高并发场合。
 
 ## 同步I/O为什么要使用注册的方式让主线程调用不同函数
 
@@ -537,6 +593,12 @@ Linux下有三种IO复用：epoll，select和poll。
 * ET**只支持非阻塞模式**
 * 读写操作用while循环，直到读/写足够多的数据，或者读/写返回EAGAIN。
 * 尤其时在写大块数据时，一次write操作不足以写完全部数据，或者在读大块数据时，应用层缓冲区数据太小，一次read操作不足以读完全部数据，应用层要么**一直调用while循环**一直IO到EGAIN,或者自己调用epoll_ctl手动触发ET响应。
+
+### 为什么ET不可以文件描述符阻塞
+
+ET只有读写事件发生时通知用户，如果没有一次性读完数据，要到下一次文件描述符有可读事件epoll才会通知。所以在该模式下需要循环读取信息，直到读完数据。如果设置为阻塞，数据读完以后就阻塞来了，无法进行后续请求的处理。
+
+LT模式则不需要每次读完数据，只要有数据可读，epoll_wait就会一直通知。
 
 ### ET比LT更高效的原因
 
@@ -728,3 +790,8 @@ Session是另一种记录客户状态的机制，不同的是Cookie保存在客�
 * 火焰图 
 
 动态显示系统信息和运行的进程信息：`top`
+
+
+
+# 代码随想录_webserver笔记
+
