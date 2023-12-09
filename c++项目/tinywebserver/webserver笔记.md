@@ -60,6 +60,7 @@ cond参考网址：http://t.csdn.cn/qOqgb
 
 条件变量：提供了一种线程间的通知机制,当某个共享数据达到某个值时,唤醒等待这个共享数据的线程.
 主要包括两个动作：
+
 1. 一个线程因等待“条件变量成立”
 2. 另外一个线程使“条件成立”，给出信号，从而唤醒正在等待的线程
 
@@ -484,7 +485,10 @@ STATE_MACHINE(){
 
 # [05.HTTP连接处理(中)](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=7&sn=d1ab62872c3ddac765d2d80bbebfb0dd&chksm=83ffbefeb48837e808caad089f23c340e1348efb94bef88be355f4d9aedb0f9784e1f9e072b1&cur_album_id=1339230165934882817&scene=189#wechat_redirect)
 
+**从状态机负责读取报文的一行，主状态机负责对该行数据进行解析**，主状态机内部调用从状态机，从状态机驱动主状态机。
+
 ## 流程图与状态机
+
 ![](picture/主状态机.jpg)
 
 ## 主状态机
